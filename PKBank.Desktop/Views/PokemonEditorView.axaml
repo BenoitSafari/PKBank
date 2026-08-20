@@ -27,19 +27,24 @@
   <ScrollViewer>
     <StackPanel Spacing="10">
 
-      <!-- Header: sprite + summary -->
-      <StackPanel Orientation="Horizontal" Spacing="12">
-        <Border Background="{DynamicResource SystemControlBackgroundListLowBrush}" CornerRadius="6" Padding="6">
-          <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
-        </Border>
-        <StackPanel VerticalAlignment="Center" Spacing="4">
-          <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
-          <StackPanel Orientation="Horizontal" Spacing="8">
-            <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
-                       Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
+      <!-- Header: sprite + summary + QR -->
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+          <Border Background="{DynamicResource SystemControlBackgroundListLowBrush}" CornerRadius="6" Padding="6">
+            <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+          </Border>
+          <StackPanel VerticalAlignment="Center" Spacing="4">
+            <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+                         Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
+            </StackPanel>
           </StackPanel>
         </StackPanel>
-      </StackPanel>
+        <Button Grid.Column="2" Content="QR" VerticalAlignment="Top" MinWidth="42"
+                IsEnabled="{Binding HasSpecies}" Click="OnQrClicked"
+                ToolTip.Tip="Show the QR code for this Pokémon"/>
+      </Grid>
 
       <!-- Main fields -->
       <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">

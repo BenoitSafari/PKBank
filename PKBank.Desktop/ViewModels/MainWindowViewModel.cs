@@ -147,13 +147,38 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public void DeleteSelected()
     {
-        if (_sav is not { } sav || SelectedSlot is not { } slot)
+        if (SelectedSlot is { } slot)
+            DeleteSlot(slot);
+    }
+
+    public void DeleteSlot(SlotViewModel slot)
+    {
+        if (_sav is not { } sav)
             return;
         slot.Write(sav.BlankPKM);
         sav.State.Edited = true;
         if (slot.IsParty)
             RefreshParty();
-        SelectSlot(slot); // rebuild the editor on the now-empty slot
+        if (slot == SelectedSlot)
+            SelectSlot(slot); // rebuild the editor on the now-empty slot
+    }
+
+    /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>
+    public void SetSlotFromEditor(SlotViewModel slot)
+    {
+        if (_sav is not { } sav || Editor is not { } editor)
+            return;
+        var pk = editor.GetEntityClone();
+        if (slot.IsParty)
+            pk.ResetPartyStats();
+        pk.RefreshChecksum();
+        slot.Write(pk);
+        sav.State.Edited = true;
+        if (slot.IsParty)
+            RefreshParty();
+        if (slot == SelectedSlot)
+            editor.Revert(); // origin slot now holds the freshly written data
+        StatusMessage = "Editor content written to slot.";
     }
 
     public void NextBox() => CurrentBox = _sav is { } sav && _currentBox >= sav.BoxCount - 1 ? 0 : _currentBox + 1;

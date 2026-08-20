@@ -9,6 +9,23 @@
         Width="1200" Height="800"
         WindowStartupLocation="CenterScreen">
 
+  <Window.Resources>
+    <DataTemplate x:Key="SlotTemplate" DataType="vm:SlotViewModel">
+      <Button Classes="slot" Classes.selected="{Binding IsSelected}"
+              Click="OnSlotClicked" ToolTip.Tip="{Binding ToolTip}">
+        <Button.ContextMenu>
+          <ContextMenu>
+            <MenuItem Header="View" Click="OnSlotViewClicked"/>
+            <MenuItem Header="Set" Click="OnSlotSetClicked"/>
+            <Separator/>
+            <MenuItem Header="Delete" Click="OnSlotDeleteClicked"/>
+          </ContextMenu>
+        </Button.ContextMenu>
+        <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+      </Button>
+    </DataTemplate>
+  </Window.Resources>
+
   <Window.Styles>
     <Style Selector="Button.slot">
       <Setter Property="Padding" Value="2"/>
@@ -77,38 +94,22 @@
 
         <StackPanel DockPanel.Dock="Bottom" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
           <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
-          <ItemsControl ItemsSource="{Binding PartySlots}">
+          <ItemsControl ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <StackPanel Orientation="Horizontal"/>
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:SlotViewModel">
-                <Button Classes="slot" Classes.selected="{Binding IsSelected}"
-                        Click="OnSlotClicked" ToolTip.Tip="{Binding ToolTip}">
-                  <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
-                </Button>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
           </ItemsControl>
         </StackPanel>
 
         <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
-          <ItemsControl ItemsSource="{Binding BoxSlots}" HorizontalAlignment="Left">
+          <ItemsControl ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}" HorizontalAlignment="Left">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid Columns="6"/>
               </ItemsPanelTemplate>
             </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate DataType="vm:SlotViewModel">
-                <Button Classes="slot" Classes.selected="{Binding IsSelected}"
-                        Click="OnSlotClicked" ToolTip.Tip="{Binding ToolTip}">
-                  <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
-                </Button>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
           </ItemsControl>
         </ScrollViewer>
 

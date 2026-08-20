@@ -96,6 +96,26 @@ public sealed partial class MainWindow : Window
             ViewModel?.SelectSlot(slot);
     }
 
+    private static SlotViewModel? GetMenuSlot(object? sender) => (sender as MenuItem)?.DataContext as SlotViewModel;
+
+    private void OnSlotViewClicked(object? sender, RoutedEventArgs e)
+    {
+        if (GetMenuSlot(sender) is { } slot)
+            ViewModel?.SelectSlot(slot);
+    }
+
+    private void OnSlotSetClicked(object? sender, RoutedEventArgs e)
+    {
+        if (GetMenuSlot(sender) is { } slot)
+            ViewModel?.SetSlotFromEditor(slot);
+    }
+
+    private void OnSlotDeleteClicked(object? sender, RoutedEventArgs e)
+    {
+        if (GetMenuSlot(sender) is { } slot)
+            ViewModel?.DeleteSlot(slot);
+    }
+
     private void OnDeleteClicked(object? sender, RoutedEventArgs e) => ViewModel?.DeleteSelected();
     private void OnPrevBoxClicked(object? sender, RoutedEventArgs e) => ViewModel?.PrevBox();
     private void OnNextBoxClicked(object? sender, RoutedEventArgs e) => ViewModel?.NextBox();

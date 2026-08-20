@@ -20,8 +20,10 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 
 - Open any save file supported by PKHeX.Core (auto-detected), or create a blank save (Gen 1 → Legends: Z-A)
 - Box navigation and party view with the real box sprites (shiny variants included)
+- Slot context menu (right-click): View / Set (write editor content into the slot) / Delete
 - Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats
 - Live legality check with full report
+- QR code window (button next to the Pokémon name), same payload as PKHeX Windows
 - Export the modified save (File → Save As…)
 
 ## Architecture

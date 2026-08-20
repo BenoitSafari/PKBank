@@ -33,6 +33,8 @@ public static class SpriteService
 
     public static Bitmap? GetItemSprite(int item) => item <= 0 ? null : Load($"item.bitem_{item}.png");
 
+    public static Bitmap? GetLegalityOverlay(bool valid) => Load(valid ? "misc.valid.png" : "misc.warn.png");
+
     public static Bitmap? GetBallSprite(byte ball) => Load($"ball.{SpriteName.GetResourceStringBall(ball)}.png") ?? Load("ball._ball4.png");
 
     private static Bitmap? Load(string logicalName) => Cache.GetOrAdd(logicalName, static name =>

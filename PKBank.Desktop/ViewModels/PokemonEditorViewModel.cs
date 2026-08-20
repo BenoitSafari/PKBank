@@ -43,6 +43,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     internal PKM Entity => _pk;
 
+    /// <summary>Snapshot of the entity currently being edited (with pending changes).</summary>
+    public PKM GetEntityClone() => _pk.Clone();
+
+    public bool HasSpecies => _pk.Species != 0;
+
     // Static data sources (per save file)
     public IReadOnlyList<ComboItem> SpeciesList => _sources.Species;
     public IReadOnlyList<ComboItem> ItemList => _sources.Items;
@@ -346,6 +351,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasItem));
         OnPropertyChanged(nameof(HasLanguage));
         OnPropertyChanged(nameof(CanCycleGender));
+        OnPropertyChanged(nameof(HasSpecies));
         RefreshDerived();
     }
 
