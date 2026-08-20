@@ -22,6 +22,7 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 - Box navigation and party view with the real box sprites (shiny variants included)
 - Slot context menu (right-click): View / Set (write editor content into the slot) / Delete
 - Drag & drop: move a Pokémon between slots (swap when the target is occupied), or drop onto a file manager folder to export it as a .pk* file
+  - Known limitation: on KDE Plasma (Wayland session), the drag cursor stays "forbidden" for XWayland apps even though the drop works — KDE bug 496243, not fixable app-side; the ghost sprite is the reliable drag indicator
 - Rich hover preview on slots: ball icon, ability, level, IVs/EVs, nature, legality verdict, encounter and PID type
 - Ball sprites shown in the ball selector (closed and dropdown) and hover preview
 - Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats
