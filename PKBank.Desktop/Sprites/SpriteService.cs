@@ -15,8 +15,6 @@ public static class SpriteService
     private static readonly Assembly Assembly = typeof(SpriteService).Assembly;
     private static readonly ConcurrentDictionary<string, Bitmap?> Cache = new();
 
-    static SpriteService() => SpriteName.AllowShinySprite = true;
-
     public static Bitmap? GetPokemonSprite(PKM pk)
     {
         if (pk.Species == 0)

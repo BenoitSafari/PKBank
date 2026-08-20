@@ -21,9 +21,41 @@ public sealed partial class MainWindow : Window
             {
                 vm.PropertyChanged += OnViewModelPropertyChanged;
                 SyncBoxCombo(vm);
+                BuildLanguageMenu(vm);
             }
         };
     }
+
+    private void BuildLanguageMenu(MainWindowViewModel vm)
+    {
+        LanguageMenu.Items.Clear();
+        foreach (var (code, name) in Services.AppSettings.Languages)
+        {
+            var item = new MenuItem
+            {
+                Header = name,
+                ToggleType = MenuItemToggleType.Radio,
+                IsChecked = code == vm.Settings.Language,
+            };
+            item.Click += (_, _) =>
+            {
+                vm.SetLanguage(code);
+                BuildLanguageMenu(vm); // refresh check marks
+            };
+            LanguageMenu.Items.Add(item);
+        }
+    }
+
+    private async void OnSettingsClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is not { } vm)
+            return;
+        await new SettingsWindow(vm).ShowDialog(this);
+        BuildLanguageMenu(vm); // language may have changed from the settings screen
+    }
+
+    private async void OnAboutClicked(object? sender, RoutedEventArgs e)
+        => await new AboutWindow().ShowDialog(this);
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

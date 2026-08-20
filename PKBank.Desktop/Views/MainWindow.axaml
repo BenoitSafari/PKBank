@@ -54,6 +54,12 @@
         <Separator/>
         <MenuItem Header="E_xit" Click="OnExitClicked"/>
       </MenuItem>
+      <MenuItem Header="_Options">
+        <MenuItem x:Name="LanguageMenu" Header="_Language"/>
+        <Separator/>
+        <MenuItem Header="_Settings…" Click="OnSettingsClicked"/>
+        <MenuItem Header="_About PKBank.Desktop…" Click="OnAboutClicked"/>
+      </MenuItem>
     </Menu>
 
     <Border DockPanel.Dock="Bottom" Padding="10,6" Background="{DynamicResource SystemControlBackgroundListLowBrush}">
@@ -92,7 +98,7 @@
                   IsEnabled="{Binding SelectedSlot, Converter={x:Static ObjectConverters.IsNotNull}}"/>
         </StackPanel>
 
-        <StackPanel DockPanel.Dock="Bottom" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
+        <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
           <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
           <ItemsControl ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
             <ItemsControl.ItemsPanel>
@@ -103,8 +109,9 @@
           </ItemsControl>
         </StackPanel>
 
-        <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
-          <ItemsControl ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}" HorizontalAlignment="Left">
+        <ScrollViewer Margin="0,10,0,0" IsVisible="{Binding HasBox}">
+          <ItemsControl ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
+                        HorizontalAlignment="Left" VerticalAlignment="Top">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <UniformGrid Columns="6"/>

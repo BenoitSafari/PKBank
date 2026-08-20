@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Views.SettingsWindow"
+        Title="Settings"
+        Width="440" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+  <StackPanel Margin="16" Spacing="14">
+
+    <TextBlock Text="Program" FontWeight="SemiBold" FontSize="15"/>
+
+    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto" Margin="4,0,0,0">
+
+      <TextBlock Grid.Row="0" Grid.Column="0" Text="Game data language" VerticalAlignment="Center"/>
+      <ComboBox Grid.Row="0" Grid.Column="1" x:Name="LanguageCombo"
+                HorizontalAlignment="Stretch" Margin="0,3"
+                SelectionChanged="OnLanguageChanged"/>
+
+      <TextBlock Grid.Row="1" Grid.Column="0" Text="Blank save version" VerticalAlignment="Center"/>
+      <ComboBox Grid.Row="1" Grid.Column="1" x:Name="BlankVersionCombo"
+                HorizontalAlignment="Stretch" Margin="0,3"
+                SelectionChanged="OnBlankVersionChanged"/>
+
+      <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ShinyCheck"
+                Content="Show shiny sprites" Margin="0,6,0,0"
+                IsCheckedChanged="OnShinyChanged"/>
+    </Grid>
+
+    <TextBlock Text="The blank save version is loaded at startup when no file is opened."
+               Opacity="0.7" FontSize="12" TextWrapping="Wrap" Margin="4,0,0,0"/>
+
+    <Button Content="Close" HorizontalAlignment="Right" Click="OnCloseClicked"/>
+
+  </StackPanel>
+
+</Window>

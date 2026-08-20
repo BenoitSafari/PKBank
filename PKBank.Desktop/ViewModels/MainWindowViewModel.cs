@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using PKBank.Desktop.Services;
 using PKHeX.Core;
+using PKHeX.Drawing.PokeSprite;
 
 namespace PKBank.Desktop.ViewModels;
 
-public sealed class MainWindowViewModel : ViewModelBase
+public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
 {
     private SaveFile? _sav;
     private FilteredGameDataSource? _sources;
@@ -37,6 +39,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public SaveFile? SAV => _sav;
     public bool HasSave => _sav is not null;
+    public AppSettings Settings { get; } = settings;
 
     public ObservableCollection<SlotViewModel> BoxSlots { get; } = [];
     public ObservableCollection<SlotViewModel> PartySlots { get; } = [];
@@ -105,6 +108,54 @@ public sealed class MainWindowViewModel : ViewModelBase
         _savePath = null;
         LoadSave(BlankSaveFile.Get(version, _sav));
         StatusMessage = $"Created a blank {GameInfo.GetVersionName(version)} save.";
+    }
+
+    /// <summary>Loads the configured blank save at startup when no file argument was given.</summary>
+    public void LoadStartupBlank() => NewBlank(Settings.BlankSaveVersion);
+
+    public void SetLanguage(string code)
+    {
+        if (!GameLanguage.IsLanguageValid(code) || code == Settings.Language)
+            return;
+        Settings.Language = code;
+        Settings.Save();
+        GameInfo.CurrentLanguage = code;
+        ReloadCurrentSave();
+        StatusMessage = "Game data language changed.";
+    }
+
+    public void SetShinySprites(bool value)
+    {
+        if (value == Settings.ShinySprites)
+            return;
+        Settings.ShinySprites = value;
+        Settings.Save();
+        SpriteName.AllowShinySprite = value;
+        foreach (var slot in BoxSlots)
+            slot.Refresh();
+        foreach (var slot in PartySlots)
+            slot.Refresh();
+        if (SelectedSlot is { } selected)
+            SelectSlot(selected); // rebuild the editor so its sprite matches
+    }
+
+    /// <summary>Rebuilds all view-models from the current save (e.g. after a language change), keeping the selection.</summary>
+    public void ReloadCurrentSave()
+    {
+        if (_sav is not { } sav)
+            return;
+        var box = _currentBox;
+        var previous = SelectedSlot;
+        LoadSave(sav);
+        if (HasBox)
+            CurrentBox = box;
+        if (previous is not { } prev)
+            return;
+        var match = prev.IsParty
+            ? (prev.Slot < PartySlots.Count ? PartySlots[prev.Slot] : null)
+            : (prev.Slot < BoxSlots.Count ? BoxSlots[prev.Slot] : null);
+        if (match is not null)
+            SelectSlot(match);
     }
 
     public bool TrySaveTo(string path)
@@ -214,7 +265,15 @@ public sealed class MainWindowViewModel : ViewModelBase
             var names = new string[sav.BoxCount];
             for (int i = 0; i < names.Length; i++)
             {
-                var name = (sav as IBoxDetailNameRead)?.GetBoxName(i);
+                string? name;
+                try
+                {
+                    name = (sav as IBoxDetailNameRead)?.GetBoxName(i);
+                }
+                catch
+                {
+                    name = null; // blank saves may lack the underlying blocks
+                }
                 names[i] = string.IsNullOrWhiteSpace(name) ? BoxDetailNameExtensions.GetDefaultBoxName(i) : name;
             }
             BoxNames = names;
@@ -238,7 +297,16 @@ public sealed class MainWindowViewModel : ViewModelBase
                 PartySlots.Add(new SlotViewModel(sav, isParty: true, -1, i));
         }
 
-        TrainerInfo = $"{sav.OT}  ·  TID {sav.DisplayTID}  ·  {GameInfo.GetVersionName(sav.Version)}  ·  {sav.PlayTimeString}";
+        string playTime;
+        try
+        {
+            playTime = sav.PlayTimeString;
+        }
+        catch
+        {
+            playTime = "–"; // blank saves may lack the underlying blocks
+        }
+        TrainerInfo = $"{sav.OT}  ·  TID {sav.DisplayTID}  ·  {GameInfo.GetVersionName(sav.Version)}  ·  {playTime}";
         StatusMessage = "Save loaded.";
         OnPropertyChanged(nameof(HasSave));
         OnPropertyChanged(nameof(HasBox));
