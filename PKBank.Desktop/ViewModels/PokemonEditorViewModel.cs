@@ -410,6 +410,211 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
     }
 
+    // ----- Trainer info ----------------------------------------------------
+
+    public string OTName
+    {
+        get => _pk.OriginalTrainerName;
+        set
+        {
+            var name = value ?? string.Empty;
+            if (_loading || name == _pk.OriginalTrainerName)
+                return;
+            _pk.OriginalTrainerName = name;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public string OTGenderSymbol => _pk.OriginalTrainerGender == 1 ? "♀" : "♂";
+
+    public void CycleOTGender()
+    {
+        _pk.OriginalTrainerGender = (byte)(_pk.OriginalTrainerGender == 0 ? 1 : 0);
+        OnPropertyChanged(nameof(OTGenderSymbol));
+        RefreshDerived(refreshInputTexts: false);
+    }
+
+    /// <summary>Secret ID only exists from Gen 3 onward (WinForms hides the label below that).</summary>
+    public bool HasSID => _pk.Generation >= 3;
+
+    // Display values already account for the ID format: 16-bit pairs on Gen 1-6,
+    // 6-digit TID / 4-digit SID on Gen 7+.
+    public int MaxTID => _pk.TrainerIDDisplayFormat == TrainerIDFormat.SixDigit ? 999_999 : ushort.MaxValue;
+    public int MaxSID => _pk.TrainerIDDisplayFormat == TrainerIDFormat.SixDigit ? 4294 : ushort.MaxValue;
+
+    public int? TID
+    {
+        get => (int)_pk.DisplayTID;
+        set
+        {
+            var id = (uint)Math.Clamp(value ?? 0, 0, MaxTID);
+            if (_loading || id == _pk.DisplayTID)
+                return;
+            _pk.DisplayTID = id;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public int? SID
+    {
+        get => (int)_pk.DisplaySID;
+        set
+        {
+            var id = (uint)Math.Clamp(value ?? 0, 0, MaxSID);
+            if (_loading || id == _pk.DisplaySID)
+                return;
+            _pk.DisplaySID = id;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public int? Friendship
+    {
+        get => _pk.OriginalTrainerFriendship;
+        set
+        {
+            var friendship = (byte)Math.Clamp(value ?? 0, 0, byte.MaxValue);
+            if (_loading || friendship == _pk.OriginalTrainerFriendship)
+                return;
+            _pk.OriginalTrainerFriendship = friendship;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false); // friendship feeds Return/Frustration power
+        }
+    }
+
+    // ----- Origin ----------------------------------------------------------
+
+    public bool HasOriginGame => _pk.Format >= 3;
+    public bool HasMetLocation => _pk.Format >= 2;
+    public bool HasFateful => _pk.Format >= 3;
+
+    public IReadOnlyList<ComboItem> OriginGameList => _sources.Games;
+    public IReadOnlyList<ComboItem> MetLocationList { get; private set; } = [];
+
+    public int OriginGame
+    {
+        get => (int)_pk.Version;
+        set
+        {
+            if (_loading || value < 0 || value == (int)_pk.Version)
+                return;
+            _pk.Version = (GameVersion)value;
+            RebuildMetLocationList(); // location names are version-specific
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public int MetLocation
+    {
+        get => _pk.MetLocation;
+        set
+        {
+            if (_loading || value < 0 || value == _pk.MetLocation)
+                return;
+            _pk.MetLocation = (ushort)value;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public int? MetLevel
+    {
+        get => _pk.MetLevel;
+        set
+        {
+            var level = (byte)Math.Clamp(value ?? 0, 0, 100);
+            if (_loading || level == _pk.MetLevel)
+                return;
+            _pk.MetLevel = level;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public bool FatefulEncounter
+    {
+        get => _pk.FatefulEncounter;
+        set
+        {
+            if (_loading || value == _pk.FatefulEncounter)
+                return;
+            _pk.FatefulEncounter = value;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    private void RebuildMetLocationList()
+    {
+        MetLocationList = HasMetLocation
+            ? GameInfo.GetLocationList(_pk.Version, _pk.Context, egg: false)
+            : [];
+        OnPropertyChanged(nameof(MetLocationList));
+        Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(MetLocation)));
+    }
+
+    // ----- Extra bytes (raw unused offsets, as in WinForms) ----------------
+
+    private int _extraByteIndex;
+
+    public IReadOnlyList<string> ExtraByteOffsets { get; private set; } = [];
+    public bool HasExtraBytes => ExtraByteOffsets.Count != 0;
+
+    public int ExtraByteIndex
+    {
+        get => _extraByteIndex;
+        set
+        {
+            if (value < 0 || value >= ExtraByteOffsets.Count || value == _extraByteIndex)
+                return;
+            _extraByteIndex = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ExtraByteValue));
+        }
+    }
+
+    public int? ExtraByteValue
+    {
+        get
+        {
+            var offsets = _pk.ExtraBytes;
+            if ((uint)_extraByteIndex >= (uint)offsets.Length)
+                return null;
+            return _pk.Data[offsets[_extraByteIndex]];
+        }
+        set
+        {
+            var offsets = _pk.ExtraBytes;
+            if (_loading || (uint)_extraByteIndex >= (uint)offsets.Length)
+                return;
+            var b = (byte)Math.Clamp(value ?? 0, 0, byte.MaxValue);
+            var offset = offsets[_extraByteIndex];
+            if (_pk.Data[offset] == b)
+                return;
+            _pk.Data[offset] = b;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    private void RebuildExtraBytes()
+    {
+        var offsets = _pk.ExtraBytes;
+        var list = new string[offsets.Length];
+        for (int i = 0; i < offsets.Length; i++)
+            list[i] = $"0x{offsets[i]:X2}";
+        ExtraByteOffsets = list;
+        _extraByteIndex = 0;
+        OnPropertyChanged(nameof(ExtraByteOffsets));
+        OnPropertyChanged(nameof(HasExtraBytes));
+        OnPropertyChanged(nameof(ExtraByteIndex));
+        OnPropertyChanged(nameof(ExtraByteValue));
+    }
+
     public int Move1 { get => _pk.GetMove(0); set => SetMove(0, value); }
     public int Move2 { get => _pk.GetMove(1); set => SetMove(1, value); }
     public int Move3 { get => _pk.GetMove(2); set => SetMove(2, value); }
@@ -614,6 +819,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         _loading = true;
         RebuildSpeciesDependentLists();
+        RebuildMetLocationList();
+        RebuildExtraBytes();
         _loading = false;
         RefreshAll();
     }
@@ -687,6 +894,23 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(IsEgg));
         OnPropertyChanged(nameof(HasPokerus));
         OnPropertyChanged(nameof(PokerusStatus));
+        OnPropertyChanged(nameof(OTName));
+        OnPropertyChanged(nameof(OTGenderSymbol));
+        OnPropertyChanged(nameof(HasSID));
+        OnPropertyChanged(nameof(MaxTID));
+        OnPropertyChanged(nameof(MaxSID));
+        OnPropertyChanged(nameof(TID));
+        OnPropertyChanged(nameof(SID));
+        OnPropertyChanged(nameof(Friendship));
+        OnPropertyChanged(nameof(HasOriginGame));
+        OnPropertyChanged(nameof(HasMetLocation));
+        OnPropertyChanged(nameof(HasFateful));
+        OnPropertyChanged(nameof(OriginGame));
+        OnPropertyChanged(nameof(MetLocation));
+        OnPropertyChanged(nameof(MetLevel));
+        OnPropertyChanged(nameof(FatefulEncounter));
+        OnPropertyChanged(nameof(HasExtraBytes));
+        OnPropertyChanged(nameof(ExtraByteValue));
         RefreshDerived();
     }
 

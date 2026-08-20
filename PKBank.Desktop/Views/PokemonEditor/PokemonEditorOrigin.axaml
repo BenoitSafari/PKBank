@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.ViewModels"
+             xmlns:core="using:PKHeX.Core"
+             x:Class="PKBank.Desktop.Views.PokemonEditor.PokemonEditorOrigin"
+             x:DataType="vm:PokemonEditorViewModel">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
+            <TextBlock Text="{Binding Text}"/>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+        <Style Selector="ComboBox.field">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="4" Margin="0,8,0,0">
+
+        <!-- Trainer info -->
+        <TextBlock Text="Trainer" FontWeight="SemiBold" FontSize="16"/>
+        <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto">
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="OT"/>
+            <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto">
+                <TextBox Grid.Column="0" Text="{Binding OTName, Mode=TwoWay}" Margin="0,2"/>
+                <Button Grid.Column="1" Content="{Binding OTGenderSymbol}" MinWidth="42" Margin="8,0,0,0"
+                        Click="OnCycleOTGenderClicked"
+                        ToolTip.Tip="Toggle the original trainer's gender"/>
+            </Grid>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="ID / SID"/>
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,2">
+                <NumericUpDown Minimum="0" Maximum="{Binding MaxTID}" Increment="1" Width="130"
+                               Value="{Binding TID, Mode=TwoWay}" ToolTip.Tip="Trainer ID"/>
+                <NumericUpDown Minimum="0" Maximum="{Binding MaxSID}" Increment="1" Width="130"
+                               IsVisible="{Binding HasSID}"
+                               Value="{Binding SID, Mode=TwoWay}" ToolTip.Tip="Secret ID"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Friendship"/>
+            <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" Increment="1"
+                           Width="130" HorizontalAlignment="Left" Margin="0,2"
+                           Value="{Binding Friendship, Mode=TwoWay}"/>
+        </Grid>
+
+        <!-- Origin -->
+        <TextBlock Text="Origin" FontWeight="SemiBold" FontSize="16" Margin="0,8,0,0"/>
+        <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+
+            <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="Game" IsVisible="{Binding HasOriginGame}"/>
+            <ComboBox Grid.Row="0" Grid.Column="1" Classes="field" IsVisible="{Binding HasOriginGame}"
+                      ItemsSource="{Binding OriginGameList}"
+                      ItemTemplate="{StaticResource ComboItemTemplate}"
+                      SelectedValueBinding="{ReflectionBinding Value}"
+                      SelectedValue="{Binding OriginGame, Mode=TwoWay}"/>
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Location" IsVisible="{Binding HasMetLocation}"/>
+            <ComboBox Grid.Row="1" Grid.Column="1" Classes="field" IsVisible="{Binding HasMetLocation}"
+                      ItemsSource="{Binding MetLocationList}"
+                      ItemTemplate="{StaticResource ComboItemTemplate}"
+                      SelectedValueBinding="{ReflectionBinding Value}"
+                      SelectedValue="{Binding MetLocation, Mode=TwoWay}"/>
+
+            <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Met Level" IsVisible="{Binding HasMetLocation}"/>
+            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="12" Margin="0,2"
+                        IsVisible="{Binding HasMetLocation}">
+                <NumericUpDown Minimum="0" Maximum="100" Increment="1" Width="130"
+                               Value="{Binding MetLevel, Mode=TwoWay}"/>
+                <CheckBox Content="Fateful Encounter" VerticalAlignment="Center"
+                          IsVisible="{Binding HasFateful}"
+                          IsChecked="{Binding FatefulEncounter, Mode=TwoWay}"/>
+            </StackPanel>
+
+            <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Extra Bytes" IsVisible="{Binding HasExtraBytes}"/>
+            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,2"
+                        IsVisible="{Binding HasExtraBytes}">
+                <ComboBox Width="110"
+                          ItemsSource="{Binding ExtraByteOffsets}"
+                          SelectedIndex="{Binding ExtraByteIndex, Mode=TwoWay}"
+                          ToolTip.Tip="Unused byte offset in this format"/>
+                <NumericUpDown Minimum="0" Maximum="255" Increment="1" Width="130"
+                               Value="{Binding ExtraByteValue, Mode=TwoWay}"
+                               ToolTip.Tip="Raw value stored at that offset"/>
+            </StackPanel>
+        </Grid>
+
+    </StackPanel>
+
+</UserControl>
