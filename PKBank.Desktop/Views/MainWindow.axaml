@@ -137,50 +137,55 @@
       </Border>
 
       <!-- Storage (right) -->
-      <DockPanel Grid.Column="1" Margin="10,0,0,0" IsVisible="{Binding HasSave}">
+      <Border Grid.Column="1" Margin="10,0,0,0"
+              IsVisible="{Binding HasSave}"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+              BorderThickness="1" CornerRadius="6" Padding="10">
+        <DockPanel>
 
-        <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
-          <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}"/>
-          <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}"/>
-          <Button Content="Import" Click="OnImportSelectedClicked" IsEnabled="{Binding CanImportSelected}"/>
-          <Button Content="Export" Click="OnExportSelectedClicked" IsEnabled="{Binding CanExportSelected}"/>
-          <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}"/>
-        </StackPanel>
+          <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
+            <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}"/>
+            <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}"/>
+            <Button Content="Import" Click="OnImportSelectedClicked" IsEnabled="{Binding CanImportSelected}"/>
+            <Button Content="Export" Click="OnExportSelectedClicked" IsEnabled="{Binding CanExportSelected}"/>
+            <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}"/>
+          </StackPanel>
 
-        <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
-          <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
-          <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal"/>
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-        </StackPanel>
+          <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
+            <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
+            <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <StackPanel Orientation="Horizontal"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </StackPanel>
 
-        <!-- Box navigation: below the party, above the box grid -->
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,10,0,0"
-                    IsVisible="{Binding HasBox}">
-          <Button Content="◀" Click="OnPrevBoxClicked"/>
-          <!-- Selection managed in code-behind: swapping ItemsSource on a databound
-               ComboBox clears the selection asynchronously and drops re-entrant writes. -->
-          <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
-          <Button Content="▶" Click="OnNextBoxClicked"/>
-        </StackPanel>
+          <!-- Box navigation: below the party, above the box grid -->
+          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,10,0,0"
+                      IsVisible="{Binding HasBox}">
+            <Button Content="◀" Click="OnPrevBoxClicked"/>
+            <!-- Selection managed in code-behind: swapping ItemsSource on a databound
+                 ComboBox clears the selection asynchronously and drops re-entrant writes. -->
+            <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
+            <Button Content="▶" Click="OnNextBoxClicked"/>
+          </StackPanel>
 
-        <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
-          <ItemsControl x:Name="BoxItems" ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
-                        HorizontalAlignment="Left" VerticalAlignment="Top">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <UniformGrid Columns="6"/>
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-          </ItemsControl>
-        </ScrollViewer>
+          <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
+            <ItemsControl x:Name="BoxItems" ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
+                          HorizontalAlignment="Left" VerticalAlignment="Top">
+              <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                  <UniformGrid Columns="6"/>
+                </ItemsPanelTemplate>
+              </ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </ScrollViewer>
 
-      </DockPanel>
+        </DockPanel>
+      </Border>
 
     </Grid>
 
