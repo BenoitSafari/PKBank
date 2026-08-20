@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>PKBank.Desktop</RootNamespace>
+    <AssemblyName>PKBank.Desktop</AssemblyName>
+    <Description>Pokémon Save Editor (cross-platform UI)</Description>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Avalonia" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\packages\PKHeX\PKHeX.Core\PKHeX.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Reuse the sprite resource-name logic without referencing the Windows-only assembly. -->
+    <Compile Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Util\SpriteName.cs" Link="Sprites\SpriteName.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Sprite PNGs are shared with PKHeX.Drawing.PokeSprite; embedded under stable logical names. -->
+    <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\Big Pokemon Sprites\*.png" LogicalName="pkm.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\Big Shiny Sprites\*.png" LogicalName="pkm.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\Big Items\*.png" LogicalName="item.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\ball\*.png" LogicalName="ball.%(Filename)%(Extension)" />
+    <AvaloniaResource Include="..\packages\PKHeX\icon.png" Link="Assets\icon.png" />
+  </ItemGroup>
+
+</Project>

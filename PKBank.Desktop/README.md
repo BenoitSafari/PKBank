@@ -1,0 +1,46 @@
+# PKBank.Desktop
+
+Native cross-platform UI for PKHeX, built with [Avalonia](https://avaloniaui.net/). Runs natively on Linux (no Wine), and also on Windows/macOS.
+
+This project lives alongside `PKHeX.WinForms` and never modifies it, so rebasing this branch onto upstream `master` stays conflict-free. It only references `PKHeX.Core` (all game logic, formats, and legality come from there).
+
+## Run
+
+```sh
+dotnet run --project PKBank.Desktop
+```
+
+Optionally pass a save file path to open it on startup:
+
+```sh
+dotnet run --project PKBank.Desktop -- /path/to/main
+```
+
+## Current features
+
+- Open any save file supported by PKHeX.Core (auto-detected), or create a blank save (Gen 1 → Legends: Z-A)
+- Box navigation and party view with the real box sprites (shiny variants included)
+- Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats
+- Live legality check with full report
+- Export the modified save (File → Save As…)
+
+## Architecture
+
+| Piece | Role |
+|---|---|
+| `Sprites/SpriteService` | Loads box sprites from the PNGs shared with `PKHeX.Drawing.PokeSprite` (embedded at build time, cached `Bitmap`s). The resource-name logic (`SpriteName.cs`) is compile-linked from that project — single source of truth, no Windows dependency. |
+| `ViewModels/MainWindowViewModel` | Save lifecycle, box/party slots, slot selection, export. |
+| `ViewModels/PokemonEditorViewModel` | Wraps a working `PKM` copy; every mutation refreshes sprite, stats and legality. `Apply` writes back to the slot. |
+| `Views/` | XAML views (compiled bindings, Fluent theme). |
+
+## Roadmap (parity with WinForms, incrementally)
+
+- [ ] Drag & drop between slots, boxes, and to/from the filesystem (.pk* import/export)
+- [ ] Showdown set import/export
+- [ ] Met location / origin editor tab
+- [ ] OT/handler, memories, ribbons/marks tabs
+- [ ] Trainer info editor (name, TID/SID, money, badges)
+- [ ] Inventory editor
+- [ ] Mystery Gift import
+- [ ] Batch editor
+- [ ] Localization (reuse PKHeX translation files)

@@ -1,0 +1,159 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.ViewModels"
+             xmlns:v="using:PKBank.Desktop.Views"
+             xmlns:core="using:PKHeX.Core"
+             x:Class="PKBank.Desktop.Views.PokemonEditorView"
+             x:DataType="vm:PokemonEditorViewModel">
+
+  <UserControl.Resources>
+    <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
+      <TextBlock Text="{Binding Text}"/>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <UserControl.Styles>
+    <Style Selector="TextBlock.fieldLabel">
+      <Setter Property="VerticalAlignment" Value="Center"/>
+      <Setter Property="Margin" Value="0,0,8,0"/>
+      <Setter Property="Opacity" Value="0.85"/>
+    </Style>
+    <Style Selector="ComboBox.field">
+      <Setter Property="HorizontalAlignment" Value="Stretch"/>
+      <Setter Property="Margin" Value="0,2"/>
+    </Style>
+  </UserControl.Styles>
+
+  <ScrollViewer>
+    <StackPanel Spacing="10">
+
+      <!-- Header: sprite + summary -->
+      <StackPanel Orientation="Horizontal" Spacing="12">
+        <Border Background="{DynamicResource SystemControlBackgroundListLowBrush}" CornerRadius="6" Padding="6">
+          <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+        </Border>
+        <StackPanel VerticalAlignment="Center" Spacing="4">
+          <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+                       Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
+          </StackPanel>
+        </StackPanel>
+      </StackPanel>
+
+      <!-- Main fields -->
+      <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="Species"/>
+        <ComboBox Grid.Row="0" Grid.Column="1" Classes="field"
+                  ItemsSource="{Binding SpeciesList}"
+                  ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}"
+                  SelectedValue="{Binding Species, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Form" IsVisible="{Binding HasForms}"/>
+        <ComboBox Grid.Row="1" Grid.Column="1" Classes="field" IsVisible="{Binding HasForms}"
+                  ItemsSource="{Binding FormList}"
+                  SelectedIndex="{Binding Form, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Nickname"/>
+        <Grid Grid.Row="2" Grid.Column="1" ColumnDefinitions="*,Auto">
+          <TextBox Grid.Column="0" Text="{Binding Nickname, Mode=TwoWay}" Margin="0,2"/>
+          <CheckBox Grid.Column="1" Content="Nicknamed" Margin="8,0,0,0" IsChecked="{Binding IsNicknamed, Mode=TwoWay}"/>
+        </Grid>
+
+        <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Level"/>
+        <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="120,Auto,Auto,Auto">
+          <NumericUpDown Grid.Column="0" Minimum="1" Maximum="100" Increment="1"
+                         Value="{Binding Level, Mode=TwoWay}" Margin="0,2"/>
+          <CheckBox Grid.Column="1" Content="Shiny" Margin="12,0,0,0" IsChecked="{Binding IsShiny, Mode=TwoWay}"/>
+          <Button Grid.Column="2" Content="{Binding GenderSymbol}" Margin="12,0,0,0" MinWidth="42"
+                  IsEnabled="{Binding CanCycleGender}" Command="{Binding CycleGender}"/>
+        </Grid>
+
+        <TextBlock Grid.Row="4" Grid.Column="0" Classes="fieldLabel" Text="Nature" IsVisible="{Binding HasNature}"/>
+        <ComboBox Grid.Row="4" Grid.Column="1" Classes="field" IsVisible="{Binding HasNature}"
+                  ItemsSource="{Binding NatureList}"
+                  ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}"
+                  SelectedValue="{Binding Nature, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="5" Grid.Column="0" Classes="fieldLabel" Text="Ability" IsVisible="{Binding HasAbility}"/>
+        <ComboBox Grid.Row="5" Grid.Column="1" Classes="field" IsVisible="{Binding HasAbility}"
+                  ItemsSource="{Binding AbilityList}"
+                  ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedIndex="{Binding AbilityIndex, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="6" Grid.Column="0" Classes="fieldLabel" Text="Held Item" IsVisible="{Binding HasItem}"/>
+        <ComboBox Grid.Row="6" Grid.Column="1" Classes="field" IsVisible="{Binding HasItem}"
+                  ItemsSource="{Binding ItemList}"
+                  ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}"
+                  SelectedValue="{Binding HeldItem, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="7" Grid.Column="0" Classes="fieldLabel" Text="Ball" IsVisible="{Binding HasBall}"/>
+        <ComboBox Grid.Row="7" Grid.Column="1" Classes="field" IsVisible="{Binding HasBall}"
+                  ItemsSource="{Binding BallList}"
+                  ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}"
+                  SelectedValue="{Binding Ball, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="8" Grid.Column="0" Classes="fieldLabel" Text="Language" IsVisible="{Binding HasLanguage}"/>
+        <ComboBox Grid.Row="8" Grid.Column="1" Classes="field" IsVisible="{Binding HasLanguage}"
+                  ItemsSource="{Binding LanguageList}"
+                  ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}"
+                  SelectedValue="{Binding Language, Mode=TwoWay}"/>
+      </Grid>
+
+      <!-- Moves -->
+      <TextBlock Text="Moves" FontWeight="SemiBold"/>
+      <StackPanel Spacing="2">
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"/>
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"/>
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"/>
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"/>
+      </StackPanel>
+
+      <!-- Stats -->
+      <TextBlock Text="Stats" FontWeight="SemiBold"/>
+      <Grid ColumnDefinitions="70,110,110,60">
+        <TextBlock Grid.Column="0" Text="" />
+        <TextBlock Grid.Column="1" Text="IV" HorizontalAlignment="Center" Opacity="0.7"/>
+        <TextBlock Grid.Column="2" Text="EV" HorizontalAlignment="Center" Opacity="0.7"/>
+        <TextBlock Grid.Column="3" Text="Total" HorizontalAlignment="Center" Opacity="0.7"/>
+      </Grid>
+      <ItemsControl ItemsSource="{Binding StatRows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate DataType="vm:StatRowViewModel">
+            <Grid ColumnDefinitions="70,110,110,60" Margin="0,1">
+              <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+              <NumericUpDown Grid.Column="1" Minimum="0" Maximum="65535" Increment="1" Margin="2,0"
+                             Value="{Binding IV, Mode=TwoWay}"/>
+              <NumericUpDown Grid.Column="2" Minimum="0" Maximum="65535" Increment="1" Margin="2,0"
+                             Value="{Binding EV, Mode=TwoWay}"/>
+              <TextBlock Grid.Column="3" Text="{Binding Stat}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <!-- Legality report -->
+      <Expander Header="Legality Report">
+        <TextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontFamily="monospace" FontSize="12"/>
+      </Expander>
+
+      <!-- Actions -->
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,8">
+        <Button Content="Apply to Slot" Classes="accent" Command="{Binding Apply}"/>
+        <Button Content="Revert" Command="{Binding Revert}"/>
+      </StackPanel>
+
+    </StackPanel>
+  </ScrollViewer>
+
+</UserControl>

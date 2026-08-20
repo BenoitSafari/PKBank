@@ -1,0 +1,121 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PKBank.Desktop.ViewModels"
+        xmlns:v="using:PKBank.Desktop.Views"
+        x:Class="PKBank.Desktop.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/icon.png"
+        Title="{Binding WindowTitle}"
+        Width="1200" Height="800"
+        WindowStartupLocation="CenterScreen">
+
+  <Window.Styles>
+    <Style Selector="Button.slot">
+      <Setter Property="Padding" Value="2"/>
+      <Setter Property="Margin" Value="1"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+      <Setter Property="BorderThickness" Value="1"/>
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
+      <Setter Property="CornerRadius" Value="4"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button.slot.selected">
+      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
+      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+    </Style>
+  </Window.Styles>
+
+  <DockPanel>
+
+    <Menu DockPanel.Dock="Top">
+      <MenuItem Header="_File">
+        <MenuItem Header="_Open…" Click="OnOpenClicked" InputGesture="Ctrl+O"/>
+        <MenuItem Header="Save _As…" Click="OnSaveAsClicked" IsEnabled="{Binding HasSave}" InputGesture="Ctrl+Shift+S"/>
+        <Separator/>
+        <MenuItem x:Name="NewMenu" Header="_New (Blank Save)"/>
+        <Separator/>
+        <MenuItem Header="E_xit" Click="OnExitClicked"/>
+      </MenuItem>
+    </Menu>
+
+    <Border DockPanel.Dock="Bottom" Padding="10,6" Background="{DynamicResource SystemControlBackgroundListLowBrush}">
+      <DockPanel>
+        <TextBlock DockPanel.Dock="Right" Text="{Binding TrainerInfo}" Opacity="0.8"/>
+        <TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0"/>
+      </DockPanel>
+    </Border>
+
+    <Grid ColumnDefinitions="460,*" Margin="10">
+
+      <!-- Pokémon editor (left) -->
+      <Border Grid.Column="0"
+              IsVisible="{Binding Editor, Converter={x:Static ObjectConverters.IsNotNull}}"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+              BorderThickness="1" CornerRadius="6" Padding="10">
+        <ContentControl Content="{Binding Editor}">
+          <ContentControl.ContentTemplate>
+            <DataTemplate DataType="vm:PokemonEditorViewModel">
+              <v:PokemonEditorView/>
+            </DataTemplate>
+          </ContentControl.ContentTemplate>
+        </ContentControl>
+      </Border>
+
+      <!-- Storage (right) -->
+      <DockPanel Grid.Column="1" Margin="10,0,0,0" IsVisible="{Binding HasSave}">
+
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasBox}">
+          <Button Content="◀" Click="OnPrevBoxClicked"/>
+          <!-- Selection managed in code-behind: swapping ItemsSource on a databound
+               ComboBox clears the selection asynchronously and drops re-entrant writes. -->
+          <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
+          <Button Content="▶" Click="OnNextBoxClicked"/>
+          <Button Content="Delete Slot" Click="OnDeleteClicked" Margin="18,0,0,0"
+                  IsEnabled="{Binding SelectedSlot, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        </StackPanel>
+
+        <StackPanel DockPanel.Dock="Bottom" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
+          <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
+          <ItemsControl ItemsSource="{Binding PartySlots}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:SlotViewModel">
+                <Button Classes="slot" Classes.selected="{Binding IsSelected}"
+                        Click="OnSlotClicked" ToolTip.Tip="{Binding ToolTip}">
+                  <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+
+        <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
+          <ItemsControl ItemsSource="{Binding BoxSlots}" HorizontalAlignment="Left">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <UniformGrid Columns="6"/>
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate DataType="vm:SlotViewModel">
+                <Button Classes="slot" Classes.selected="{Binding IsSelected}"
+                        Click="OnSlotClicked" ToolTip.Tip="{Binding ToolTip}">
+                  <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </ScrollViewer>
+
+      </DockPanel>
+
+    </Grid>
+
+  </DockPanel>
+
+</Window>
