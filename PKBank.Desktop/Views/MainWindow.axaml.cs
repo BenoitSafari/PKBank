@@ -52,10 +52,14 @@ public sealed partial class MainWindow : Window
             area.AddHandler(PointerPressedEvent, OnSlotAreaPointerPressed, RoutingStrategies.Tunnel);
             area.AddHandler(PointerMovedEvent, OnSlotAreaPointerMoved, RoutingStrategies.Tunnel);
             area.AddHandler(PointerReleasedEvent, OnSlotAreaPointerReleased, RoutingStrategies.Tunnel);
-            DragDrop.SetAllowDrop(area, true);
-            area.AddHandler(DragDrop.DragOverEvent, OnSlotDragOver);
-            area.AddHandler(DragDrop.DropEvent, OnSlotDrop);
         }
+        // Accept the drag anywhere in the window so the cursor never turns
+        // "forbidden" mid-flight; the drop itself resolves a slot by hit-test.
+        DragDrop.SetAllowDrop(this, true);
+        AddHandler(DragDrop.DragOverEvent, OnWindowDragOver);
+        AddHandler(DragDrop.DropEvent, OnWindowDrop);
+        AddHandler(DragDrop.DragEnterEvent, OnWindowDragEnter);
+        AddHandler(DragDrop.DragLeaveEvent, OnWindowDragLeave);
     }
 
     private static SlotViewModel? FindSlot(object? source)
@@ -103,17 +107,40 @@ public sealed partial class MainWindow : Window
         _dragInProgress = true;
         try
         {
+            ShowDragGhost(slot);
             var transfer = new DataTransfer();
             transfer.Add(DataTransferItem.Create(SlotDragFormat, slot));
             await AttachExportFile(transfer, slot);
-            await DragDrop.DoDragDropAsync(pressArgs, transfer, DragDropEffects.Move | DragDropEffects.Copy);
+            // Copy only: offering Move+Copy makes file managers show a
+            // "Move/Copy/Link" menu on drop instead of just copying the export.
+            await DragDrop.DoDragDropAsync(pressArgs, transfer, DragDropEffects.Copy);
         }
         finally
         {
+            HideDragGhost();
             _dragInProgress = false;
             _pressedSlot = null;
             _pressArgs = null;
         }
+    }
+
+    private void ShowDragGhost(SlotViewModel slot)
+    {
+        DragGhostImage.Source = slot.Sprite;
+        DragGhostLayer.IsVisible = true;
+        UpdateDragGhost(_pressPoint);
+    }
+
+    private void UpdateDragGhost(Point position)
+    {
+        Canvas.SetLeft(DragGhostImage, position.X + 10);
+        Canvas.SetTop(DragGhostImage, position.Y + 6);
+    }
+
+    private void HideDragGhost()
+    {
+        DragGhostLayer.IsVisible = false;
+        DragGhostImage.Source = null;
     }
 
     /// <summary>Writes the Pokémon to a temp .pk* file (WinForms drag-out format) for external drops.</summary>
@@ -138,22 +165,43 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private void OnSlotDragOver(object? sender, DragEventArgs e)
+    private void OnWindowDragEnter(object? sender, DragEventArgs e)
     {
-        var valid = e.DataTransfer.Contains(SlotDragFormat) && FindSlot(e.Source) is not null;
-        e.DragEffects = valid ? DragDropEffects.Move : DragDropEffects.None;
+        if (_dragInProgress)
+            DragGhostLayer.IsVisible = true;
+    }
+
+    private void OnWindowDragLeave(object? sender, DragEventArgs e)
+    {
+        // The cursor left the window (e.g. dragging out to a file manager).
+        DragGhostLayer.IsVisible = false;
+    }
+
+    private void OnWindowDragOver(object? sender, DragEventArgs e)
+    {
+        if (!e.DataTransfer.Contains(SlotDragFormat))
+        {
+            e.DragEffects = DragDropEffects.None;
+            return;
+        }
+        e.DragEffects = DragDropEffects.Copy;
+        if (_dragInProgress)
+            UpdateDragGhost(e.GetPosition(DragGhostLayer));
         e.Handled = true;
     }
 
-    private void OnSlotDrop(object? sender, DragEventArgs e)
+    private void OnWindowDrop(object? sender, DragEventArgs e)
     {
         if (e.DataTransfer.TryGetValue(SlotDragFormat) is not { } source)
             return;
-        if (FindSlot(e.Source) is not { } target)
+        if (HitTestSlot(e.GetPosition(this)) is not { } target)
             return;
         ViewModel?.MoveOrSwapSlots(source, target);
         e.Handled = true;
     }
+
+    private SlotViewModel? HitTestSlot(Point position)
+        => this.InputHitTest(position) is Control control ? FindSlot(control) : null;
 
     private void BuildLanguageMenu(MainWindowViewModel vm)
     {

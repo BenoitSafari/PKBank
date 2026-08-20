@@ -89,6 +89,7 @@
     </Style>
   </Window.Styles>
 
+  <Panel>
   <DockPanel>
 
     <Menu DockPanel.Dock="Top">
@@ -178,5 +179,11 @@
     </Grid>
 
   </DockPanel>
+
+  <!-- Ghost sprite following the cursor during a slot drag -->
+  <Canvas x:Name="DragGhostLayer" IsHitTestVisible="False" IsVisible="False">
+    <Image x:Name="DragGhostImage" Width="68" Height="56" Stretch="None" Opacity="0.65"/>
+  </Canvas>
+  </Panel>
 
 </Window>
