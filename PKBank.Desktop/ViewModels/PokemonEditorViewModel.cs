@@ -264,7 +264,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int IVTotal => _pk.IVTotal;
     public int EVTotal => _pk.EVTotal;
     public IBrush? EVTotalBrush => StatColors.GetEVTotalBrush(_pk.EVTotal);
-    public IBrush? EVTotalTextBrush => EVTotalBrush is null ? null : Brushes.Black;
+    public bool EVTotalHasColor => EVTotalBrush is not null;
     public string EVRemainingTip => $"Remaining: {EffortValues.Max510 - _pk.EVTotal}";
 
     /// <summary>Randomize IVs; Ctrl (max) fills flawless, Alt (clear) zeroes. Mirrors WinForms UpdateRandomIVs.</summary>
@@ -448,7 +448,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(IVTotal));
         OnPropertyChanged(nameof(EVTotal));
         OnPropertyChanged(nameof(EVTotalBrush));
-        OnPropertyChanged(nameof(EVTotalTextBrush));
+        OnPropertyChanged(nameof(EVTotalHasColor));
         OnPropertyChanged(nameof(EVRemainingTip));
     }
 

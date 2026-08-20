@@ -22,6 +22,18 @@
       <Setter Property="HorizontalAlignment" Value="Stretch"/>
       <Setter Property="Margin" Value="0,2"/>
     </Style>
+    <!-- Stat inputs: keep the bound background (e.g. maxed-EV red) on hover and
+         focus, where the Fluent theme normally swaps in its own brushes. -->
+    <Style Selector="TextBox.stat:pointerover /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="{Binding $parent[TextBox].Background}"/>
+    </Style>
+    <Style Selector="TextBox.stat:focus /template/ Border#PART_BorderElement">
+      <Setter Property="Background" Value="{Binding $parent[TextBox].Background}"/>
+    </Style>
+    <!-- Graded EV total: black text over the colored grade background -->
+    <Style Selector="TextBlock.graded">
+      <Setter Property="Foreground" Value="Black"/>
+    </Style>
   </UserControl.Styles>
 
   <ScrollViewer>
@@ -149,9 +161,11 @@
               <Border Grid.Column="1" Background="{Binding BaseBrush}" CornerRadius="3" Margin="2,0" MinHeight="30">
                 <TextBlock Text="{Binding Base}" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
               </Border>
-              <TextBox Grid.Column="2" MaxLength="2" Margin="2,0" HorizontalContentAlignment="Center"
+              <TextBox Grid.Column="2" Classes="stat" MaxLength="2" Margin="2,0" HorizontalContentAlignment="Center"
+                       ToolTip.Tip="{Binding IVTip}"
                        Text="{Binding IVText, Mode=TwoWay}"/>
-              <TextBox Grid.Column="3" MaxLength="3" Margin="2,0" HorizontalContentAlignment="Center"
+              <TextBox Grid.Column="3" Classes="stat" MaxLength="3" Margin="2,0" HorizontalContentAlignment="Center"
+                       ToolTip.Tip="{Binding EVTip}"
                        Background="{Binding EVBrush}"
                        Text="{Binding EVText, Mode=TwoWay}"/>
               <TextBlock Grid.Column="4" Text="{Binding Stat}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -168,7 +182,7 @@
         <TextBlock Grid.Column="2" Text="{Binding IVTotal}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         <Border Grid.Column="3" Background="{Binding EVTotalBrush}" CornerRadius="3" Margin="2,0" MinHeight="30"
                 ToolTip.Tip="{Binding EVRemainingTip}">
-          <TextBlock Text="{Binding EVTotal}" Foreground="{Binding EVTotalTextBrush}"
+          <TextBlock Text="{Binding EVTotal}" Classes.graded="{Binding EVTotalHasColor}"
                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
       </Grid>

@@ -1,5 +1,6 @@
 using System;
 using Avalonia.Media;
+using Avalonia.Threading;
 using PKBank.Desktop.Services;
 using PKHeX.Core;
 
@@ -47,11 +48,18 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         var clamped = Math.Clamp(raw, 0, max);
         apply(clamped);
         if (raw != clamped)
-            OnPropertyChanged(property); // clamped: force the field to show the real value
+        {
+            // The binding ignores re-entrant notifications while it is writing the
+            // value, so push the clamped value back on the next dispatcher tick.
+            Dispatcher.UIThread.Post(() => OnPropertyChanged(property));
+        }
         owner.OnStatsEdited();
     }
 
     private static int ParseStat(string? text) => int.TryParse(text, out var value) && value > 0 ? value : 0;
+
+    public string IVTip => $"Max: {MaxIV}";
+    public string EVTip => $"Max: {MaxEV}";
 
     /// <summary>Highlights the EV field when the per-stat cap is reached.</summary>
     public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() >= MaxEV ? StatColors.EVFieldMaxed : null;
@@ -78,6 +86,8 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         RefreshInputTexts();
         OnPropertyChanged(nameof(Base));
         OnPropertyChanged(nameof(BaseBrush));
+        OnPropertyChanged(nameof(IVTip));
+        OnPropertyChanged(nameof(EVTip));
     }
 
     private int GetIV() => PkIndex switch
