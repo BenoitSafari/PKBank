@@ -2,6 +2,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:PKBank.Desktop.ViewModels"
         xmlns:v="using:PKBank.Desktop.Views"
+        xmlns:pe="using:PKBank.Desktop.Views.PokemonEditor"
         x:Class="PKBank.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.png"
@@ -126,7 +127,7 @@
         <ContentControl Content="{Binding Editor}">
           <ContentControl.ContentTemplate>
             <DataTemplate DataType="vm:PokemonEditorViewModel">
-              <v:PokemonEditorView/>
+              <pe:PokemonEditorView/>
             </DataTemplate>
           </ContentControl.ContentTemplate>
         </ContentControl>

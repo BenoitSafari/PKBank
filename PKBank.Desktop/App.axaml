@@ -14,6 +14,26 @@
     <Style Selector="ScrollBar">
       <Setter Property="AllowAutoHide" Value="False"/>
     </Style>
+
+    <!-- Uniform control sizing: buttons and inputs are 32px tall with centered
+         content. MinHeight (not Height) so intentionally larger controls, like
+         the 68x56 slot buttons, keep their size. -->
+    <Style Selector="Button">
+      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="HorizontalContentAlignment" Value="Center"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="TextBox">
+      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="ComboBox">
+      <Setter Property="MinHeight" Value="32"/>
+      <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="NumericUpDown">
+      <Setter Property="MinHeight" Value="32"/>
+    </Style>
   </Application.Styles>
 
 </Application>
