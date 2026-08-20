@@ -23,6 +23,7 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 - Slot context menu (right-click): View / Set (write editor content into the slot) / Delete
 - Drag & drop: move a Pokémon between slots (swap when the target is occupied), or drop onto a file manager folder to export it as a .pk* file
   - Known limitation: on KDE Plasma (Wayland session), the drag cursor stays "forbidden" for XWayland apps even though the drop works — KDE bug 496243, not fixable app-side; the ghost sprite is the reliable drag indicator
+  - KDE's Move/Copy/Link menu on drop is Dolphin's default for any inter-app file drop (`[KDE] DndBehavior=AlwaysAsk` in kdeglobals). Hold Ctrl while dropping for an immediate copy, or set the system-wide "dragging files" behavior to move-on-same-device to drop without the menu (the export is staged on the home filesystem and offered as Move to make that work)
 - Rich hover preview on slots: ball icon, ability, level, IVs/EVs, nature, legality verdict, encounter and PID type
 - Ball sprites shown in the ball selector (closed and dropdown) and hover preview
 - Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats

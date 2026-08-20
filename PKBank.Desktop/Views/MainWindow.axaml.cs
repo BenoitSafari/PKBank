@@ -111,9 +111,10 @@ public sealed partial class MainWindow : Window
             var transfer = new DataTransfer();
             transfer.Add(DataTransferItem.Create(SlotDragFormat, slot));
             await AttachExportFile(transfer, slot);
-            // Copy only: offering Move+Copy makes file managers show a
-            // "Move/Copy/Link" menu on drop instead of just copying the export.
-            await DragDrop.DoDragDropAsync(pressArgs, transfer, DragDropEffects.Copy);
+            // Move only: KDE's KIO drops without its Move/Copy/Link menu only when
+            // the proposed action is Move, the file is local and on the same device
+            // as the destination, and the user opted into DndBehavior=MoveIfSameDevice.
+            await DragDrop.DoDragDropAsync(pressArgs, transfer, DragDropEffects.Move);
         }
         finally
         {
@@ -149,7 +150,11 @@ public sealed partial class MainWindow : Window
         try
         {
             var pk = slot.Read();
-            var path = FileUtil.GetPKMTempFileName(pk, encrypt: false);
+            // Write on the same filesystem as the user's home so file managers can
+            // Move the export directly (/tmp is usually a different device, tmpfs).
+            var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PKBank.Desktop", "export");
+            Directory.CreateDirectory(dir);
+            var path = Path.Combine(dir, Path.GetFileName(FileUtil.GetPKMTempFileName(pk, encrypt: false)));
             pk.ForcePartyData();
             var buffer = new byte[pk.SIZE_PARTY];
             pk.WriteDecryptedDataParty(buffer);
@@ -184,7 +189,7 @@ public sealed partial class MainWindow : Window
             e.DragEffects = DragDropEffects.None;
             return;
         }
-        e.DragEffects = DragDropEffects.Copy;
+        e.DragEffects = DragDropEffects.Move;
         if (_dragInProgress)
             UpdateDragGhost(e.GetPosition(DragGhostLayer));
         e.Handled = true;
