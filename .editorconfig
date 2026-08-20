@@ -17,6 +17,17 @@ insert_final_newline = false
 indent_size = 2
 tab_width = 2
 
+# XAML markup (Avalonia .axaml / WPF-style .xaml)
+# Rider/ReSharper reformat XAML with the XML formatter, so set both the generic
+# and the XML-specific properties to keep 4-space indentation everywhere.
+[*.{axaml,xaml}]
+indent_style = space
+indent_size = 4
+tab_width = 4
+xml_indent_style = space
+xml_indent_size = 4
+xml_tab_width = 4
+
 # Code Files
 [*.{cs,vb}]
 end_of_line = crlf
