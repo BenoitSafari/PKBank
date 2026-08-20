@@ -130,6 +130,19 @@ public sealed partial class MainWindow : Window
 
     private static SlotViewModel? GetMenuSlot(object? sender) => (sender as MenuItem)?.DataContext as SlotViewModel;
 
+    private void OnSlotMenuOpening(object? sender, CancelEventArgs e)
+    {
+        if (sender is not ContextMenu menu)
+            return;
+        // "Set" writes the editor's content, so it needs a Pokémon in the editor.
+        var canSet = ViewModel?.Editor is { HasSpecies: true };
+        foreach (var item in menu.Items)
+        {
+            if (item is MenuItem { Tag: "set" } setItem)
+                setItem.IsEnabled = canSet;
+        }
+    }
+
     private void OnSlotViewClicked(object? sender, RoutedEventArgs e)
     {
         if (GetMenuSlot(sender) is { } slot)

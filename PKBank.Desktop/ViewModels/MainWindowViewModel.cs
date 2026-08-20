@@ -83,6 +83,9 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         private set => SetField(ref _selectedSlot, value);
     }
 
+    /// <summary>True when the selected slot holds a Pokémon that can be deleted.</summary>
+    public bool CanDeleteSelected => SelectedSlot is { IsEmpty: false };
+
     public PokemonEditorViewModel? Editor { get => _editor; private set => SetField(ref _editor, value); }
 
     public void LoadSaveFromPath(string path)
@@ -196,6 +199,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         var editor = new PokemonEditorViewModel(sav, sources, slot);
         editor.Applied += OnEditorApplied;
         Editor = editor;
+        OnPropertyChanged(nameof(CanDeleteSelected));
     }
 
     public void DeleteSelected()
@@ -231,6 +235,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             RefreshParty();
         if (slot == SelectedSlot)
             editor.Revert(); // origin slot now holds the freshly written data
+        OnPropertyChanged(nameof(CanDeleteSelected));
         StatusMessage = "Editor content written to slot.";
     }
 
@@ -241,6 +246,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     {
         if (SelectedSlot is { IsParty: true })
             RefreshParty();
+        OnPropertyChanged(nameof(CanDeleteSelected));
         StatusMessage = "Changes written to slot. Use File → Save As… to export the save.";
     }
 

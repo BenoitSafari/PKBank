@@ -10,15 +10,19 @@
         WindowStartupLocation="CenterScreen">
 
   <Window.Resources>
+    <SolidColorBrush x:Key="SlotSelectedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
+    <SolidColorBrush x:Key="SlotHoverBorderBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.45"/>
+    <SolidColorBrush x:Key="SlotOccupiedBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.16"/>
+
     <DataTemplate x:Key="SlotTemplate" DataType="vm:SlotViewModel">
-      <Button Classes="slot" Classes.selected="{Binding IsSelected}"
+      <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.occupied="{Binding !IsEmpty}"
               Click="OnSlotClicked" ToolTip.Tip="{Binding Preview}">
         <Button.ContextMenu>
-          <ContextMenu>
-            <MenuItem Header="View" Click="OnSlotViewClicked"/>
-            <MenuItem Header="Set" Click="OnSlotSetClicked"/>
+          <ContextMenu Opening="OnSlotMenuOpening">
+            <MenuItem Header="View" Click="OnSlotViewClicked" IsEnabled="{Binding !IsEmpty}"/>
+            <MenuItem Header="Set" Tag="set" Click="OnSlotSetClicked"/>
             <Separator/>
-            <MenuItem Header="Delete" Click="OnSlotDeleteClicked"/>
+            <MenuItem Header="Delete" Click="OnSlotDeleteClicked" IsEnabled="{Binding !IsEmpty}"/>
           </ContextMenu>
         </Button.ContextMenu>
         <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
@@ -67,9 +71,19 @@
       <Setter Property="HorizontalContentAlignment" Value="Center"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
+    <!-- Occupied slots get a subtle accent-tinted background -->
+    <Style Selector="Button.slot.occupied">
+      <Setter Property="Background" Value="{StaticResource SlotOccupiedBrush}"/>
+    </Style>
     <Style Selector="Button.slot.selected">
-      <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
-      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
+      <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}"/>
+    </Style>
+    <!-- Hover: faded accent border (the Fluent theme normally overrides it away) -->
+    <Style Selector="Button.slot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="{StaticResource SlotHoverBorderBrush}"/>
+    </Style>
+    <Style Selector="Button.slot.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}"/>
     </Style>
   </Window.Styles>
 
@@ -125,7 +139,7 @@
           <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
           <Button Content="▶" Click="OnNextBoxClicked"/>
           <Button Content="Delete Slot" Click="OnDeleteClicked" Margin="18,0,0,0"
-                  IsEnabled="{Binding SelectedSlot, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                  IsEnabled="{Binding CanDeleteSelected}"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
