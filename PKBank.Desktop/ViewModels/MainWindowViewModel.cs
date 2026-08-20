@@ -268,6 +268,43 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         NotifySlotActionStates();
     }
 
+    /// <summary>
+    /// Drag &amp; drop between slots: moves the Pokémon to the target slot,
+    /// swapping when the target is occupied.
+    /// </summary>
+    public void MoveOrSwapSlots(SlotViewModel source, SlotViewModel target)
+    {
+        if (_sav is not { } sav || source == target)
+            return;
+        var src = source.Read();
+        if (src.Species == 0)
+            return;
+        var dst = target.Read();
+
+        if (target.IsParty)
+            src.ResetPartyStats();
+        src.RefreshChecksum();
+        target.Write(src);
+
+        if (dst.Species != 0)
+        {
+            if (source.IsParty)
+                dst.ResetPartyStats();
+            dst.RefreshChecksum();
+            source.Write(dst);
+        }
+        else
+        {
+            source.Write(sav.BlankPKM);
+        }
+
+        sav.State.Edited = true;
+        if (source.IsParty || target.IsParty)
+            RefreshParty();
+        NotifySlotActionStates();
+        StatusMessage = dst.Species != 0 ? "Slots swapped." : "Pokémon moved.";
+    }
+
     /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>
     public void SetSlotFromEditor(SlotViewModel slot)
     {

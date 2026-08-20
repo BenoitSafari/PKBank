@@ -1,15 +1,29 @@
+using System;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.ViewModels;
+using PKHeX.Core;
 
 namespace PKBank.Desktop.Views;
 
 public sealed partial class MainWindow : Window
 {
+    private static readonly DataFormat<SlotViewModel> SlotDragFormat =
+        DataFormat.CreateInProcessFormat<SlotViewModel>("pkhex-avalonia-slot");
+    private const double DragThreshold = 6;
+
     private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
+
+    private SlotViewModel? _pressedSlot;
+    private PointerPressedEventArgs? _pressArgs;
+    private Point _pressPoint;
+    private bool _dragInProgress;
 
     public MainWindow()
     {
@@ -24,6 +38,121 @@ public sealed partial class MainWindow : Window
                 BuildLanguageMenu(vm);
             }
         };
+        InitializeSlotDragDrop();
+    }
+
+    // ----- Slot drag & drop -------------------------------------------------
+    // Dragging a slot moves/swaps it onto another slot; the data object also
+    // carries a temp .pk* file so dropping onto a file manager exports it.
+
+    private void InitializeSlotDragDrop()
+    {
+        foreach (var area in new Control[] { BoxItems, PartyItems })
+        {
+            area.AddHandler(PointerPressedEvent, OnSlotAreaPointerPressed, RoutingStrategies.Tunnel);
+            area.AddHandler(PointerMovedEvent, OnSlotAreaPointerMoved, RoutingStrategies.Tunnel);
+            area.AddHandler(PointerReleasedEvent, OnSlotAreaPointerReleased, RoutingStrategies.Tunnel);
+            DragDrop.SetAllowDrop(area, true);
+            area.AddHandler(DragDrop.DragOverEvent, OnSlotDragOver);
+            area.AddHandler(DragDrop.DropEvent, OnSlotDrop);
+        }
+    }
+
+    private static SlotViewModel? FindSlot(object? source)
+    {
+        for (var control = source as Control; control is not null; control = control.Parent as Control)
+        {
+            if (control.DataContext is SlotViewModel slot)
+                return slot;
+            if (control is ItemsControl)
+                break;
+        }
+        return null;
+    }
+
+    private void OnSlotAreaPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+        var slot = FindSlot(e.Source);
+        _pressedSlot = slot is { IsEmpty: false } ? slot : null;
+        _pressArgs = _pressedSlot is null ? null : e;
+        _pressPoint = e.GetPosition(this);
+    }
+
+    private void OnSlotAreaPointerReleased(object? sender, PointerReleasedEventArgs e)
+    {
+        _pressedSlot = null;
+        _pressArgs = null;
+    }
+
+    private async void OnSlotAreaPointerMoved(object? sender, PointerEventArgs e)
+    {
+        if (_pressedSlot is not { } slot || _pressArgs is not { } pressArgs || _dragInProgress)
+            return;
+        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+        {
+            _pressedSlot = null;
+            _pressArgs = null;
+            return;
+        }
+        var delta = e.GetPosition(this) - _pressPoint;
+        if (Math.Abs(delta.X) < DragThreshold && Math.Abs(delta.Y) < DragThreshold)
+            return;
+
+        _dragInProgress = true;
+        try
+        {
+            var transfer = new DataTransfer();
+            transfer.Add(DataTransferItem.Create(SlotDragFormat, slot));
+            await AttachExportFile(transfer, slot);
+            await DragDrop.DoDragDropAsync(pressArgs, transfer, DragDropEffects.Move | DragDropEffects.Copy);
+        }
+        finally
+        {
+            _dragInProgress = false;
+            _pressedSlot = null;
+            _pressArgs = null;
+        }
+    }
+
+    /// <summary>Writes the Pokémon to a temp .pk* file (WinForms drag-out format) for external drops.</summary>
+    private async System.Threading.Tasks.Task AttachExportFile(DataTransfer transfer, SlotViewModel slot)
+    {
+        try
+        {
+            var pk = slot.Read();
+            var path = FileUtil.GetPKMTempFileName(pk, encrypt: false);
+            pk.ForcePartyData();
+            var buffer = new byte[pk.SIZE_PARTY];
+            pk.WriteDecryptedDataParty(buffer);
+            File.WriteAllBytes(path, buffer);
+
+            var file = await StorageProvider.TryGetFileFromPathAsync(path);
+            if (file is not null)
+                transfer.Add(DataTransferItem.CreateFile(file));
+        }
+        catch
+        {
+            // External export is best-effort; slot-to-slot dragging still works.
+        }
+    }
+
+    private void OnSlotDragOver(object? sender, DragEventArgs e)
+    {
+        var valid = e.DataTransfer.Contains(SlotDragFormat) && FindSlot(e.Source) is not null;
+        e.DragEffects = valid ? DragDropEffects.Move : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private void OnSlotDrop(object? sender, DragEventArgs e)
+    {
+        if (e.DataTransfer.TryGetValue(SlotDragFormat) is not { } source)
+            return;
+        if (FindSlot(e.Source) is not { } target)
+            return;
+        ViewModel?.MoveOrSwapSlots(source, target);
+        e.Handled = true;
     }
 
     private void BuildLanguageMenu(MainWindowViewModel vm)

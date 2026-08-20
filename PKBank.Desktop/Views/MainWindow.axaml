@@ -143,7 +143,7 @@
 
         <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
           <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
-          <ItemsControl ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
+          <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>
                 <StackPanel Orientation="Horizontal"/>
@@ -163,7 +163,7 @@
         </StackPanel>
 
         <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
-          <ItemsControl ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
+          <ItemsControl x:Name="BoxItems" ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
                         HorizontalAlignment="Left" VerticalAlignment="Top">
             <ItemsControl.ItemsPanel>
               <ItemsPanelTemplate>

@@ -21,6 +21,7 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 - Open any save file supported by PKHeX.Core (auto-detected), or create a blank save (Gen 1 → Legends: Z-A)
 - Box navigation and party view with the real box sprites (shiny variants included)
 - Slot context menu (right-click): View / Set (write editor content into the slot) / Delete
+- Drag & drop: move a Pokémon between slots (swap when the target is occupied), or drop onto a file manager folder to export it as a .pk* file
 - Rich hover preview on slots: ball icon, ability, level, IVs/EVs, nature, legality verdict, encounter and PID type
 - Ball sprites shown in the ball selector (closed and dropdown) and hover preview
 - Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats
@@ -40,7 +41,7 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 
 ## Roadmap (parity with WinForms, incrementally)
 
-- [ ] Drag & drop between slots, boxes, and to/from the filesystem (.pk* import/export)
+- [x] Drag & drop between slots and export to the filesystem (import from .pk* files still to do)
 - [ ] Showdown set import/export
 - [ ] Met location / origin editor tab
 - [ ] OT/handler, memories, ribbons/marks tabs
