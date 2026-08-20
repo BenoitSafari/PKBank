@@ -120,6 +120,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         Settings.Language = code;
         Settings.Save();
         GameInfo.CurrentLanguage = code;
+        // Actually reload the cached string tables (setting CurrentLanguage alone does not).
+        LocalizeUtil.InitializeStrings(code, _sav);
         ReloadCurrentSave();
         StatusMessage = "Game data language changed.";
     }

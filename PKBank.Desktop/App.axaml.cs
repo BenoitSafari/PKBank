@@ -19,6 +19,7 @@ public sealed class App : Application
         {
             var settings = AppSettings.Load();
             GameInfo.CurrentLanguage = settings.Language;
+            LocalizeUtil.InitializeStrings(settings.Language);
             SpriteName.AllowShinySprite = settings.ShinySprites;
 
             var vm = new MainWindowViewModel(settings);
