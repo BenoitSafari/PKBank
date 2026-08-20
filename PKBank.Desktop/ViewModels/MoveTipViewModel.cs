@@ -20,9 +20,10 @@ public sealed record MoveTipViewModel(string Name, byte Type, string TypeName, s
         var name = move < strings.movelist.Length ? strings.movelist[move] : $"#{move}";
         var type = MoveInfo.GetType(move, pk.Context);
         var typeName = type < strings.types.Length ? strings.types[type] : "?";
-        var category = MoveDetails.GetCategory(move, pk.Format, pk.Context).ToString();
-        var power = MoveDetails.GetPower(move);
-        var accuracy = MoveDetails.GetAccuracy(move);
+        var generation = pk.Format;
+        var category = MoveDetails.GetCategory(move, generation, pk.Context).ToString();
+        var power = MoveDetails.GetPower(move, generation);
+        var accuracy = MoveDetails.GetAccuracy(move, generation);
         var pp = pk.GetMovePP(move, ppUps);
 
         return new MoveTipViewModel(

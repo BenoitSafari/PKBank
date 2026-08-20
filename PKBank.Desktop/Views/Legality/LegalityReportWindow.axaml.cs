@@ -4,7 +4,7 @@ using Avalonia.Media;
 using PKBank.Desktop.Sprites;
 using PKHeX.Core;
 
-namespace PKBank.Desktop.Views;
+namespace PKBank.Desktop.Views.Legality;
 
 public sealed partial class LegalityReportWindow : Window
 {

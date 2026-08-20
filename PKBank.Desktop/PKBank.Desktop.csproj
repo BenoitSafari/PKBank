@@ -26,6 +26,10 @@
   <ItemGroup>
     <!-- Reuse the sprite resource-name logic without referencing the Windows-only assembly. -->
     <Compile Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Util\SpriteName.cs" Link="Sprites\SpriteName.cs" />
+    <Compile Update="Views\Legality\LegalityReportWindow.axaml.cs">
+      <DependentUpon>LegalityReportWindow.axaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>
@@ -38,6 +42,10 @@
     <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\warn.png" LogicalName="misc.warn.png" />
     <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.Misc\Resources\img\types\square_s\*.png" LogicalName="type.%(Filename)%(Extension)" />
     <AvaloniaResource Include="..\packages\PKHeX\icon.png" Link="Assets\icon.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="Views\Legality\LegalityReportWindow.axaml" />
   </ItemGroup>
 
 </Project>

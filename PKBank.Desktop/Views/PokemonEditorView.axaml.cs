@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PKBank.Desktop.ViewModels;
+using PKBank.Desktop.Views.Legality;
 
 namespace PKBank.Desktop.Views;
 

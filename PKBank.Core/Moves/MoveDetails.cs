@@ -35,9 +35,14 @@ public static partial class MoveDetails
         return type < (byte)MoveType.Fire ? MoveCategory.Physical : MoveCategory.Special;
     }
 
-    /// <summary>Base power (current-generation value); 0 when not applicable.</summary>
-    public static byte GetPower(ushort move) => HasData(move) ? Powers[move] : (byte)0;
+    /// <summary>Base power as it was in the given generation; 0 when not applicable (or the move did not exist yet).</summary>
+    public static byte GetPower(ushort move, byte generation)
+        => HasData(move) ? PowersByGeneration[(GetGenerationIndex(generation) * Stride) + move] : (byte)0;
 
-    /// <summary>Accuracy in percent (current-generation value); 0 means it always hits or is not applicable.</summary>
-    public static byte GetAccuracy(ushort move) => HasData(move) ? Accuracies[move] : (byte)0;
+    /// <summary>Accuracy in percent as it was in the given generation; 0 means it always hits or is not applicable.</summary>
+    public static byte GetAccuracy(ushort move, byte generation)
+        => HasData(move) ? AccuraciesByGeneration[(GetGenerationIndex(generation) * Stride) + move] : (byte)0;
+
+    private static int GetGenerationIndex(byte generation)
+        => System.Math.Clamp(generation, (byte)1, (byte)Generations) - 1;
 }
