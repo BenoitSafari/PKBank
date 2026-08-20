@@ -155,19 +155,43 @@
 
       <!-- Moves -->
       <TextBlock Text="Moves" FontWeight="SemiBold"/>
+      <Grid ColumnDefinitions="*,104,40">
+        <TextBlock Grid.Column="1" Text="PP Ups" HorizontalAlignment="Center" Opacity="0.7" FontSize="12"/>
+        <TextBlock Grid.Column="2" Text="PP" HorizontalAlignment="Center" Opacity="0.7" FontSize="12"/>
+      </Grid>
       <StackPanel Spacing="2">
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
-                  DropDownOpened="OnMoveDropDownOpened"
-                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"/>
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
-                  DropDownOpened="OnMoveDropDownOpened"
-                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"/>
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
-                  DropDownOpened="OnMoveDropDownOpened"
-                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"/>
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
-                  DropDownOpened="OnMoveDropDownOpened"
-                  SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"/>
+        <Grid ColumnDefinitions="*,104,40">
+          <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                    DropDownOpened="OnMoveDropDownOpened"
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"/>
+          <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                         Value="{Binding PPUps1, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
+          <TextBlock Grid.Column="2" Text="{Binding PP1Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,104,40">
+          <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                    DropDownOpened="OnMoveDropDownOpened"
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"/>
+          <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                         Value="{Binding PPUps2, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
+          <TextBlock Grid.Column="2" Text="{Binding PP2Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,104,40">
+          <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                    DropDownOpened="OnMoveDropDownOpened"
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"/>
+          <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                         Value="{Binding PPUps3, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
+          <TextBlock Grid.Column="2" Text="{Binding PP3Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
+        <Grid ColumnDefinitions="*,104,40">
+          <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                    DropDownOpened="OnMoveDropDownOpened"
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"/>
+          <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                         Value="{Binding PPUps4, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
+          <TextBlock Grid.Column="2" Text="{Binding PP4Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        </Grid>
       </StackPanel>
 
       <!-- Stats -->

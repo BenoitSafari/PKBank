@@ -249,6 +249,51 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int Move3 { get => _pk.GetMove(2); set => SetMove(2, value); }
     public int Move4 { get => _pk.GetMove(3); set => SetMove(3, value); }
 
+    // PP Ups (0-3) per move; the resulting max PP is displayed read-only so no
+    // illegal value can be entered. Nullable so an emptied field maps to 0.
+    public int? PPUps1 { get => _pk.Move1_PPUps; set => SetPPUps(0, value); }
+    public int? PPUps2 { get => _pk.Move2_PPUps; set => SetPPUps(1, value); }
+    public int? PPUps3 { get => _pk.Move3_PPUps; set => SetPPUps(2, value); }
+    public int? PPUps4 { get => _pk.Move4_PPUps; set => SetPPUps(3, value); }
+
+    public string PP1Display => GetPPDisplay(0);
+    public string PP2Display => GetPPDisplay(1);
+    public string PP3Display => GetPPDisplay(2);
+    public string PP4Display => GetPPDisplay(3);
+
+    private string GetPPDisplay(int index)
+    {
+        var move = _pk.GetMove(index);
+        return move == 0 ? "—" : _pk.GetMovePP(move, GetPPUps(index)).ToString();
+    }
+
+    private int GetPPUps(int index) => index switch
+    {
+        0 => _pk.Move1_PPUps,
+        1 => _pk.Move2_PPUps,
+        2 => _pk.Move3_PPUps,
+        _ => _pk.Move4_PPUps,
+    };
+
+    private void SetPPUps(int index, int? value)
+    {
+        var ups = Math.Clamp(value ?? 0, 0, 3);
+        if (_loading || ups == GetPPUps(index))
+            return;
+        var move = _pk.GetMove(index);
+        var pp = _pk.GetMovePP(move, ups);
+        switch (index)
+        {
+            case 0: _pk.Move1_PPUps = ups; _pk.Move1_PP = pp; break;
+            case 1: _pk.Move2_PPUps = ups; _pk.Move2_PP = pp; break;
+            case 2: _pk.Move3_PPUps = ups; _pk.Move3_PP = pp; break;
+            default: _pk.Move4_PPUps = ups; _pk.Move4_PP = pp; break;
+        }
+        OnPropertyChanged($"PPUps{index + 1}");
+        OnPropertyChanged($"PP{index + 1}Display");
+        RefreshDerived(refreshInputTexts: false);
+    }
+
     /// <summary>
     /// Reorders the move selectors (legal moves first, WinForms-style) when the
     /// dropdown opens and the legality state changed since the last ordering.
@@ -378,6 +423,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         _pk.SetMove(index, (ushort)value);
         _pk.HealPP();
         OnPropertyChanged($"Move{index + 1}");
+        OnPropertyChanged($"PP{index + 1}Display");
         RefreshDerived();
     }
 
@@ -429,6 +475,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(Move2));
         OnPropertyChanged(nameof(Move3));
         OnPropertyChanged(nameof(Move4));
+        OnPropertyChanged(nameof(PPUps1));
+        OnPropertyChanged(nameof(PPUps2));
+        OnPropertyChanged(nameof(PPUps3));
+        OnPropertyChanged(nameof(PPUps4));
+        OnPropertyChanged(nameof(PP1Display));
+        OnPropertyChanged(nameof(PP2Display));
+        OnPropertyChanged(nameof(PP3Display));
+        OnPropertyChanged(nameof(PP4Display));
         OnPropertyChanged(nameof(HasNature));
         OnPropertyChanged(nameof(HasAbility));
         OnPropertyChanged(nameof(HasBall));
