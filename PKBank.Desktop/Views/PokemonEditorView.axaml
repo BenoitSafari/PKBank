@@ -99,9 +99,18 @@
         <TextBlock Grid.Row="7" Grid.Column="0" Classes="fieldLabel" Text="Ball" IsVisible="{Binding HasBall}"/>
         <ComboBox Grid.Row="7" Grid.Column="1" Classes="field" IsVisible="{Binding HasBall}"
                   ItemsSource="{Binding BallList}"
-                  ItemTemplate="{StaticResource ComboItemTemplate}"
                   SelectedValueBinding="{ReflectionBinding Value}"
-                  SelectedValue="{Binding Ball, Mode=TwoWay}"/>
+                  SelectedValue="{Binding Ball, Mode=TwoWay}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate DataType="core:ComboItem">
+              <StackPanel Orientation="Horizontal" Spacing="7">
+                <Image Source="{Binding Value, Converter={x:Static v:Converters.BallSprite}}"
+                       Width="20" Height="20" Stretch="None"/>
+                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
+              </StackPanel>
+            </DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
 
         <TextBlock Grid.Row="8" Grid.Column="0" Classes="fieldLabel" Text="Language" IsVisible="{Binding HasLanguage}"/>
         <ComboBox Grid.Row="8" Grid.Column="1" Classes="field" IsVisible="{Binding HasLanguage}"

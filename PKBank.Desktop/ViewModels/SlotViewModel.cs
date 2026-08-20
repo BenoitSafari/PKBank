@@ -12,7 +12,6 @@ public sealed class SlotViewModel : ViewModelBase
 {
     private readonly SaveFile _sav;
     private Bitmap? _sprite;
-    private string _toolTip = string.Empty;
     private bool _isSelected;
     private bool _isEmpty = true;
 
@@ -30,9 +29,11 @@ public sealed class SlotViewModel : ViewModelBase
     }
 
     public Bitmap? Sprite { get => _sprite; private set => SetField(ref _sprite, value); }
-    public string ToolTip { get => _toolTip; private set => SetField(ref _toolTip, value); }
     public bool IsEmpty { get => _isEmpty; private set => SetField(ref _isEmpty, value); }
     public bool IsSelected { get => _isSelected; set => SetField(ref _isSelected, value); }
+
+    /// <summary>Hover preview content; computed when the tooltip binding reads it.</summary>
+    public SlotPreviewViewModel? Preview => SlotPreviewViewModel.TryCreate(Read());
 
     public void ChangeBox(int box)
     {
@@ -56,10 +57,6 @@ public sealed class SlotViewModel : ViewModelBase
         var pk = Read();
         IsEmpty = pk.Species == 0;
         Sprite = SpriteService.GetPokemonSprite(pk);
-
-        var species = GameInfo.Strings.specieslist;
-        ToolTip = IsEmpty || pk.Species >= species.Length
-            ? "(empty)"
-            : $"{pk.Nickname} — {species[pk.Species]} (Lv. {pk.CurrentLevel})";
+        OnPropertyChanged(nameof(Preview));
     }
 }

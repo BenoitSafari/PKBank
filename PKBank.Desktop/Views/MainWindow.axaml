@@ -12,7 +12,7 @@
   <Window.Resources>
     <DataTemplate x:Key="SlotTemplate" DataType="vm:SlotViewModel">
       <Button Classes="slot" Classes.selected="{Binding IsSelected}"
-              Click="OnSlotClicked" ToolTip.Tip="{Binding ToolTip}">
+              Click="OnSlotClicked" ToolTip.Tip="{Binding Preview}">
         <Button.ContextMenu>
           <ContextMenu>
             <MenuItem Header="View" Click="OnSlotViewClicked"/>
@@ -25,6 +25,36 @@
       </Button>
     </DataTemplate>
   </Window.Resources>
+
+  <Window.DataTemplates>
+    <!-- Rich hover preview shown as the slot tooltip -->
+    <DataTemplate DataType="vm:SlotPreviewViewModel">
+      <StackPanel Spacing="3" MaxWidth="340">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Image Source="{Binding BallSprite}" Width="20" Height="20" Stretch="None"
+                 IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        </StackPanel>
+        <ItemsControl ItemsSource="{Binding Lines}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="x:String">
+              <TextBlock Text="{Binding}" FontSize="12"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Text="{Binding LegalityLine}" FontSize="12" TextWrapping="Wrap"
+                   Foreground="IndianRed"
+                   IsVisible="{Binding HasLegalityLine}"/>
+        <ItemsControl ItemsSource="{Binding DetailLines}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate DataType="x:String">
+              <TextBlock Text="{Binding}" FontSize="12" Opacity="0.85"/>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+    </DataTemplate>
+  </Window.DataTemplates>
 
   <Window.Styles>
     <Style Selector="Button.slot">
