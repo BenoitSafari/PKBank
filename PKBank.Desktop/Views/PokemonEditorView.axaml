@@ -10,17 +10,43 @@
     <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
       <TextBlock Text="{Binding Text}"/>
     </DataTemplate>
-    <!-- Move entry: type icon + name (red when the current entity cannot learn it) + trailing "Illegal ✗" badge -->
+    <!-- Move entry: type icon + name + category (red when the current entity cannot learn it) + trailing "Illegal ✗" badge -->
     <DataTemplate x:Key="MoveChoiceTemplate" DataType="vm:MoveChoice">
-      <Grid ColumnDefinitions="Auto,*,Auto">
+      <Grid ColumnDefinitions="Auto,Auto,*,Auto">
         <Image Source="{Binding TypeSprite}" Width="20" Height="20" Margin="0,0,7,0"
                VerticalAlignment="Center" IsVisible="{Binding HasType}"/>
         <TextBlock Grid.Column="1" Text="{Binding Text}" VerticalAlignment="Center" Classes.illegal="{Binding IsIllegal}"/>
-        <TextBlock Grid.Column="2" Text="Illegal ✗" Classes="illegal" FontWeight="SemiBold"
+        <TextBlock Grid.Column="2" Text="{Binding CategoryLabel}" VerticalAlignment="Center" Margin="7,0,0,0"
+                   Opacity="0.6" FontSize="12"/>
+        <TextBlock Grid.Column="3" Text="Illegal ✗" Classes="illegal" FontWeight="SemiBold"
                    Margin="16,0,0,0" VerticalAlignment="Center" IsVisible="{Binding IsIllegal}"/>
       </Grid>
     </DataTemplate>
   </UserControl.Resources>
+
+  <UserControl.DataTemplates>
+    <!-- Hover summary for a selected move -->
+    <DataTemplate DataType="vm:MoveTipViewModel">
+      <StackPanel Spacing="4" MinWidth="170">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <Image Source="{Binding TypeSprite}" Width="20" Height="20" VerticalAlignment="Center"/>
+          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" VerticalAlignment="Center"/>
+        </StackPanel>
+        <Grid ColumnDefinitions="86,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
+          <TextBlock Grid.Row="0" Text="Type" Opacity="0.7" FontSize="12"/>
+          <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding TypeName}" FontSize="12"/>
+          <TextBlock Grid.Row="1" Text="Category" Opacity="0.7" FontSize="12"/>
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding Category}" FontSize="12"/>
+          <TextBlock Grid.Row="2" Text="Power" Opacity="0.7" FontSize="12"/>
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding Power}" FontSize="12"/>
+          <TextBlock Grid.Row="3" Text="Accuracy" Opacity="0.7" FontSize="12"/>
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding Accuracy}" FontSize="12"/>
+          <TextBlock Grid.Row="4" Text="PP" Opacity="0.7" FontSize="12"/>
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding PP}" FontSize="12"/>
+        </Grid>
+      </StackPanel>
+    </DataTemplate>
+  </UserControl.DataTemplates>
 
   <UserControl.Styles>
     <Style Selector="TextBlock.fieldLabel">
@@ -165,7 +191,8 @@
         <Grid ColumnDefinitions="*,104,40">
           <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                     DropDownOpened="OnMoveDropDownOpened"
-                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"/>
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"
+                    ToolTip.Tip="{Binding MoveTip1}"/>
           <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                          Value="{Binding PPUps1, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
           <TextBlock Grid.Column="2" Text="{Binding PP1Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -173,7 +200,8 @@
         <Grid ColumnDefinitions="*,104,40">
           <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                     DropDownOpened="OnMoveDropDownOpened"
-                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"/>
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"
+                    ToolTip.Tip="{Binding MoveTip2}"/>
           <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                          Value="{Binding PPUps2, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
           <TextBlock Grid.Column="2" Text="{Binding PP2Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -181,7 +209,8 @@
         <Grid ColumnDefinitions="*,104,40">
           <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                     DropDownOpened="OnMoveDropDownOpened"
-                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"/>
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"
+                    ToolTip.Tip="{Binding MoveTip3}"/>
           <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                          Value="{Binding PPUps3, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
           <TextBlock Grid.Column="2" Text="{Binding PP3Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
@@ -189,7 +218,8 @@
         <Grid ColumnDefinitions="*,104,40">
           <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                     DropDownOpened="OnMoveDropDownOpened"
-                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"/>
+                    SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"
+                    ToolTip.Tip="{Binding MoveTip4}"/>
           <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                          Value="{Binding PPUps4, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
           <TextBlock Grid.Column="2" Text="{Binding PP4Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>

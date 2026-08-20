@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using PKBank.Desktop.Services;
 using PKBank.Desktop.Sprites;
 using PKHeX.Core;
+using PKBank.Core.Moves;
 
 namespace PKBank.Desktop.ViewModels;
 
@@ -261,6 +262,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public string PP3Display => GetPPDisplay(2);
     public string PP4Display => GetPPDisplay(3);
 
+    // Hover summaries for the move selectors (null when the slot has no move)
+    public MoveTipViewModel? MoveTip1 => MoveTipViewModel.TryCreate(_pk, 0, GetPPUps(0));
+    public MoveTipViewModel? MoveTip2 => MoveTipViewModel.TryCreate(_pk, 1, GetPPUps(1));
+    public MoveTipViewModel? MoveTip3 => MoveTipViewModel.TryCreate(_pk, 2, GetPPUps(2));
+    public MoveTipViewModel? MoveTip4 => MoveTipViewModel.TryCreate(_pk, 3, GetPPUps(3));
+
     private string GetPPDisplay(int index)
     {
         var move = _pk.GetMove(index);
@@ -291,6 +298,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
         OnPropertyChanged($"PPUps{index + 1}");
         OnPropertyChanged($"PP{index + 1}Display");
+        OnPropertyChanged($"MoveTip{index + 1}");
         RefreshDerived(refreshInputTexts: false);
     }
 
@@ -314,13 +322,16 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         var info = _legalMoves.Info;
         var judge = _pk.Species != 0; // no entity, no verdict
         var context = _pk.Context;
+        var generation = _pk.Format;
         var list = new MoveChoice[source.Count];
         for (int i = 0; i < source.Count; i++)
         {
             var item = source[i];
-            var illegal = judge && item.Value != 0 && !info.CanLearn((ushort)item.Value);
-            var type = item.Value == 0 ? (byte)0 : MoveInfo.GetType((ushort)item.Value, context);
-            list[i] = new MoveChoice(item.Text, item.Value, illegal, type);
+            var move = (ushort)item.Value;
+            var illegal = judge && move != 0 && !info.CanLearn(move);
+            var type = move == 0 ? (byte)0 : MoveInfo.GetType(move, context);
+            var category = MoveDetails.GetCategory(move, generation, context);
+            list[i] = new MoveChoice(item.Text, item.Value, illegal, type, category);
         }
         MoveList = list;
         OnPropertyChanged(nameof(MoveList));
@@ -427,6 +438,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         _pk.HealPP();
         OnPropertyChanged($"Move{index + 1}");
         OnPropertyChanged($"PP{index + 1}Display");
+        OnPropertyChanged($"MoveTip{index + 1}");
         RefreshDerived();
     }
 
@@ -486,6 +498,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(PP2Display));
         OnPropertyChanged(nameof(PP3Display));
         OnPropertyChanged(nameof(PP4Display));
+        OnPropertyChanged(nameof(MoveTip1));
+        OnPropertyChanged(nameof(MoveTip2));
+        OnPropertyChanged(nameof(MoveTip3));
+        OnPropertyChanged(nameof(MoveTip4));
         OnPropertyChanged(nameof(HasNature));
         OnPropertyChanged(nameof(HasAbility));
         OnPropertyChanged(nameof(HasBall));

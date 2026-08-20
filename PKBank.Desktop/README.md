@@ -2,7 +2,7 @@
 
 Native cross-platform UI for PKHeX, built with [Avalonia](https://avaloniaui.net/). Runs natively on Linux (no Wine), and also on Windows/macOS.
 
-This project lives alongside `PKHeX.WinForms` and never modifies it, so rebasing this branch onto upstream `master` stays conflict-free. It only references `PKHeX.Core` (all game logic, formats, and legality come from there).
+This project lives alongside `PKHeX.WinForms` and never modifies it, so rebasing this branch onto upstream `master` stays conflict-free. It references `PKHeX.Core` (all game logic, formats, and legality come from there) and `PKBank.Core` (our companion project for data the framework lacks — see its README).
 
 ## Run
 
@@ -28,6 +28,7 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 - Ball sprites shown in the ball selector (closed and dropdown) and hover preview
 - Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats
 - Stats panel parity with WinForms: color-graded base stats and BST, per-stat IV/EV caps, IV/EV column totals with legality grading (510 cap), randomize buttons (click random · Ctrl max · Alt clear)
+- Move selectors show type icons, damage category (generation-aware Physical/Special/Status via PKBank.Core), and a hover summary popover (type, category, power, accuracy, PP)
 - Live legality check with full report
 - QR code window (button next to the Pokémon name), same payload as PKHeX Windows
 - Export the modified save (File → Save As…)
