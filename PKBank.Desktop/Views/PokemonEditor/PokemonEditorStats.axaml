@@ -19,8 +19,8 @@
         </Style>
     </UserControl.Styles>
 
-    <StackPanel Spacing="4">
-        <TextBlock Text="Stats" FontWeight="SemiBold"/>
+    <StackPanel Spacing="4" Margin="0,8,0,0">
+        <TextBlock Text="Stats" FontWeight="SemiBold" FontSize="16" />
         <Grid ColumnDefinitions="64,52,72,72,46">
             <TextBlock Grid.Column="1" Text="Base" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
             <TextBlock Grid.Column="2" Text="IV" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>

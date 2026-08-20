@@ -9,18 +9,6 @@ public sealed partial class PokemonEditorHeader : UserControl
 {
     public PokemonEditorHeader() => InitializeComponent();
 
-    private void OnRerollPidClicked(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is PokemonEditorViewModel vm)
-            vm.RerollPid();
-    }
-
-    private void OnPidLostFocus(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is PokemonEditorViewModel vm)
-            vm.NormalizePidText(); // snap partial input back to the stored 8-digit value
-    }
-
     private async void OnQrClicked(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not PokemonEditorViewModel vm || !vm.HasSpecies)

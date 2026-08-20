@@ -54,8 +54,8 @@
         </Style>
     </UserControl.Styles>
 
-    <StackPanel Spacing="4">
-        <TextBlock Text="Moves" FontWeight="SemiBold"/>
+    <StackPanel Spacing="4" Margin="0,8,0,0">
+        <TextBlock Text="Moves" FontWeight="SemiBold" FontSize="16" />
         <Grid ColumnDefinitions="*,104,40">
             <TextBlock Grid.Column="1" Text="PP Ups" HorizontalAlignment="Center" Opacity="0.7" FontSize="12"/>
             <TextBlock Grid.Column="2" Text="PP" HorizontalAlignment="Center" Opacity="0.7" FontSize="12"/>

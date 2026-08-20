@@ -12,35 +12,43 @@
                 CornerRadius="6"
                 Padding="6"
                 VerticalAlignment="Top">
-            <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+            <Image Source="{Binding Sprite}"
+                   Width="68"
+                   Height="56"
+                   Stretch="None" />
         </Border>
-        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center" Spacing="5">
-            <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
+        <StackPanel Grid.Column="1"
+                    Margin="12,0,8,0"
+                    VerticalAlignment="Center"
+                    Spacing="8">
+            <TextBlock Text="{Binding Nickname}"
+                       FontSize="18"
+                       FontWeight="SemiBold" />
             <StackPanel Orientation="Horizontal" Spacing="10">
-                <CheckBox Content="Shiny" IsChecked="{Binding IsShiny, Mode=TwoWay}"/>
-                <CheckBox Content="Egg" IsChecked="{Binding IsEgg, Mode=TwoWay}" IsVisible="{Binding HasEgg}"/>
-                <Button Content="{Binding GenderSymbol}" MinWidth="42"
-                        IsEnabled="{Binding CanCycleGender}" Command="{Binding CycleGender}"
-                        ToolTip.Tip="Toggle gender (rerolls a valid PID)"/>
-            </StackPanel>
-            <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasPID}">
-                <TextBlock Text="PID" VerticalAlignment="Center" Opacity="0.85" Margin="0,0,2,0"/>
-                <TextBox Text="{Binding PIDText, Mode=TwoWay}" MaxLength="8" Width="102"
-                         HorizontalContentAlignment="Center" FontFamily="monospace"
-                         LostFocus="OnPidLostFocus"/>
-                <Button Content="♻" MinWidth="34"
-                        Click="OnRerollPidClicked"
-                        ToolTip.Tip="Generate a new valid PID"/>
+                <CheckBox Content="Shiny"
+                          IsChecked="{Binding IsShiny, Mode=TwoWay}" />
+                <CheckBox Content="Egg"
+                          IsChecked="{Binding IsEgg, Mode=TwoWay}"
+                          IsVisible="{Binding HasEgg}" />
+                <Button Content="{Binding GenderSymbol}"
+                        MinWidth="34"
+                        IsEnabled="{Binding CanCycleGender}"
+                        Command="{Binding CycleGender}"
+                        ToolTip.Tip="Toggle gender (rerolls a valid PID)" />
             </StackPanel>
         </StackPanel>
         <Button Grid.Column="2" Padding="8,4" Margin="0,0,8,0" VerticalAlignment="Top"
-                Click="OnLegalityClicked" IsEnabled="{Binding HasSpecies}"
+                Click="OnLegalityClicked"
+                IsEnabled="{Binding HasSpecies}"
                 ToolTip.Tip="Open the full legality report">
-            <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+            <TextBlock Text="{Binding LegalitySummary}"
+                       FontWeight="SemiBold"
                        Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
         </Button>
-        <Button Grid.Column="3" Content="QR" VerticalAlignment="Top" MinWidth="42"
-                IsEnabled="{Binding HasSpecies}" Click="OnQrClicked"
+        <Button Grid.Column="3" VerticalAlignment="Top" MinWidth="42"
+                Content="QR"
+                IsEnabled="{Binding HasSpecies}"
+                Click="OnQrClicked"
                 ToolTip.Tip="Show the QR code for this Pokémon"/>
     </Grid>
 
