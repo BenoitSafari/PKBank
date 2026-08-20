@@ -132,14 +132,11 @@
       <!-- Storage (right) -->
       <DockPanel Grid.Column="1" Margin="10,0,0,0" IsVisible="{Binding HasSave}">
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasBox}">
-          <Button Content="◀" Click="OnPrevBoxClicked"/>
-          <!-- Selection managed in code-behind: swapping ItemsSource on a databound
-               ComboBox clears the selection asynchronously and drops re-entrant writes. -->
-          <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
-          <Button Content="▶" Click="OnNextBoxClicked"/>
-          <Button Content="Delete Slot" Click="OnDeleteClicked" Margin="18,0,0,0"
-                  IsEnabled="{Binding CanDeleteSelected}"/>
+        <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
+          <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}"/>
+          <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}"/>
+          <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}"/>
         </StackPanel>
 
         <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
@@ -153,7 +150,17 @@
           </ItemsControl>
         </StackPanel>
 
-        <ScrollViewer Margin="0,10,0,0" IsVisible="{Binding HasBox}">
+        <!-- Box navigation: below the party, above the box grid -->
+        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,10,0,0"
+                    IsVisible="{Binding HasBox}">
+          <Button Content="◀" Click="OnPrevBoxClicked"/>
+          <!-- Selection managed in code-behind: swapping ItemsSource on a databound
+               ComboBox clears the selection asynchronously and drops re-entrant writes. -->
+          <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
+          <Button Content="▶" Click="OnNextBoxClicked"/>
+        </StackPanel>
+
+        <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
           <ItemsControl ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
                         HorizontalAlignment="Left" VerticalAlignment="Top">
             <ItemsControl.ItemsPanel>

@@ -134,14 +134,17 @@ public sealed partial class MainWindow : Window
     {
         if (sender is not ContextMenu menu)
             return;
-        // "Set" writes the editor's content, so it needs a Pokémon in the editor.
-        var canSet = ViewModel?.Editor is { HasSpecies: true };
+        // Same guard as the action bar's Set button: needs a Pokémon in the editor.
+        var canSet = ViewModel?.CanSetToSlot == true;
         foreach (var item in menu.Items)
         {
             if (item is MenuItem { Tag: "set" } setItem)
                 setItem.IsEnabled = canSet;
         }
     }
+
+    private void OnViewSelectedClicked(object? sender, RoutedEventArgs e) => ViewModel?.ViewSelected();
+    private void OnSetSelectedClicked(object? sender, RoutedEventArgs e) => ViewModel?.SetSelected();
 
     private void OnSlotViewClicked(object? sender, RoutedEventArgs e)
     {

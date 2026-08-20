@@ -83,8 +83,22 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         private set => SetField(ref _selectedSlot, value);
     }
 
-    /// <summary>True when the selected slot holds a Pokémon that can be deleted.</summary>
-    public bool CanDeleteSelected => SelectedSlot is { IsEmpty: false };
+    private void NotifySlotActionStates()
+    {
+        OnPropertyChanged(nameof(CanViewSelected));
+        OnPropertyChanged(nameof(CanSetToSlot));
+        OnPropertyChanged(nameof(CanSetSelected));
+        OnPropertyChanged(nameof(CanDeleteSelected));
+    }
+
+    private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PokemonEditorViewModel.HasSpecies))
+        {
+            OnPropertyChanged(nameof(CanSetToSlot));
+            OnPropertyChanged(nameof(CanSetSelected));
+        }
+    }
 
     public PokemonEditorViewModel? Editor { get => _editor; private set => SetField(ref _editor, value); }
 
@@ -184,6 +198,36 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         }
     }
 
+    // ----- Slot interactions -----------------------------------------------
+    // View/Set/Delete act on a target slot. The context menu targets the
+    // right-clicked slot; the top action bar targets the selected slot.
+    // Both share the same guards (CanView/CanSetToSlot/CanDelete) and actions.
+
+    /// <summary>Set requires an entity in the editor, whatever the target slot is.</summary>
+    public bool CanSetToSlot => Editor is { HasSpecies: true };
+
+    public bool CanViewSelected => SelectedSlot is { IsEmpty: false };
+    public bool CanSetSelected => SelectedSlot is not null && CanSetToSlot;
+    public bool CanDeleteSelected => SelectedSlot is { IsEmpty: false };
+
+    public void ViewSelected()
+    {
+        if (SelectedSlot is { } slot)
+            SelectSlot(slot);
+    }
+
+    public void SetSelected()
+    {
+        if (SelectedSlot is { } slot)
+            SetSlotFromEditor(slot);
+    }
+
+    public void DeleteSelected()
+    {
+        if (SelectedSlot is { } slot)
+            DeleteSlot(slot);
+    }
+
     public void SelectSlot(SlotViewModel slot)
     {
         if (_sav is not { } sav || _sources is not { } sources)
@@ -195,17 +239,15 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         SelectedSlot = slot;
 
         if (Editor is { } old)
+        {
             old.Applied -= OnEditorApplied;
+            old.PropertyChanged -= OnEditorPropertyChanged;
+        }
         var editor = new PokemonEditorViewModel(sav, sources, slot);
         editor.Applied += OnEditorApplied;
+        editor.PropertyChanged += OnEditorPropertyChanged;
         Editor = editor;
-        OnPropertyChanged(nameof(CanDeleteSelected));
-    }
-
-    public void DeleteSelected()
-    {
-        if (SelectedSlot is { } slot)
-            DeleteSlot(slot);
+        NotifySlotActionStates();
     }
 
     public void DeleteSlot(SlotViewModel slot)
@@ -218,6 +260,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             RefreshParty();
         if (slot == SelectedSlot)
             SelectSlot(slot); // rebuild the editor on the now-empty slot
+        NotifySlotActionStates();
     }
 
     /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>
@@ -235,7 +278,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             RefreshParty();
         if (slot == SelectedSlot)
             editor.Revert(); // origin slot now holds the freshly written data
-        OnPropertyChanged(nameof(CanDeleteSelected));
+        NotifySlotActionStates();
         StatusMessage = "Editor content written to slot.";
     }
 
@@ -246,7 +289,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     {
         if (SelectedSlot is { IsParty: true })
             RefreshParty();
-        OnPropertyChanged(nameof(CanDeleteSelected));
+        NotifySlotActionStates();
         StatusMessage = "Changes written to slot. Use File → Save As… to export the save.";
     }
 
