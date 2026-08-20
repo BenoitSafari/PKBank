@@ -164,11 +164,11 @@
               <Border Grid.Column="1" Background="{Binding BaseBrush}" CornerRadius="3" Margin="2,0" MinHeight="30">
                 <TextBlock Text="{Binding Base}" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
               </Border>
-              <TextBox Grid.Column="2" Classes="stat" MaxLength="2" Margin="2,0" HorizontalContentAlignment="Center"
-                       ToolTip.Tip="{Binding IVTip}"
+              <TextBox Grid.Column="2" Classes="stat" Tag="iv" MaxLength="2" Margin="2,0" HorizontalContentAlignment="Center"
+                       ToolTip.Tip="{Binding IVTip}" TextChanged="OnStatTextChanged"
                        Text="{Binding IVText, Mode=TwoWay}"/>
-              <TextBox Grid.Column="3" Classes="stat" MaxLength="3" Margin="2,0" HorizontalContentAlignment="Center"
-                       ToolTip.Tip="{Binding EVTip}"
+              <TextBox Grid.Column="3" Classes="stat" Tag="ev" MaxLength="3" Margin="2,0" HorizontalContentAlignment="Center"
+                       ToolTip.Tip="{Binding EVTip}" TextChanged="OnStatTextChanged"
                        Background="{Binding EVBrush}"
                        Text="{Binding EVText, Mode=TwoWay}"/>
               <TextBlock Grid.Column="4" Text="{Binding Stat}" VerticalAlignment="Center" HorizontalAlignment="Center"/>

@@ -26,6 +26,20 @@ public sealed partial class PokemonEditorView : UserControl
             vm.RefreshStatInputTexts(); // emptied fields snap back to their stored value (0)
     }
 
+    // Clamp the text at the control level, like the WinForms masked boxes: binding
+    // notifications are deduplicated and cannot rewrite the field mid-edit.
+    private void OnStatTextChanged(object? sender, TextChangedEventArgs e)
+    {
+        if (sender is not TextBox { DataContext: StatRowViewModel row } tb)
+            return;
+        var max = tb.Tag as string == "iv" ? row.MaxIV : row.MaxEV;
+        if (int.TryParse(tb.Text, out var value) && value > max)
+        {
+            tb.Text = max.ToString();
+            tb.CaretIndex = tb.Text.Length;
+        }
+    }
+
     private void OnRandomIVsClicked(object? sender, RoutedEventArgs e)
     {
         if (DataContext is PokemonEditorViewModel vm)

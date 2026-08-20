@@ -1,6 +1,5 @@
 using System;
 using Avalonia.Media;
-using Avalonia.Threading;
 using PKBank.Desktop.Services;
 using PKHeX.Core;
 
@@ -29,7 +28,7 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
     public string IVText
     {
         get => GetIV().ToString();
-        set => ApplyText(value, MaxIV, SetIV, nameof(IVText));
+        set => ApplyText(value, MaxIV, SetIV);
     }
 
     public string EVText
@@ -37,22 +36,16 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         get => GetEV().ToString();
         set
         {
-            ApplyText(value, MaxEV, SetEV, nameof(EVText));
+            ApplyText(value, MaxEV, SetEV);
             OnPropertyChanged(nameof(EVBrush));
         }
     }
 
-    private void ApplyText(string? text, int max, Action<int> apply, string property)
+    // Out-of-range display correction happens at the control level (TextChanged);
+    // this clamp is defense in depth for the stored value.
+    private void ApplyText(string? text, int max, Action<int> apply)
     {
-        var raw = ParseStat(text);
-        var clamped = Math.Clamp(raw, 0, max);
-        apply(clamped);
-        if (raw != clamped)
-        {
-            // The binding ignores re-entrant notifications while it is writing the
-            // value, so push the clamped value back on the next dispatcher tick.
-            Dispatcher.UIThread.Post(() => OnPropertyChanged(property));
-        }
+        apply(Math.Clamp(ParseStat(text), 0, max));
         owner.OnStatsEdited();
     }
 
@@ -61,8 +54,8 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
     public string IVTip => $"Max: {MaxIV}";
     public string EVTip => $"Max: {MaxEV}";
 
-    /// <summary>Highlights the EV field when the per-stat cap is reached.</summary>
-    public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() >= MaxEV ? StatColors.EVFieldMaxed : null;
+    /// <summary>Highlights the EV field when the stored value exceeds the per-stat cap (hacked data).</summary>
+    public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() > MaxEV ? StatColors.EVFieldMaxed : null;
 
     public ushort Stat { get => _stat; private set => SetField(ref _stat, value); }
 
