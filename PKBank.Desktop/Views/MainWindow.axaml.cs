@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -15,8 +16,6 @@ namespace PKBank.Desktop.Views;
 
 public sealed partial class MainWindow : Window
 {
-    private static readonly DataFormat<SlotViewModel> SlotDragFormat =
-        DataFormat.CreateInProcessFormat<SlotViewModel>("pkhex-avalonia-slot");
     private const double DragThreshold = 6;
 
     private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
@@ -25,6 +24,7 @@ public sealed partial class MainWindow : Window
     private PointerPressedEventArgs? _pressArgs;
     private Point _pressPoint;
     private bool _dragInProgress;
+    private KeyModifiers _clickModifiers;
 
     public MainWindow()
     {
@@ -77,6 +77,7 @@ public sealed partial class MainWindow : Window
 
     private void OnSlotAreaPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        _clickModifiers = e.KeyModifiers; // consumed by OnSlotClicked (fires after release)
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
             return;
         var slot = FindSlot(e.Source);
@@ -110,8 +111,23 @@ public sealed partial class MainWindow : Window
         {
             ShowDragGhost(slot);
             var transfer = new DataTransfer();
-            transfer.Add(DataTransferItem.Create(SlotDragFormat, slot));
-            await AttachExportFile(transfer, slot);
+            var vm = ViewModel;
+            if (vm is { IsMultiSelection: true } && vm.SelectedSlots.Contains(slot))
+            {
+                // Dragging the multi-selection: no internal move semantics, just
+                // one export file per occupied selected slot.
+                transfer.Add(DataTransferItem.Create(SlotDragFormats.Multi, "selection"));
+                foreach (var member in vm.SelectedSlots)
+                {
+                    if (!member.IsEmpty)
+                        await AttachExportFile(transfer, member);
+                }
+            }
+            else
+            {
+                transfer.Add(DataTransferItem.Create(SlotDragFormats.Slot, slot));
+                await AttachExportFile(transfer, slot);
+            }
             // Move only: KDE's KIO drops without its Move/Copy/Link menu only when
             // the proposed action is Move, the file is local and on the same device
             // as the destination, and the user opted into DndBehavior=MoveIfSameDevice.
@@ -185,7 +201,7 @@ public sealed partial class MainWindow : Window
 
     private void OnWindowDragOver(object? sender, DragEventArgs e)
     {
-        if (e.DataTransfer.Contains(SlotDragFormat))
+        if (e.DataTransfer.Contains(SlotDragFormats.Slot) || e.DataTransfer.Contains(SlotDragFormats.Multi))
         {
             e.DragEffects = DragDropEffects.Move;
             if (_dragInProgress)
@@ -205,7 +221,10 @@ public sealed partial class MainWindow : Window
 
     private void OnWindowDrop(object? sender, DragEventArgs e)
     {
-        if (e.DataTransfer.TryGetValue(SlotDragFormat) is { } source)
+        if (e.DataTransfer.Contains(SlotDragFormats.Multi))
+            return; // multi-selection drags only mean something outside the app
+
+        if (e.DataTransfer.TryGetValue(SlotDragFormats.Slot) is { } source)
         {
             if (HitTestSlot(e.GetPosition(this)) is not { } target)
                 return;
@@ -325,22 +344,40 @@ public sealed partial class MainWindow : Window
 
     private void OnSlotClicked(object? sender, RoutedEventArgs e)
     {
-        if ((sender as Button)?.DataContext is SlotViewModel slot)
-            ViewModel?.SelectSlot(slot);
+        if ((sender as Button)?.DataContext is not SlotViewModel slot || ViewModel is not { } vm)
+            return;
+        if (_clickModifiers.HasFlag(KeyModifiers.Control))
+            vm.ToggleSelectSlot(slot);
+        else if (_clickModifiers.HasFlag(KeyModifiers.Shift))
+            vm.RangeSelectSlot(slot);
+        else
+            vm.SelectSlot(slot); // plain click: back to single selection
     }
 
     private static SlotViewModel? GetMenuSlot(object? sender) => (sender as MenuItem)?.DataContext as SlotViewModel;
 
     private void OnSlotMenuOpening(object? sender, CancelEventArgs e)
     {
-        if (sender is not ContextMenu menu)
+        if (sender is not ContextMenu { DataContext: SlotViewModel slot } menu || ViewModel is not { } vm)
             return;
-        // Same guard as the action bar's Set button: needs a Pokémon in the editor.
-        var canSet = ViewModel?.CanSetToSlot == true;
+        // View/Set/Import are single-slot actions; Export/Delete follow the
+        // action targets (whole selection when the clicked slot is part of it).
+        var multi = vm.IsMultiSelection;
+        var targets = vm.GetActionTargets(slot);
+        var anyOccupied = targets.Any(static s => !s.IsEmpty);
         foreach (var item in menu.Items)
         {
-            if (item is MenuItem { Tag: "set" } setItem)
-                setItem.IsEnabled = canSet;
+            if (item is not MenuItem menuItem)
+                continue;
+            menuItem.IsEnabled = menuItem.Tag switch
+            {
+                "view" => !multi && !slot.IsEmpty,
+                "set" => !multi && vm.CanSetToSlot,
+                "import" => !multi,
+                "export" => anyOccupied,
+                "delete" => anyOccupied,
+                _ => menuItem.IsEnabled,
+            };
         }
     }
 
@@ -361,8 +398,8 @@ public sealed partial class MainWindow : Window
 
     private void OnSlotDeleteClicked(object? sender, RoutedEventArgs e)
     {
-        if (GetMenuSlot(sender) is { } slot)
-            ViewModel?.DeleteSlot(slot);
+        if (GetMenuSlot(sender) is { } slot && ViewModel is { } vm)
+            vm.DeleteSlots(vm.GetActionTargets(slot));
     }
 
     private async void OnSlotImportClicked(object? sender, RoutedEventArgs e)
@@ -373,8 +410,8 @@ public sealed partial class MainWindow : Window
 
     private async void OnSlotExportClicked(object? sender, RoutedEventArgs e)
     {
-        if (GetMenuSlot(sender) is { } slot)
-            await ExportSlotAsync(slot);
+        if (GetMenuSlot(sender) is { } slot && ViewModel is { } vm)
+            await ExportSlotsAsync(vm.GetActionTargets(slot));
     }
 
     private async void OnImportSelectedClicked(object? sender, RoutedEventArgs e)
@@ -385,8 +422,8 @@ public sealed partial class MainWindow : Window
 
     private async void OnExportSelectedClicked(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel?.SelectedSlot is { } slot)
-            await ExportSlotAsync(slot);
+        if (ViewModel is { } vm)
+            await ExportSlotsAsync(vm.SelectedSlots);
     }
 
     private async System.Threading.Tasks.Task ImportIntoSlotAsync(SlotViewModel slot)
@@ -404,10 +441,49 @@ public sealed partial class MainWindow : Window
             vm.TryImportFileToSlot(path, slot);
     }
 
-    private async System.Threading.Tasks.Task ExportSlotAsync(SlotViewModel slot)
+    private async System.Threading.Tasks.Task ExportSlotsAsync(IReadOnlyList<SlotViewModel> slots)
     {
-        if (ViewModel is not { } vm || slot.IsEmpty)
+        if (ViewModel is not { } vm)
             return;
+        var occupied = slots.Where(static s => !s.IsEmpty).ToList();
+        if (occupied.Count == 0)
+            return;
+
+        if (occupied.Count == 1)
+        {
+            await ExportSingleAsync(vm, occupied[0]);
+            return;
+        }
+
+        // Multiple Pokémon: pick a folder and write one file per occupied slot.
+        var folders = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = $"Export {occupied.Count} Pokémon To Folder",
+            AllowMultiple = false,
+        });
+        var dir = folders.FirstOrDefault()?.TryGetLocalPath();
+        if (dir is null)
+            return;
+
+        int exported = 0;
+        try
+        {
+            foreach (var slot in occupied)
+            {
+                var pk = slot.Read();
+                PkmFileService.Export(pk, System.IO.Path.Combine(dir, PathUtil.CleanFileName(pk.FileName)));
+                exported++;
+            }
+            vm.StatusMessage = $"Exported {exported} Pokémon to {System.IO.Path.GetFileName(dir)}.";
+        }
+        catch (System.Exception ex)
+        {
+            vm.StatusMessage = $"Export failed after {exported} file(s): {ex.Message}";
+        }
+    }
+
+    private async System.Threading.Tasks.Task ExportSingleAsync(MainWindowViewModel vm, SlotViewModel slot)
+    {
         var pk = slot.Read();
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {

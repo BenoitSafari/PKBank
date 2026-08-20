@@ -23,17 +23,21 @@ public sealed partial class PokemonEditorView : UserControl
 
     private MainWindowViewModel? MainViewModel => TopLevel.GetTopLevel(this)?.DataContext as MainWindowViewModel;
 
+    private static bool IsInternalSlotDrag(DragEventArgs e)
+        => e.DataTransfer.Contains(SlotDragFormats.Slot) || e.DataTransfer.Contains(SlotDragFormats.Multi);
+
     private void OnFileDragOver(object? sender, DragEventArgs e)
     {
-        if (!e.DataTransfer.Contains(DataFormat.File))
-            return; // let the window-level handler deal with internal slot drags
+        // Internal slot drags also carry export files; those are not for the editor.
+        if (IsInternalSlotDrag(e) || !e.DataTransfer.Contains(DataFormat.File))
+            return; // let the window-level handler deal with it
         e.DragEffects = DragDropEffects.Copy;
         e.Handled = true;
     }
 
     private void OnFileDrop(object? sender, DragEventArgs e)
     {
-        if (DataContext is not PokemonEditorViewModel vm)
+        if (IsInternalSlotDrag(e) || DataContext is not PokemonEditorViewModel vm)
             return;
         var path = e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath();
         if (path is null)

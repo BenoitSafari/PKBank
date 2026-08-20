@@ -91,6 +91,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         OnPropertyChanged(nameof(CanDeleteSelected));
         OnPropertyChanged(nameof(CanImportSelected));
         OnPropertyChanged(nameof(CanExportSelected));
+        OnPropertyChanged(nameof(IsMultiSelection));
     }
 
     private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -207,11 +208,12 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     /// <summary>Set requires an entity in the editor, whatever the target slot is.</summary>
     public bool CanSetToSlot => Editor is { HasSpecies: true };
 
-    public bool CanViewSelected => SelectedSlot is { IsEmpty: false };
-    public bool CanSetSelected => SelectedSlot is not null && CanSetToSlot;
-    public bool CanDeleteSelected => SelectedSlot is { IsEmpty: false };
-    public bool CanImportSelected => SelectedSlot is not null;
-    public bool CanExportSelected => SelectedSlot is { IsEmpty: false };
+    // View/Set/Import are single-slot actions; Delete/Export also work on a multi-selection.
+    public bool CanViewSelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
+    public bool CanSetSelected => !IsMultiSelection && SelectedSlot is not null && CanSetToSlot;
+    public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+    public bool CanImportSelected => !IsMultiSelection && SelectedSlot is not null;
+    public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
 
     /// <summary>
     /// Imports a Pokémon file into the given slot, converting it to the save's
@@ -251,21 +253,100 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             SetSlotFromEditor(slot);
     }
 
-    public void DeleteSelected()
+    public void DeleteSelected() => DeleteSlots(_selectedSlots.ToArray());
+
+    public void DeleteSlots(IReadOnlyList<SlotViewModel> slots)
     {
-        if (SelectedSlot is { } slot)
-            DeleteSlot(slot);
+        foreach (var slot in slots)
+        {
+            if (!slot.IsEmpty)
+                DeleteSlot(slot);
+        }
     }
 
-    /// <summary>Marks the slot as selected without touching the editor (left click).</summary>
+    // ----- Selection -------------------------------------------------------
+    // SelectedSlot is the primary slot (anchor for ranges, target of the
+    // editor-centric actions); _selectedSlots holds the full multi-selection.
+
+    private readonly List<SlotViewModel> _selectedSlots = [];
+
+    public IReadOnlyList<SlotViewModel> SelectedSlots => _selectedSlots;
+    public bool IsMultiSelection => _selectedSlots.Count > 1;
+
+    /// <summary>Plain left click: collapses any multi-selection back to a single slot.</summary>
     public void SelectSlot(SlotViewModel slot)
     {
-        if (SelectedSlot is { } previous)
+        foreach (var previous in _selectedSlots)
             previous.IsSelected = false;
+        _selectedSlots.Clear();
+        _selectedSlots.Add(slot);
         slot.IsSelected = true;
         SelectedSlot = slot;
         NotifySlotActionStates();
     }
+
+    /// <summary>Ctrl+click: adds the slot to the selection (or removes it when already selected).</summary>
+    public void ToggleSelectSlot(SlotViewModel slot)
+    {
+        if (_selectedSlots.Count == 0)
+        {
+            SelectSlot(slot);
+            return;
+        }
+        if (_selectedSlots.Contains(slot))
+        {
+            if (_selectedSlots.Count == 1)
+                return; // never empty the selection entirely
+            _selectedSlots.Remove(slot);
+            slot.IsSelected = false;
+            if (SelectedSlot == slot)
+                SelectedSlot = _selectedSlots[^1];
+        }
+        else
+        {
+            _selectedSlots.Add(slot);
+            slot.IsSelected = true;
+            SelectedSlot = slot; // the anchor follows the last addition
+        }
+        NotifySlotActionStates();
+    }
+
+    /// <summary>Shift+click: adds every slot between the anchor and the clicked slot (inclusive).</summary>
+    public void RangeSelectSlot(SlotViewModel slot)
+    {
+        if (SelectedSlot is not { } anchor || anchor.IsParty != slot.IsParty)
+        {
+            SelectSlot(slot); // no same-area anchor: behave like a plain click
+            return;
+        }
+
+        var list = slot.IsParty ? PartySlots : BoxSlots;
+        int from = list.IndexOf(anchor);
+        int to = list.IndexOf(slot);
+        if (from < 0 || to < 0)
+        {
+            SelectSlot(slot);
+            return;
+        }
+
+        var (start, end) = from <= to ? (from, to) : (to, from);
+        for (int i = start; i <= end; i++)
+        {
+            var member = list[i];
+            if (_selectedSlots.Contains(member))
+                continue;
+            _selectedSlots.Add(member);
+            member.IsSelected = true;
+        }
+        NotifySlotActionStates();
+    }
+
+    /// <summary>
+    /// Slots a context-menu action should apply to: the whole selection when the
+    /// clicked slot belongs to it, otherwise just the clicked slot.
+    /// </summary>
+    public IReadOnlyList<SlotViewModel> GetActionTargets(SlotViewModel clicked)
+        => IsMultiSelection && _selectedSlots.Contains(clicked) ? _selectedSlots.ToArray() : [clicked];
 
     /// <summary>Selects the slot and loads its Pokémon into the editor (View action).</summary>
     public void ViewSlot(SlotViewModel slot)
@@ -370,6 +451,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         GameInfo.FilteredSources = _sources;
 
         SelectedSlot = null;
+        _selectedSlots.Clear();
         Editor = null;
 
         BoxSlots.Clear();

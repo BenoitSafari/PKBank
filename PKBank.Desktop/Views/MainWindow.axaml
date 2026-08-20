@@ -20,13 +20,13 @@
               Click="OnSlotClicked" ToolTip.Tip="{Binding Preview}">
         <Button.ContextMenu>
           <ContextMenu Opening="OnSlotMenuOpening">
-            <MenuItem Header="View" Click="OnSlotViewClicked" IsEnabled="{Binding !IsEmpty}"/>
+            <MenuItem Header="View" Tag="view" Click="OnSlotViewClicked"/>
             <MenuItem Header="Set" Tag="set" Click="OnSlotSetClicked"/>
             <Separator/>
-            <MenuItem Header="Import…" Click="OnSlotImportClicked"/>
-            <MenuItem Header="Export…" Click="OnSlotExportClicked" IsEnabled="{Binding !IsEmpty}"/>
+            <MenuItem Header="Import…" Tag="import" Click="OnSlotImportClicked"/>
+            <MenuItem Header="Export…" Tag="export" Click="OnSlotExportClicked"/>
             <Separator/>
-            <MenuItem Header="Delete" Click="OnSlotDeleteClicked" IsEnabled="{Binding !IsEmpty}"/>
+            <MenuItem Header="Delete" Tag="delete" Click="OnSlotDeleteClicked"/>
           </ContextMenu>
         </Button.ContextMenu>
         <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
