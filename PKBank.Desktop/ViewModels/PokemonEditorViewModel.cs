@@ -19,8 +19,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private PKM _pk;
     private bool _loading;
 
-    public event Action? Applied;
-
     public PokemonEditorViewModel(SaveFile sav, FilteredGameDataSource sources, SlotViewModel origin)
     {
         _sav = sav;
@@ -255,7 +253,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public bool LegalityValid { get; private set; }
     public string LegalitySummary { get; private set; } = string.Empty;
-    public string LegalityReport { get; private set; } = string.Empty;
 
     // Column totals (mirrors the WinForms StatEditor total row, shown for Format >= 3)
     public bool ShowTotalsRow => _pk.Format >= 3;
@@ -323,18 +320,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         RefreshDerived();
     }
 
-    public void Apply()
-    {
-        if (_origin.IsParty)
-            _pk.ResetPartyStats();
-        _pk.RefreshChecksum();
-        _origin.Write(_pk);
-        _pk = _origin.Read(); // reload the save-normalized copy
-        _sav.State.Edited = true;
-        Load();
-        Applied?.Invoke();
-    }
-
+    /// <summary>Reloads the working copy from the origin slot (e.g. after Set wrote into it).</summary>
     public void Revert()
     {
         _pk = _origin.Read();
@@ -458,17 +444,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         {
             LegalityValid = true;
             LegalitySummary = string.Empty;
-            LegalityReport = string.Empty;
         }
         else
         {
             var la = new LegalityAnalysis(_pk);
             LegalityValid = la.Valid;
             LegalitySummary = la.Valid ? "Legal ✓" : "Illegal ✗";
-            LegalityReport = la.Report(verbose: false);
         }
         OnPropertyChanged(nameof(LegalityValid));
         OnPropertyChanged(nameof(LegalitySummary));
-        OnPropertyChanged(nameof(LegalityReport));
     }
 }

@@ -46,4 +46,13 @@ public sealed partial class PokemonEditorView : UserControl
             return;
         await new QRCodeWindow(vm.GetEntityClone()).ShowDialog(owner);
     }
+
+    private async void OnLegalityClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PokemonEditorViewModel vm || !vm.HasSpecies)
+            return;
+        if (TopLevel.GetTopLevel(this) is not Window owner)
+            return;
+        await new LegalityReportWindow(vm.GetEntityClone()).ShowDialog(owner);
+    }
 }

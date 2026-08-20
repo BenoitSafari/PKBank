@@ -47,10 +47,13 @@
           </Border>
           <StackPanel VerticalAlignment="Center" Spacing="4">
             <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
-            <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
+                    HorizontalAlignment="Left" Click="OnLegalityClicked"
+                    IsEnabled="{Binding HasSpecies}"
+                    ToolTip.Tip="Open the full legality report">
               <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
                          Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
-            </StackPanel>
+            </Button>
           </StackPanel>
         </StackPanel>
         <Button Grid.Column="2" Content="QR" VerticalAlignment="Top" MinWidth="42"
@@ -192,17 +195,6 @@
                 ToolTip.Tip="Click: random (encounter-aware) · Ctrl: max · Alt: clear"/>
         <Button x:Name="RandomEVsButton" Content="Randomize EVs" Click="OnRandomEVsClicked"
                 ToolTip.Tip="Click: random · Ctrl: max · Alt: clear"/>
-      </StackPanel>
-
-      <!-- Legality report -->
-      <Expander Header="Legality Report">
-        <TextBlock Text="{Binding LegalityReport}" TextWrapping="Wrap" FontFamily="monospace" FontSize="12"/>
-      </Expander>
-
-      <!-- Actions -->
-      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,8">
-        <Button Content="Apply to Slot" Classes="accent" Command="{Binding Apply}"/>
-        <Button Content="Revert" Command="{Binding Revert}"/>
       </StackPanel>
 
     </StackPanel>

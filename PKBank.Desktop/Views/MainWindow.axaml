@@ -39,6 +39,8 @@
                  IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}"/>
           <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"/>
         </StackPanel>
+        <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+                   Foreground="{Binding IsValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
         <ItemsControl ItemsSource="{Binding Lines}">
           <ItemsControl.ItemTemplate>
             <DataTemplate DataType="x:String">

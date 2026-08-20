@@ -250,12 +250,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             return;
 
         if (Editor is { } old)
-        {
-            old.Applied -= OnEditorApplied;
             old.PropertyChanged -= OnEditorPropertyChanged;
-        }
         var editor = new PokemonEditorViewModel(sav, sources, slot);
-        editor.Applied += OnEditorApplied;
         editor.PropertyChanged += OnEditorPropertyChanged;
         Editor = editor;
         NotifySlotActionStates();
@@ -293,14 +289,6 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
 
     public void NextBox() => CurrentBox = _sav is { } sav && _currentBox >= sav.BoxCount - 1 ? 0 : _currentBox + 1;
     public void PrevBox() => CurrentBox = _sav is { } sav && _currentBox <= 0 ? sav.BoxCount - 1 : _currentBox - 1;
-
-    private void OnEditorApplied()
-    {
-        if (Editor?.Origin is { IsParty: true })
-            RefreshParty();
-        NotifySlotActionStates();
-        StatusMessage = "Changes written to slot. Use File → Save As… to export the save.";
-    }
 
     private void RefreshParty()
     {

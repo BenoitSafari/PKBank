@@ -1,0 +1,33 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Views.LegalityReportWindow"
+        Title="Legality Report"
+        Width="480" MaxHeight="640" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+  <StackPanel Margin="16" Spacing="12">
+
+    <StackPanel Orientation="Horizontal" Spacing="10">
+      <Image x:Name="SpriteImage" Width="68" Height="56" Stretch="None"/>
+      <StackPanel VerticalAlignment="Center" Spacing="2">
+        <TextBlock x:Name="TitleText" FontSize="16" FontWeight="SemiBold"/>
+        <TextBlock x:Name="VerdictText" FontWeight="SemiBold"/>
+      </StackPanel>
+    </StackPanel>
+
+    <ScrollViewer MaxHeight="360">
+      <SelectableTextBlock x:Name="ReportText" TextWrapping="Wrap" FontFamily="monospace" FontSize="12"/>
+    </ScrollViewer>
+
+    <Expander Header="Verbose">
+      <ScrollViewer MaxHeight="260">
+        <SelectableTextBlock x:Name="VerboseText" TextWrapping="Wrap" FontFamily="monospace" FontSize="11" Opacity="0.9"/>
+      </ScrollViewer>
+    </Expander>
+
+    <Button Content="Close" HorizontalAlignment="Right" Click="OnCloseClicked"/>
+
+  </StackPanel>
+
+</Window>

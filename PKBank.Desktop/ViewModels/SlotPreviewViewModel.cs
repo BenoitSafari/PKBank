@@ -21,6 +21,9 @@ public sealed class SlotPreviewViewModel
 
     public bool HasLegalityLine => LegalityLine.Length != 0;
 
+    /// <summary>Same verdict badge as the editor header.</summary>
+    public string LegalitySummary => IsValid ? "Legal ✓" : "Illegal ✗";
+
     public static SlotPreviewViewModel? TryCreate(PKM pk)
     {
         if (pk.Species == 0)
