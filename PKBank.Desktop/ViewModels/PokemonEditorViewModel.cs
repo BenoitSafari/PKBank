@@ -344,7 +344,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     internal void OnStatsEdited()
     {
         if (!_loading)
-            RefreshDerived();
+            RefreshDerived(refreshInputTexts: false); // keep the field being typed in untouched
+    }
+
+    /// <summary>Normalizes the stat input fields (e.g. shows 0 for an emptied field on focus loss).</summary>
+    public void RefreshStatInputTexts()
+    {
+        foreach (var row in StatRows)
+            row.RefreshInputTexts();
     }
 
     private void SetMove(int index, int value)
@@ -415,20 +422,25 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         RefreshDerived();
     }
 
-    private void RefreshDerived()
+    private void RefreshDerived(bool refreshInputTexts = true)
     {
         OnPropertyChanged(nameof(Sprite));
-        RefreshStats();
+        RefreshStats(refreshInputTexts);
         RefreshLegality();
     }
 
-    private void RefreshStats()
+    private void RefreshStats(bool refreshInputTexts)
     {
         Span<ushort> stats = stackalloc ushort[6];
         if (_pk.Species != 0)
             _pk.GetStats(_pk.PersonalInfo).AsSpan().CopyTo(stats);
         foreach (var row in StatRows)
-            row.RefreshAll(stats);
+        {
+            if (refreshInputTexts)
+                row.RefreshAll(stats);
+            else
+                row.RefreshComputed(stats);
+        }
 
         OnPropertyChanged(nameof(ShowTotalsRow));
         OnPropertyChanged(nameof(BST));

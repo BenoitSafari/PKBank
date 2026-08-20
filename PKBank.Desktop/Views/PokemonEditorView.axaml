@@ -135,49 +135,50 @@
 
       <!-- Stats -->
       <TextBlock Text="Stats" FontWeight="SemiBold"/>
-      <Grid ColumnDefinitions="64,48,102,102,50">
+      <Grid ColumnDefinitions="64,52,72,72,46">
         <TextBlock Grid.Column="1" Text="Base" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
-        <Button Grid.Column="2" x:Name="RandomIVsButton" Content="IV" HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Center" Padding="4,2" Margin="2,0"
-                Click="OnRandomIVsClicked"
-                ToolTip.Tip="Click: random (encounter-aware) · Ctrl: max · Alt: clear"/>
-        <Button Grid.Column="3" x:Name="RandomEVsButton" Content="EV" HorizontalAlignment="Stretch"
-                HorizontalContentAlignment="Center" Padding="4,2" Margin="2,0"
-                Click="OnRandomEVsClicked"
-                ToolTip.Tip="Click: random · Ctrl: max · Alt: clear"/>
+        <TextBlock Grid.Column="2" Text="IV" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
+        <TextBlock Grid.Column="3" Text="EV" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
         <TextBlock Grid.Column="4" Text="Stat" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
       </Grid>
-      <ItemsControl ItemsSource="{Binding StatRows}">
+      <ItemsControl ItemsSource="{Binding StatRows}" LostFocus="OnStatInputLostFocus">
         <ItemsControl.ItemTemplate>
           <DataTemplate DataType="vm:StatRowViewModel">
-            <Grid ColumnDefinitions="64,48,102,102,50" Margin="0,1">
+            <Grid ColumnDefinitions="64,52,72,72,46" Margin="0,1">
               <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
-              <Border Grid.Column="1" Background="{Binding BaseBrush}" CornerRadius="3" Margin="2,0">
+              <Border Grid.Column="1" Background="{Binding BaseBrush}" CornerRadius="3" Margin="2,0" MinHeight="30">
                 <TextBlock Text="{Binding Base}" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
               </Border>
-              <NumericUpDown Grid.Column="2" Minimum="0" Maximum="{Binding MaxIV}" Increment="1" Margin="2,0"
-                             Value="{Binding IV, Mode=TwoWay}"/>
-              <NumericUpDown Grid.Column="3" Minimum="0" Maximum="{Binding MaxEV}" Increment="1" Margin="2,0"
-                             Background="{Binding EVBrush}"
-                             Value="{Binding EV, Mode=TwoWay}"/>
+              <TextBox Grid.Column="2" MaxLength="2" Margin="2,0" HorizontalContentAlignment="Center"
+                       Text="{Binding IVText, Mode=TwoWay}"/>
+              <TextBox Grid.Column="3" MaxLength="3" Margin="2,0" HorizontalContentAlignment="Center"
+                       Background="{Binding EVBrush}"
+                       Text="{Binding EVText, Mode=TwoWay}"/>
               <TextBlock Grid.Column="4" Text="{Binding Stat}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
             </Grid>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
       <!-- Column totals (Format >= 3, as in WinForms) -->
-      <Grid ColumnDefinitions="64,48,102,102,50" Margin="0,1" IsVisible="{Binding ShowTotalsRow}">
+      <Grid ColumnDefinitions="64,52,72,72,46" Margin="0,1" IsVisible="{Binding ShowTotalsRow}">
         <TextBlock Grid.Column="0" Text="Total" VerticalAlignment="Center" Opacity="0.85"/>
-        <Border Grid.Column="1" Background="{Binding BSTBrush}" CornerRadius="3" Margin="2,0">
+        <Border Grid.Column="1" Background="{Binding BSTBrush}" CornerRadius="3" Margin="2,0" MinHeight="30">
           <TextBlock Text="{Binding BST}" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
         <TextBlock Grid.Column="2" Text="{Binding IVTotal}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
-        <Border Grid.Column="3" Background="{Binding EVTotalBrush}" CornerRadius="3" Margin="2,0"
+        <Border Grid.Column="3" Background="{Binding EVTotalBrush}" CornerRadius="3" Margin="2,0" MinHeight="30"
                 ToolTip.Tip="{Binding EVRemainingTip}">
           <TextBlock Text="{Binding EVTotal}" Foreground="{Binding EVTotalTextBrush}"
                      HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
       </Grid>
+      <!-- Random generation actions -->
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+        <Button x:Name="RandomIVsButton" Content="Randomize IVs" Click="OnRandomIVsClicked"
+                ToolTip.Tip="Click: random (encounter-aware) · Ctrl: max · Alt: clear"/>
+        <Button x:Name="RandomEVsButton" Content="Randomize EVs" Click="OnRandomEVsClicked"
+                ToolTip.Tip="Click: random · Ctrl: max · Alt: clear"/>
+      </StackPanel>
 
       <!-- Legality report -->
       <Expander Header="Legality Report">

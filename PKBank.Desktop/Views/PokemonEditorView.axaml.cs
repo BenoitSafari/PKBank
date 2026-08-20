@@ -20,6 +20,12 @@ public sealed partial class PokemonEditorView : UserControl
 
     private void CaptureModifiers(object? sender, PointerPressedEventArgs e) => _pressModifiers = e.KeyModifiers;
 
+    private void OnStatInputLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (e.Source is TextBox && DataContext is PokemonEditorViewModel vm)
+            vm.RefreshStatInputTexts(); // emptied fields snap back to their stored value (0)
+    }
+
     private void OnRandomIVsClicked(object? sender, RoutedEventArgs e)
     {
         if (DataContext is PokemonEditorViewModel vm)

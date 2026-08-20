@@ -22,46 +22,62 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
     public int MaxIV => owner.Entity.MaxIV;
     public int MaxEV => owner.Entity.MaxEV;
 
-    // Nullable so an emptied NumericUpDown pushes null instead of crashing the
-    // binding; null and negative values normalize back to 0.
-    public int? IV
+    // Text-based inputs so every keystroke updates the computed stats live.
+    // Empty, invalid or negative text is treated as 0; values above the cap
+    // are clamped and pushed back to the field.
+    public string IVText
     {
-        get => GetIV();
+        get => GetIV().ToString();
+        set => ApplyText(value, MaxIV, SetIV, nameof(IVText));
+    }
+
+    public string EVText
+    {
+        get => GetEV().ToString();
         set
         {
-            SetIV(Math.Clamp(value ?? 0, 0, MaxIV));
-            OnPropertyChanged();
-            owner.OnStatsEdited();
+            ApplyText(value, MaxEV, SetEV, nameof(EVText));
+            OnPropertyChanged(nameof(EVBrush));
         }
     }
 
-    public int? EV
+    private void ApplyText(string? text, int max, Action<int> apply, string property)
     {
-        get => GetEV();
-        set
-        {
-            SetEV(Math.Clamp(value ?? 0, 0, MaxEV));
-            OnPropertyChanged();
-            OnPropertyChanged(nameof(EVBrush));
-            owner.OnStatsEdited();
-        }
+        var raw = ParseStat(text);
+        var clamped = Math.Clamp(raw, 0, max);
+        apply(clamped);
+        if (raw != clamped)
+            OnPropertyChanged(property); // clamped: force the field to show the real value
+        owner.OnStatsEdited();
     }
+
+    private static int ParseStat(string? text) => int.TryParse(text, out var value) && value > 0 ? value : 0;
 
     /// <summary>Highlights the EV field when the per-stat cap is reached.</summary>
     public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() >= MaxEV ? StatColors.EVFieldMaxed : null;
 
     public ushort Stat { get => _stat; private set => SetField(ref _stat, value); }
 
-    public void RefreshAll(ReadOnlySpan<ushort> stats)
+    /// <summary>Refreshes computed values only; safe to call while the user is typing.</summary>
+    public void RefreshComputed(ReadOnlySpan<ushort> stats)
     {
         Stat = stats[PkIndex];
-        OnPropertyChanged(nameof(IV));
-        OnPropertyChanged(nameof(EV));
         OnPropertyChanged(nameof(EVBrush));
+    }
+
+    /// <summary>Pushes the stored values back into the input fields (load, randomize, focus loss).</summary>
+    public void RefreshInputTexts()
+    {
+        OnPropertyChanged(nameof(IVText));
+        OnPropertyChanged(nameof(EVText));
+    }
+
+    public void RefreshAll(ReadOnlySpan<ushort> stats)
+    {
+        RefreshComputed(stats);
+        RefreshInputTexts();
         OnPropertyChanged(nameof(Base));
         OnPropertyChanged(nameof(BaseBrush));
-        OnPropertyChanged(nameof(MaxIV));
-        OnPropertyChanged(nameof(MaxEV));
     }
 
     private int GetIV() => PkIndex switch
