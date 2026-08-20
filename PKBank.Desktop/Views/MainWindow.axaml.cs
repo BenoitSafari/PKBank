@@ -149,7 +149,7 @@ public sealed partial class MainWindow : Window
     private void OnSlotViewClicked(object? sender, RoutedEventArgs e)
     {
         if (GetMenuSlot(sender) is { } slot)
-            ViewModel?.SelectSlot(slot);
+            ViewModel?.ViewSlot(slot);
     }
 
     private void OnSlotSetClicked(object? sender, RoutedEventArgs e)

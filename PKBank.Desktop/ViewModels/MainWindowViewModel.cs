@@ -154,8 +154,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             slot.Refresh();
         foreach (var slot in PartySlots)
             slot.Refresh();
-        if (SelectedSlot is { } selected)
-            SelectSlot(selected); // rebuild the editor so its sprite matches
+        Editor?.RefreshSprite();
     }
 
     /// <summary>Rebuilds all view-models from the current save (e.g. after a language change), keeping the selection.</summary>
@@ -174,7 +173,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             ? (prev.Slot < PartySlots.Count ? PartySlots[prev.Slot] : null)
             : (prev.Slot < BoxSlots.Count ? BoxSlots[prev.Slot] : null);
         if (match is not null)
-            SelectSlot(match);
+            ViewSlot(match);
     }
 
     public bool TrySaveTo(string path)
@@ -213,7 +212,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public void ViewSelected()
     {
         if (SelectedSlot is { } slot)
-            SelectSlot(slot);
+            ViewSlot(slot);
     }
 
     public void SetSelected()
@@ -228,15 +227,27 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             DeleteSlot(slot);
     }
 
+    /// <summary>Marks the slot as selected without touching the editor (left click).</summary>
     public void SelectSlot(SlotViewModel slot)
     {
-        if (_sav is not { } sav || _sources is not { } sources)
-            return;
-
         if (SelectedSlot is { } previous)
             previous.IsSelected = false;
         slot.IsSelected = true;
         SelectedSlot = slot;
+        NotifySlotActionStates();
+    }
+
+    /// <summary>Selects the slot and loads its Pokémon into the editor (View action).</summary>
+    public void ViewSlot(SlotViewModel slot)
+    {
+        SelectSlot(slot);
+        LoadEditor(slot);
+    }
+
+    private void LoadEditor(SlotViewModel slot)
+    {
+        if (_sav is not { } sav || _sources is not { } sources)
+            return;
 
         if (Editor is { } old)
         {
@@ -258,8 +269,6 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         sav.State.Edited = true;
         if (slot.IsParty)
             RefreshParty();
-        if (slot == SelectedSlot)
-            SelectSlot(slot); // rebuild the editor on the now-empty slot
         NotifySlotActionStates();
     }
 
@@ -276,7 +285,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         sav.State.Edited = true;
         if (slot.IsParty)
             RefreshParty();
-        if (slot == SelectedSlot)
+        if (slot == editor.Origin)
             editor.Revert(); // origin slot now holds the freshly written data
         NotifySlotActionStates();
         StatusMessage = "Editor content written to slot.";
@@ -287,7 +296,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
 
     private void OnEditorApplied()
     {
-        if (SelectedSlot is { IsParty: true })
+        if (Editor?.Origin is { IsParty: true })
             RefreshParty();
         NotifySlotActionStates();
         StatusMessage = "Changes written to slot. Use File → Save As… to export the save.";
@@ -373,7 +382,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         {
             if (!slot.IsEmpty)
             {
-                SelectSlot(slot);
+                ViewSlot(slot);
                 return;
             }
         }
@@ -381,13 +390,13 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         {
             if (!slot.IsEmpty)
             {
-                SelectSlot(slot);
+                ViewSlot(slot);
                 return;
             }
         }
         if (BoxSlots.Count > 0)
-            SelectSlot(BoxSlots[0]);
+            ViewSlot(BoxSlots[0]);
         else if (PartySlots.Count > 0)
-            SelectSlot(PartySlots[0]);
+            ViewSlot(PartySlots[0]);
     }
 }

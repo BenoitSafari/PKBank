@@ -43,10 +43,15 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     internal PKM Entity => _pk;
 
+    /// <summary>Slot this editor was opened from; <see cref="Apply"/> writes back to it.</summary>
+    public SlotViewModel Origin => _origin;
+
     /// <summary>Snapshot of the entity currently being edited (with pending changes).</summary>
     public PKM GetEntityClone() => _pk.Clone();
 
     public bool HasSpecies => _pk.Species != 0;
+
+    public void RefreshSprite() => OnPropertyChanged(nameof(Sprite));
 
     // Static data sources (per save file)
     public IReadOnlyList<ComboItem> SpeciesList => _sources.Species;
