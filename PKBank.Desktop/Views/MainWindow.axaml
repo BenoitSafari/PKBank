@@ -23,6 +23,9 @@
             <MenuItem Header="View" Click="OnSlotViewClicked" IsEnabled="{Binding !IsEmpty}"/>
             <MenuItem Header="Set" Tag="set" Click="OnSlotSetClicked"/>
             <Separator/>
+            <MenuItem Header="Import…" Click="OnSlotImportClicked"/>
+            <MenuItem Header="Export…" Click="OnSlotExportClicked" IsEnabled="{Binding !IsEmpty}"/>
+            <Separator/>
             <MenuItem Header="Delete" Click="OnSlotDeleteClicked" IsEnabled="{Binding !IsEmpty}"/>
           </ContextMenu>
         </Button.ContextMenu>
@@ -140,6 +143,8 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
           <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}"/>
           <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}"/>
+          <Button Content="Import" Click="OnImportSelectedClicked" IsEnabled="{Binding CanImportSelected}"/>
+          <Button Content="Export" Click="OnExportSelectedClicked" IsEnabled="{Binding CanExportSelected}"/>
           <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}"/>
         </StackPanel>
 

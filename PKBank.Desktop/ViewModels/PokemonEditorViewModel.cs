@@ -792,6 +792,20 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         Load();
     }
 
+    /// <summary>
+    /// Loads a Pokémon file straight into the editor (drop on the form), converted
+    /// to the save's format. The origin slot is untouched until Set is used.
+    /// </summary>
+    public bool TryLoadEntityFromFile(string path, out string message)
+    {
+        var pk = PkmFileService.TryLoadCompatible(path, _sav, out message);
+        if (pk is null)
+            return false;
+        _pk = pk;
+        Load();
+        return true;
+    }
+
     internal void OnStatsEdited()
     {
         if (!_loading)

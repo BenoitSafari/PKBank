@@ -7,6 +7,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using PKBank.Desktop.Services;
 using PKBank.Desktop.ViewModels;
 using PKHeX.Core;
 
@@ -184,24 +185,42 @@ public sealed partial class MainWindow : Window
 
     private void OnWindowDragOver(object? sender, DragEventArgs e)
     {
-        if (!e.DataTransfer.Contains(SlotDragFormat))
+        if (e.DataTransfer.Contains(SlotDragFormat))
         {
-            e.DragEffects = DragDropEffects.None;
+            e.DragEffects = DragDropEffects.Move;
+            if (_dragInProgress)
+                UpdateDragGhost(e.GetPosition(DragGhostLayer));
+            e.Handled = true;
             return;
         }
-        e.DragEffects = DragDropEffects.Move;
-        if (_dragInProgress)
-            UpdateDragGhost(e.GetPosition(DragGhostLayer));
-        e.Handled = true;
+        if (e.DataTransfer.Contains(DataFormat.File))
+        {
+            // External Pokémon file heading for a slot.
+            e.DragEffects = DragDropEffects.Copy;
+            e.Handled = true;
+            return;
+        }
+        e.DragEffects = DragDropEffects.None;
     }
 
     private void OnWindowDrop(object? sender, DragEventArgs e)
     {
-        if (e.DataTransfer.TryGetValue(SlotDragFormat) is not { } source)
+        if (e.DataTransfer.TryGetValue(SlotDragFormat) is { } source)
+        {
+            if (HitTestSlot(e.GetPosition(this)) is not { } target)
+                return;
+            ViewModel?.MoveOrSwapSlots(source, target);
+            e.Handled = true;
             return;
-        if (HitTestSlot(e.GetPosition(this)) is not { } target)
+        }
+
+        // External file dropped onto a slot: import it there.
+        var path = e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath();
+        if (path is null)
             return;
-        ViewModel?.MoveOrSwapSlots(source, target);
+        if (HitTestSlot(e.GetPosition(this)) is not { } slot)
+            return;
+        ViewModel?.TryImportFileToSlot(path, slot);
         e.Handled = true;
     }
 
@@ -344,6 +363,70 @@ public sealed partial class MainWindow : Window
     {
         if (GetMenuSlot(sender) is { } slot)
             ViewModel?.DeleteSlot(slot);
+    }
+
+    private async void OnSlotImportClicked(object? sender, RoutedEventArgs e)
+    {
+        if (GetMenuSlot(sender) is { } slot)
+            await ImportIntoSlotAsync(slot);
+    }
+
+    private async void OnSlotExportClicked(object? sender, RoutedEventArgs e)
+    {
+        if (GetMenuSlot(sender) is { } slot)
+            await ExportSlotAsync(slot);
+    }
+
+    private async void OnImportSelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.SelectedSlot is { } slot)
+            await ImportIntoSlotAsync(slot);
+    }
+
+    private async void OnExportSelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.SelectedSlot is { } slot)
+            await ExportSlotAsync(slot);
+    }
+
+    private async System.Threading.Tasks.Task ImportIntoSlotAsync(SlotViewModel slot)
+    {
+        if (ViewModel is not { SAV: { } sav } vm)
+            return;
+        var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
+        {
+            Title = "Import Pokémon File",
+            AllowMultiple = false,
+            FileTypeFilter = PkmFileService.GetPickerFileTypes(sav),
+        });
+        var path = files.FirstOrDefault()?.TryGetLocalPath();
+        if (path is not null)
+            vm.TryImportFileToSlot(path, slot);
+    }
+
+    private async System.Threading.Tasks.Task ExportSlotAsync(SlotViewModel slot)
+    {
+        if (ViewModel is not { } vm || slot.IsEmpty)
+            return;
+        var pk = slot.Read();
+        var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
+        {
+            Title = "Export Pokémon File",
+            SuggestedFileName = PathUtil.CleanFileName(pk.FileName),
+            ShowOverwritePrompt = true,
+        });
+        var path = file?.TryGetLocalPath();
+        if (path is null)
+            return;
+        try
+        {
+            PkmFileService.Export(pk, path);
+            vm.StatusMessage = $"Exported {System.IO.Path.GetFileName(path)}.";
+        }
+        catch (System.Exception ex)
+        {
+            vm.StatusMessage = $"Export failed: {ex.Message}";
+        }
     }
 
     private void OnDeleteClicked(object? sender, RoutedEventArgs e) => ViewModel?.DeleteSelected();

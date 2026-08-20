@@ -89,6 +89,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         OnPropertyChanged(nameof(CanSetToSlot));
         OnPropertyChanged(nameof(CanSetSelected));
         OnPropertyChanged(nameof(CanDeleteSelected));
+        OnPropertyChanged(nameof(CanImportSelected));
+        OnPropertyChanged(nameof(CanExportSelected));
     }
 
     private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -208,6 +210,34 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public bool CanViewSelected => SelectedSlot is { IsEmpty: false };
     public bool CanSetSelected => SelectedSlot is not null && CanSetToSlot;
     public bool CanDeleteSelected => SelectedSlot is { IsEmpty: false };
+    public bool CanImportSelected => SelectedSlot is not null;
+    public bool CanExportSelected => SelectedSlot is { IsEmpty: false };
+
+    /// <summary>
+    /// Imports a Pokémon file into the given slot, converting it to the save's
+    /// format when needed (Gen 3 file onto a Gen 4 save, etc.).
+    /// </summary>
+    public bool TryImportFileToSlot(string path, SlotViewModel slot)
+    {
+        if (_sav is not { } sav)
+            return false;
+        var pk = PkmFileService.TryLoadCompatible(path, sav, out var message);
+        StatusMessage = message;
+        if (pk is null)
+            return false;
+
+        if (slot.IsParty)
+            pk.ResetPartyStats();
+        pk.RefreshChecksum();
+        slot.Write(pk);
+        sav.State.Edited = true;
+        if (slot.IsParty)
+            RefreshParty();
+        if (Editor?.Origin == slot)
+            Editor.Revert(); // the displayed entity's slot changed underneath it
+        NotifySlotActionStates();
+        return true;
+    }
 
     public void ViewSelected()
     {
