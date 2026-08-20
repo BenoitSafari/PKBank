@@ -5,6 +5,15 @@
 
   <Application.Styles>
     <FluentTheme />
+
+    <!-- Scrollbars: always fully expanded (no hover-only thin state) and
+         reserving layout space instead of overlaying the content. -->
+    <Style Selector="ScrollViewer">
+      <Setter Property="AllowAutoHide" Value="False"/>
+    </Style>
+    <Style Selector="ScrollBar">
+      <Setter Property="AllowAutoHide" Value="False"/>
+    </Style>
   </Application.Styles>
 
 </Application>

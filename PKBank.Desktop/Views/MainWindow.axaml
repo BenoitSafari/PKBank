@@ -113,7 +113,7 @@
       </DockPanel>
     </Border>
 
-    <Grid ColumnDefinitions="460,*" Margin="10">
+    <Grid ColumnDefinitions="478,*" Margin="10">
 
       <!-- Pokémon editor (left) -->
       <Border Grid.Column="0"
