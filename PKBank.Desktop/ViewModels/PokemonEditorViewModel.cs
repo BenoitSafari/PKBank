@@ -313,11 +313,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         var source = _legalMoves.Display.DataSource;
         var info = _legalMoves.Info;
         var judge = _pk.Species != 0; // no entity, no verdict
+        var context = _pk.Context;
         var list = new MoveChoice[source.Count];
         for (int i = 0; i < source.Count; i++)
         {
             var item = source[i];
-            list[i] = new MoveChoice(item.Text, item.Value, judge && item.Value != 0 && !info.CanLearn((ushort)item.Value));
+            var illegal = judge && item.Value != 0 && !info.CanLearn((ushort)item.Value);
+            var type = item.Value == 0 ? (byte)0 : MoveInfo.GetType((ushort)item.Value, context);
+            list[i] = new MoveChoice(item.Text, item.Value, illegal, type);
         }
         MoveList = list;
         OnPropertyChanged(nameof(MoveList));

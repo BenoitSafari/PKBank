@@ -44,6 +44,12 @@ public static class SpriteService
         return Load(valid ? MiscValidResource : MiscWarnResource);
     }
 
+    /// <summary>Small square type icon (same art WinForms uses in the move selectors).</summary>
+    public static Bitmap? GetMoveTypeSprite(byte type)
+    {
+        return Load($"type.type_icon_s_{type:00}.png");
+    }
+
     public static Bitmap? GetBallSprite(byte ball)
     {
         return Load($"{BallResourcePrefix}{SpriteName.GetResourceStringBall(ball)}.png") ?? Load(BallResourceDefault);

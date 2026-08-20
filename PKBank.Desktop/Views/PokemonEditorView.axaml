@@ -10,11 +10,13 @@
     <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
       <TextBlock Text="{Binding Text}"/>
     </DataTemplate>
-    <!-- Move entry: red text + trailing "Illegal ✗" badge when the current entity cannot learn it -->
+    <!-- Move entry: type icon + name (red when the current entity cannot learn it) + trailing "Illegal ✗" badge -->
     <DataTemplate x:Key="MoveChoiceTemplate" DataType="vm:MoveChoice">
-      <Grid ColumnDefinitions="*,Auto">
-        <TextBlock Text="{Binding Text}" VerticalAlignment="Center" Classes.illegal="{Binding IsIllegal}"/>
-        <TextBlock Grid.Column="1" Text="Illegal ✗" Classes="illegal" FontWeight="SemiBold"
+      <Grid ColumnDefinitions="Auto,*,Auto">
+        <Image Source="{Binding TypeSprite}" Width="20" Height="20" Margin="0,0,7,0"
+               VerticalAlignment="Center" IsVisible="{Binding HasType}"/>
+        <TextBlock Grid.Column="1" Text="{Binding Text}" VerticalAlignment="Center" Classes.illegal="{Binding IsIllegal}"/>
+        <TextBlock Grid.Column="2" Text="Illegal ✗" Classes="illegal" FontWeight="SemiBold"
                    Margin="16,0,0,0" VerticalAlignment="Center" IsVisible="{Binding IsIllegal}"/>
       </Grid>
     </DataTemplate>

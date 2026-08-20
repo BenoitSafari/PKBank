@@ -35,6 +35,7 @@
     <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\ball\*.png" LogicalName="ball.%(Filename)%(Extension)" />
     <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\valid.png" LogicalName="misc.valid.png" />
     <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.PokeSprite\Resources\img\warn.png" LogicalName="misc.warn.png" />
+    <EmbeddedResource Include="..\packages\PKHeX\PKHeX.Drawing.Misc\Resources\img\types\square_s\*.png" LogicalName="type.%(Filename)%(Extension)" />
     <AvaloniaResource Include="..\packages\PKHeX\icon.png" Link="Assets\icon.png" />
   </ItemGroup>
 
