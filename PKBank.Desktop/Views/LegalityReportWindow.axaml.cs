@@ -21,8 +21,7 @@ public sealed partial class LegalityReportWindow : Window
         var la = new LegalityAnalysis(pk);
         VerdictText.Text = la.Valid ? "Legal ✓" : "Illegal ✗";
         VerdictText.Foreground = la.Valid ? Brushes.MediumSeaGreen : Brushes.IndianRed;
-        ReportText.Text = la.Report(verbose: false);
-        VerboseText.Text = la.Report(verbose: true);
+        ReportText.Text = la.Report(verbose: true);
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => Close();

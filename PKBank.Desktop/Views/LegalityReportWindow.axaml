@@ -16,15 +16,9 @@
       </StackPanel>
     </StackPanel>
 
-    <ScrollViewer MaxHeight="360">
-      <SelectableTextBlock x:Name="ReportText" TextWrapping="Wrap" FontFamily="monospace" FontSize="12"/>
+    <ScrollViewer MaxHeight="480">
+      <SelectableTextBlock x:Name="ReportText" TextWrapping="Wrap" FontFamily="monospace" FontSize="12" Margin="0,0,8,0"/>
     </ScrollViewer>
-
-    <Expander Header="Verbose">
-      <ScrollViewer MaxHeight="260">
-        <SelectableTextBlock x:Name="VerboseText" TextWrapping="Wrap" FontFamily="monospace" FontSize="11" Opacity="0.9"/>
-      </ScrollViewer>
-    </Expander>
 
     <Button Content="Close" HorizontalAlignment="Right" Click="OnCloseClicked"/>
 

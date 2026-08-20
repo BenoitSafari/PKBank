@@ -8,9 +8,6 @@ using PKHeX.Core;
 
 namespace PKBank.Desktop.ViewModels;
 
-/// <summary>
-/// Edits a working copy of the Pokémon in a given slot; <see cref="Apply"/> writes it back to the save.
-/// </summary>
 public sealed class PokemonEditorViewModel : ViewModelBase
 {
     private readonly SaveFile _sav;
@@ -43,27 +40,28 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     internal PKM Entity => _pk;
 
-    /// <summary>Slot this editor was opened from; <see cref="Apply"/> writes back to it.</summary>
+    /// <summary>
+    ///     Slot this editor was opened from.
+    /// </summary>
     public SlotViewModel Origin => _origin;
 
-    /// <summary>Snapshot of the entity currently being edited (with pending changes).</summary>
+    /// <summary>
+    ///     Snapshot of the entity currently being edited (with pending changes).
+    /// </summary>
     public PKM GetEntityClone() => _pk.Clone();
 
     public bool HasSpecies => _pk.Species != 0;
 
     public void RefreshSprite() => OnPropertyChanged(nameof(Sprite));
 
-    // Static data sources (per save file)
     public IReadOnlyList<ComboItem> SpeciesList => _sources.Species;
     public IReadOnlyList<ComboItem> ItemList => _sources.Items;
     public IReadOnlyList<ComboItem> MoveList => _sources.Moves;
     public IReadOnlyList<ComboItem> NatureList => _sources.Natures;
     public IReadOnlyList<ComboItem> BallList => _sources.Balls;
     public IReadOnlyList<ComboItem> LanguageList => _sources.Languages;
-
     public IReadOnlyList<ComboItem> AbilityList { get; private set; }
     public IReadOnlyList<string> FormList { get; private set; }
-
     public IReadOnlyList<StatRowViewModel> StatRows { get; }
 
     // Capability flags for hiding fields not present in the save's generation
@@ -85,17 +83,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         {
             if (_loading || value < 0 || value == _pk.Species)
                 return;
-
             if (_pk.Species == 0 && value > 0)
-            {
-                // Slot was empty: seed sane defaults from the save's trainer first.
                 EntityTemplates.TemplateFields(_pk, _sav);
-            }
 
             _pk.Species = (ushort)value;
             var pi = _pk.PersonalInfo;
             if (_pk.Form >= pi.FormCount)
                 _pk.Form = 0;
+
             _pk.Gender = _pk.GetSaneGender();
             if (!_pk.IsNicknamed)
                 _pk.ClearNickname();
@@ -254,7 +249,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public bool LegalityValid { get; private set; }
     public string LegalitySummary { get; private set; } = string.Empty;
 
-    // Column totals (mirrors the WinForms StatEditor total row, shown for Format >= 3)
+    // Stats column totals
     public bool ShowTotalsRow => _pk.Format >= 3;
     public string BST => _pk.PersonalInfo.GetBaseStatTotal().ToString("000");
     public IBrush BSTBrush => StatColors.BaseStatTotal(_pk.PersonalInfo.GetBaseStatTotal());
@@ -264,7 +259,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public bool EVTotalHasColor => EVTotalBrush is not null;
     public string EVRemainingTip => $"Remaining: {EffortValues.Max510 - _pk.EVTotal}";
 
-    /// <summary>Randomize IVs; Ctrl (max) fills flawless, Alt (clear) zeroes. Mirrors WinForms UpdateRandomIVs.</summary>
     public void RandomizeIVs(bool max, bool clear)
     {
         Span<int> ivs = stackalloc int[6];
@@ -293,7 +287,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         RefreshDerived();
     }
 
-    /// <summary>Randomize EVs; Ctrl (max) distributes maximum, Alt (clear) zeroes. Mirrors WinForms UpdateRandomEVs.</summary>
     public void RandomizeEVs(bool max, bool clear)
     {
         Span<int> evs = stackalloc int[6];
@@ -320,7 +313,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         RefreshDerived();
     }
 
-    /// <summary>Reloads the working copy from the origin slot (e.g. after Set wrote into it).</summary>
     public void Revert()
     {
         _pk = _origin.Read();
@@ -333,11 +325,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             RefreshDerived(refreshInputTexts: false); // keep the field being typed in untouched
     }
 
-    /// <summary>Normalizes the stat input fields (e.g. shows 0 for an emptied field on focus loss).</summary>
     public void RefreshStatInputTexts()
     {
-        foreach (var row in StatRows)
-            row.RefreshInputTexts();
+        foreach (var row in StatRows) row.RefreshInputTexts();
     }
 
     private void SetMove(int index, int value)
@@ -440,16 +430,19 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void RefreshLegality()
     {
+        const string validLabel = "Legal ✓";
+        const string invalidLabel = "Illegal ✗";
+
         if (_pk.Species == 0)
         {
             LegalityValid = true;
-            LegalitySummary = string.Empty;
+            LegalitySummary = validLabel;
         }
         else
         {
             var la = new LegalityAnalysis(_pk);
             LegalityValid = la.Valid;
-            LegalitySummary = la.Valid ? "Legal ✓" : "Illegal ✗";
+            LegalitySummary = la.Valid ? validLabel : invalidLabel;
         }
         OnPropertyChanged(nameof(LegalityValid));
         OnPropertyChanged(nameof(LegalitySummary));

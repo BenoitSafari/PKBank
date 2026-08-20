@@ -47,12 +47,18 @@
           </Border>
           <StackPanel VerticalAlignment="Center" Spacing="4">
             <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
-            <Button Padding="0" Background="Transparent" BorderThickness="0" Cursor="Hand"
-                    HorizontalAlignment="Left" Click="OnLegalityClicked"
-                    IsEnabled="{Binding HasSpecies}"
-                    ToolTip.Tip="Open the full legality report">
-              <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
-                         Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
+            <Button
+                HorizontalAlignment="Left"
+                Padding="8,4"
+                Click="OnLegalityClicked"
+                IsEnabled="{Binding HasSpecies}"
+                ToolTip.Tip="Open the full legality report"
+            >
+              <TextBlock
+                  Text="{Binding LegalitySummary}"
+                  FontWeight="SemiBold"
+                  Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"
+              />
             </Button>
           </StackPanel>
         </StackPanel>

@@ -6,12 +6,17 @@ using PKHeX.Drawing.PokeSprite;
 
 namespace PKBank.Desktop.Sprites;
 
-/// <summary>
-/// Loads Pokémon/item/ball sprites from the PNGs shared with PKHeX.Drawing.PokeSprite,
-/// embedded in this assembly under stable logical names (see the csproj).
-/// </summary>
 public static class SpriteService
 {
+    private const string MiscValidResource = "misc.valid.png";
+    private const string MiscWarnResource = "misc.warn.png";
+    private const string ItemResourcePrefix = "item.bitem";
+    private const string BallResourcePrefix = "ball.";
+    private const string BallResourceDefault = "ball._ball4.png";
+    private const string PkmResourcePrefix = "pkm.b";
+    private const string PkmResourceUnknown = "pkm.b_unknown.png";
+    private const string PkmResourceEgg = "pkm.b_egg.png";
+
     private static readonly Assembly Assembly = typeof(SpriteService).Assembly;
     private static readonly ConcurrentDictionary<string, Bitmap?> Cache = new();
 
@@ -20,20 +25,29 @@ public static class SpriteService
         if (pk.Species == 0)
             return null;
         if (pk is { IsEgg: true })
-            return Load("pkm.b_egg.png");
+            return Load(PkmResourceEgg);
 
         var formArg = pk is IFormArgument fa ? fa.FormArgument : 0;
         var name = SpriteName.GetResourceStringSprite(pk.Species, pk.Form, pk.Gender, formArg, pk.Context, pk.IsShiny);
-        return Load($"pkm.b{name}.png")
-               ?? Load($"pkm.b_{pk.Species}.png") // fall back to base form
-               ?? Load("pkm.b_unknown.png");
+        return Load($"{PkmResourcePrefix}{name}.png")
+               ?? Load($"{PkmResourcePrefix}_{pk.Species}.png") // fall back to base form
+               ?? Load(PkmResourceUnknown);
     }
 
-    public static Bitmap? GetItemSprite(int item) => item <= 0 ? null : Load($"item.bitem_{item}.png");
+    public static Bitmap? GetItemSprite(int item)
+    {
+        return item <= 0 ? null : Load($"{ItemResourcePrefix}_{item}.png");
+    }
 
-    public static Bitmap? GetLegalityOverlay(bool valid) => Load(valid ? "misc.valid.png" : "misc.warn.png");
+    public static Bitmap? GetLegalityOverlay(bool valid)
+    {
+        return Load(valid ? MiscValidResource : MiscWarnResource);
+    }
 
-    public static Bitmap? GetBallSprite(byte ball) => Load($"ball.{SpriteName.GetResourceStringBall(ball)}.png") ?? Load("ball._ball4.png");
+    public static Bitmap? GetBallSprite(byte ball)
+    {
+        return Load($"{BallResourcePrefix}{SpriteName.GetResourceStringBall(ball)}.png") ?? Load(BallResourceDefault);
+    }
 
     private static Bitmap? Load(string logicalName) => Cache.GetOrAdd(logicalName, static name =>
     {
