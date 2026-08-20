@@ -24,6 +24,7 @@ dotnet run --project PKBank.Desktop -- /path/to/main
 - Rich hover preview on slots: ball icon, ability, level, IVs/EVs, nature, legality verdict, encounter and PID type
 - Ball sprites shown in the ball selector (closed and dropdown) and hover preview
 - Pokémon editor: species, form, nickname, level, nature, ability, held item, ball, language, gender, shiny, moves, IVs/EVs with live computed stats
+- Stats panel parity with WinForms: color-graded base stats and BST, per-stat IV/EV caps, IV/EV column totals with legality grading (510 cap), randomize buttons (click random · Ctrl max · Alt clear)
 - Live legality check with full report
 - QR code window (button next to the Pokémon name), same payload as PKHeX Windows
 - Export the modified save (File → Save As…)

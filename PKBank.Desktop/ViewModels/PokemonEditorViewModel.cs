@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using PKBank.Desktop.Services;
 using PKBank.Desktop.Sprites;
 using PKHeX.Core;
 
@@ -255,6 +257,59 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public string LegalitySummary { get; private set; } = string.Empty;
     public string LegalityReport { get; private set; } = string.Empty;
 
+    // Column totals (mirrors the WinForms StatEditor total row, shown for Format >= 3)
+    public bool ShowTotalsRow => _pk.Format >= 3;
+    public string BST => _pk.PersonalInfo.GetBaseStatTotal().ToString("000");
+    public IBrush BSTBrush => StatColors.BaseStatTotal(_pk.PersonalInfo.GetBaseStatTotal());
+    public int IVTotal => _pk.IVTotal;
+    public int EVTotal => _pk.EVTotal;
+    public IBrush? EVTotalBrush => StatColors.GetEVTotalBrush(_pk.EVTotal);
+    public IBrush? EVTotalTextBrush => EVTotalBrush is null ? null : Brushes.Black;
+    public string EVRemainingTip => $"Remaining: {EffortValues.Max510 - _pk.EVTotal}";
+
+    /// <summary>Randomize IVs; Ctrl (max) fills flawless, Alt (clear) zeroes. Mirrors WinForms UpdateRandomIVs.</summary>
+    public void RandomizeIVs(bool max, bool clear)
+    {
+        Span<int> ivs = stackalloc int[6];
+        if (max)
+        {
+            ivs.Fill(_pk.MaxIV);
+            _pk.SetIVs(ivs);
+        }
+        else if (clear)
+        {
+            _pk.SetIVs(ivs);
+        }
+        else
+        {
+            var la = new LegalityAnalysis(_pk);
+            var enc = la.EncounterMatch;
+            if (enc is IFlawlessIVCount { FlawlessIVCount: not 0 } fc)
+                _pk.SetRandomIVs(ivs, fc.FlawlessIVCount);
+            else if (enc is IFixedIVSet { IVs: { IsSpecified: true } iv })
+                _pk.SetRandomIVs(ivs, iv);
+            else if (enc is IFlawlessIVCountConditional c && c.GetFlawlessIVCount(_pk) is { Max: not 0 } x)
+                _pk.SetRandomIVs(ivs, Util.Rand.Next(x.Min, x.Max + 1));
+            else
+                _pk.SetRandomIVs(ivs);
+        }
+        RefreshDerived();
+    }
+
+    /// <summary>Randomize EVs; Ctrl (max) distributes maximum, Alt (clear) zeroes. Mirrors WinForms UpdateRandomEVs.</summary>
+    public void RandomizeEVs(bool max, bool clear)
+    {
+        Span<int> evs = stackalloc int[6];
+        if (max)
+            EffortValues.SetMax(evs, _pk);
+        else if (clear)
+            EffortValues.Clear(evs);
+        else
+            EffortValues.SetRandom(evs, _pk.Format);
+        _pk.SetEVs(evs);
+        RefreshDerived();
+    }
+
     public void CycleGender()
     {
         if (!CanCycleGender)
@@ -374,6 +429,15 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             _pk.GetStats(_pk.PersonalInfo).AsSpan().CopyTo(stats);
         foreach (var row in StatRows)
             row.RefreshAll(stats);
+
+        OnPropertyChanged(nameof(ShowTotalsRow));
+        OnPropertyChanged(nameof(BST));
+        OnPropertyChanged(nameof(BSTBrush));
+        OnPropertyChanged(nameof(IVTotal));
+        OnPropertyChanged(nameof(EVTotal));
+        OnPropertyChanged(nameof(EVTotalBrush));
+        OnPropertyChanged(nameof(EVTotalTextBrush));
+        OnPropertyChanged(nameof(EVRemainingTip));
     }
 
     private void RefreshLegality()

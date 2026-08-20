@@ -1,10 +1,12 @@
 using System;
+using Avalonia.Media;
+using PKBank.Desktop.Services;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.ViewModels;
 
 /// <summary>
-/// One stat line (IV/EV/computed total) of the Pokémon editor.
+/// One stat line (base stat, IV, EV, computed total) of the Pokémon editor.
 /// <see cref="PkIndex"/> uses the internal PKM stat order (0 HP, 1 Atk, 2 Def, 3 Spe, 4 SpA, 5 SpD).
 /// </summary>
 public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, int pkIndex) : ViewModelBase
@@ -14,27 +16,39 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
     public string Name { get; } = name;
     public int PkIndex { get; } = pkIndex;
 
-    public int IV
+    public string Base => owner.Entity.PersonalInfo.GetBaseStatValue(PkIndex).ToString("000");
+    public IBrush BaseBrush => StatColors.BaseStat(owner.Entity.PersonalInfo.GetBaseStatValue(PkIndex));
+
+    public int MaxIV => owner.Entity.MaxIV;
+    public int MaxEV => owner.Entity.MaxEV;
+
+    // Nullable so an emptied NumericUpDown pushes null instead of crashing the
+    // binding; null and negative values normalize back to 0.
+    public int? IV
     {
         get => GetIV();
         set
         {
-            SetIV(Math.Clamp(value, 0, owner.Entity.MaxIV));
+            SetIV(Math.Clamp(value ?? 0, 0, MaxIV));
             OnPropertyChanged();
             owner.OnStatsEdited();
         }
     }
 
-    public int EV
+    public int? EV
     {
         get => GetEV();
         set
         {
-            SetEV(Math.Clamp(value, 0, owner.Entity.MaxEV));
+            SetEV(Math.Clamp(value ?? 0, 0, MaxEV));
             OnPropertyChanged();
+            OnPropertyChanged(nameof(EVBrush));
             owner.OnStatsEdited();
         }
     }
+
+    /// <summary>Highlights the EV field when the per-stat cap is reached.</summary>
+    public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() >= MaxEV ? StatColors.EVFieldMaxed : null;
 
     public ushort Stat { get => _stat; private set => SetField(ref _stat, value); }
 
@@ -43,6 +57,11 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         Stat = stats[PkIndex];
         OnPropertyChanged(nameof(IV));
         OnPropertyChanged(nameof(EV));
+        OnPropertyChanged(nameof(EVBrush));
+        OnPropertyChanged(nameof(Base));
+        OnPropertyChanged(nameof(BaseBrush));
+        OnPropertyChanged(nameof(MaxIV));
+        OnPropertyChanged(nameof(MaxEV));
     }
 
     private int GetIV() => PkIndex switch
