@@ -160,6 +160,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             if (_loading || value < 0 || value == _pk.Form)
                 return;
             _pk.Form = (byte)value;
+            OnPropertyChanged(nameof(SelectedForm));
             RebuildAbilityList();
             RefreshAll();
         }
@@ -177,6 +178,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             OnPropertyChanged(nameof(PIDText));
             OnPropertyChanged(nameof(GenderSymbol));
             OnPropertyChanged(nameof(AbilityIndex));
+            OnPropertyChanged(nameof(SelectedAbility));
             RefreshDerived();
         }
     }
@@ -190,7 +192,60 @@ public sealed class PokemonEditorViewModel : ViewModelBase
                 return;
             _pk.SetAbilityIndex(value);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(SelectedAbility));
             RefreshDerived();
+        }
+    }
+
+    // Ability and Form combos are bound by item, not by index: a ComboBox resets its
+    // SelectedIndex to -1 while swapping ItemsSource and swallows the write-back, so an
+    // index binding loses the selection whenever the list is rebuilt (e.g. on slot change).
+    // Binding the item lets the control re-resolve the selection against the new list.
+    // Ability entries cannot be bound by value either, since two entries can share the
+    // same ability id (e.g. "Volt Absorb (1)" and "Volt Absorb (2)").
+    public ComboItem? SelectedAbility
+    {
+        get
+        {
+            var list = AbilityList;
+            var index = AbilityIndex;
+            return (uint)index < (uint)list.Count ? list[index] : null;
+        }
+        set
+        {
+            if (_loading || value is null)
+                return;
+            var list = AbilityList;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (!ReferenceEquals(list[i], value) && list[i] != value)
+                    continue;
+                AbilityIndex = i;
+                return;
+            }
+        }
+    }
+
+    public string? SelectedForm
+    {
+        get
+        {
+            var list = FormList;
+            var index = Form;
+            return (uint)index < (uint)list.Count ? list[index] : null;
+        }
+        set
+        {
+            if (_loading || value is null)
+                return;
+            var list = FormList;
+            for (int i = 0; i < list.Count; i++)
+            {
+                if (list[i] != value)
+                    continue;
+                Form = i;
+                return;
+            }
         }
     }
 
@@ -299,6 +354,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(GenderSymbol));
         OnPropertyChanged(nameof(Nature));
         OnPropertyChanged(nameof(AbilityIndex));
+        OnPropertyChanged(nameof(SelectedAbility));
+        OnPropertyChanged(nameof(SelectedForm));
     }
 
     // ----- Egg & Pokérus ---------------------------------------------------
@@ -571,6 +628,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         AbilityList = _pk.Format >= 3 ? _sources.GetAbilityList(_pk.PersonalInfo) : [];
         OnPropertyChanged(nameof(AbilityList));
+        OnPropertyChanged(nameof(SelectedAbility));
     }
 
     private void RebuildFormList()
@@ -579,6 +637,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         FormList = FormConverter.GetFormList(_pk.Species, strings.types, strings.forms, GameInfo.GenderSymbolUnicode, _pk.Context);
         OnPropertyChanged(nameof(FormList));
         OnPropertyChanged(nameof(HasForms));
+        OnPropertyChanged(nameof(SelectedForm));
     }
 
     private void RefreshAll()
@@ -592,6 +651,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(Form));
         OnPropertyChanged(nameof(Nature));
         OnPropertyChanged(nameof(AbilityIndex));
+        OnPropertyChanged(nameof(SelectedAbility));
+        OnPropertyChanged(nameof(SelectedForm));
         OnPropertyChanged(nameof(HeldItem));
         OnPropertyChanged(nameof(Ball));
         OnPropertyChanged(nameof(Language));

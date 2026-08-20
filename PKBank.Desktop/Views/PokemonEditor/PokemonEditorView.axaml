@@ -61,7 +61,7 @@
                 <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Form" IsVisible="{Binding HasForms}"/>
                 <ComboBox Grid.Row="2" Grid.Column="1" Classes="field" IsVisible="{Binding HasForms}"
                           ItemsSource="{Binding FormList}"
-                          SelectedIndex="{Binding Form, Mode=TwoWay}"/>
+                          SelectedItem="{Binding SelectedForm, Mode=TwoWay}"/>
 
                 <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Nickname"/>
                 <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*,Auto">
@@ -84,7 +84,7 @@
                 <ComboBox Grid.Row="6" Grid.Column="1" Classes="field" IsVisible="{Binding HasAbility}"
                           ItemsSource="{Binding AbilityList}"
                           ItemTemplate="{StaticResource ComboItemTemplate}"
-                          SelectedIndex="{Binding AbilityIndex, Mode=TwoWay}"/>
+                          SelectedItem="{Binding SelectedAbility, Mode=TwoWay}"/>
 
                 <TextBlock Grid.Row="7" Grid.Column="0" Classes="fieldLabel" Text="Held Item" IsVisible="{Binding HasItem}"/>
                 <ComboBox Grid.Row="7" Grid.Column="1" Classes="field" IsVisible="{Binding HasItem}"
