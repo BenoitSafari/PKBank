@@ -10,6 +10,14 @@
     <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
       <TextBlock Text="{Binding Text}"/>
     </DataTemplate>
+    <!-- Move entry: red text + trailing "Illegal ✗" badge when the current entity cannot learn it -->
+    <DataTemplate x:Key="MoveChoiceTemplate" DataType="vm:MoveChoice">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock Text="{Binding Text}" VerticalAlignment="Center" Classes.illegal="{Binding IsIllegal}"/>
+        <TextBlock Grid.Column="1" Text="Illegal ✗" Classes="illegal" FontWeight="SemiBold"
+                   Margin="16,0,0,0" VerticalAlignment="Center" IsVisible="{Binding IsIllegal}"/>
+      </Grid>
+    </DataTemplate>
   </UserControl.Resources>
 
   <UserControl.Styles>
@@ -33,6 +41,10 @@
     <!-- Graded EV total: black text over the colored grade background -->
     <Style Selector="TextBlock.graded">
       <Setter Property="Foreground" Value="Black"/>
+    </Style>
+    <!-- Illegal move indication (same accent as the legality badge) -->
+    <Style Selector="TextBlock.illegal">
+      <Setter Property="Foreground" Value="IndianRed"/>
     </Style>
   </UserControl.Styles>
 
@@ -144,13 +156,17 @@
       <!-- Moves -->
       <TextBlock Text="Moves" FontWeight="SemiBold"/>
       <StackPanel Spacing="2">
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                  DropDownOpened="OnMoveDropDownOpened"
                   SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"/>
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                  DropDownOpened="OnMoveDropDownOpened"
                   SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"/>
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                  DropDownOpened="OnMoveDropDownOpened"
                   SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"/>
-        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource ComboItemTemplate}"
+        <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+                  DropDownOpened="OnMoveDropDownOpened"
                   SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"/>
       </StackPanel>
 

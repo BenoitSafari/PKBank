@@ -1,3 +1,4 @@
+using System;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -19,6 +20,12 @@ public sealed partial class PokemonEditorView : UserControl
     }
 
     private void CaptureModifiers(object? sender, PointerPressedEventArgs e) => _pressModifiers = e.KeyModifiers;
+
+    private void OnMoveDropDownOpened(object? sender, EventArgs e)
+    {
+        if (DataContext is PokemonEditorViewModel vm)
+            vm.EnsureMoveChoicesOrdered(); // re-sort legal-first if legality changed
+    }
 
     private void OnStatInputLostFocus(object? sender, RoutedEventArgs e)
     {

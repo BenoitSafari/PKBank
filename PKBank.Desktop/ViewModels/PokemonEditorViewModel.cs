@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using Avalonia.Threading;
 using PKBank.Desktop.Services;
 using PKBank.Desktop.Sprites;
 using PKHeX.Core;
@@ -13,6 +14,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private readonly SaveFile _sav;
     private readonly FilteredGameDataSource _sources;
     private readonly SlotViewModel _origin;
+    private readonly LegalMoveSource<ComboItem> _legalMoves = new(new LegalMoveComboSource());
     private PKM _pk;
     private bool _loading;
 
@@ -22,6 +24,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         _sources = sources;
         _origin = origin;
         _pk = origin.Read();
+        _legalMoves.ChangeMoveSource(sources.Moves);
 
         StatRows =
         [
@@ -56,7 +59,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public IReadOnlyList<ComboItem> SpeciesList => _sources.Species;
     public IReadOnlyList<ComboItem> ItemList => _sources.Items;
-    public IReadOnlyList<ComboItem> MoveList => _sources.Moves;
+    public IReadOnlyList<MoveChoice> MoveList { get; private set; } = [];
     public IReadOnlyList<ComboItem> NatureList => _sources.Natures;
     public IReadOnlyList<ComboItem> BallList => _sources.Balls;
     public IReadOnlyList<ComboItem> LanguageList => _sources.Languages;
@@ -245,6 +248,44 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public int Move2 { get => _pk.GetMove(1); set => SetMove(1, value); }
     public int Move3 { get => _pk.GetMove(2); set => SetMove(2, value); }
     public int Move4 { get => _pk.GetMove(3); set => SetMove(3, value); }
+
+    /// <summary>
+    /// Reorders the move selectors (legal moves first, WinForms-style) when the
+    /// dropdown opens and the legality state changed since the last ordering.
+    /// </summary>
+    public void EnsureMoveChoicesOrdered()
+    {
+        // Index 0 is used as the shared "is ordered" flag for the single list;
+        // LegalMoveComboSource clears all flags whenever legality changes.
+        if (_legalMoves.Display.GetIsMoveBoxOrdered(0))
+            return;
+        RebuildMoveChoices();
+        _legalMoves.Display.SetIsMoveBoxOrdered(0, true);
+    }
+
+    private void RebuildMoveChoices()
+    {
+        var source = _legalMoves.Display.DataSource;
+        var info = _legalMoves.Info;
+        var judge = _pk.Species != 0; // no entity, no verdict
+        var list = new MoveChoice[source.Count];
+        for (int i = 0; i < source.Count; i++)
+        {
+            var item = source[i];
+            list[i] = new MoveChoice(item.Text, item.Value, judge && item.Value != 0 && !info.CanLearn((ushort)item.Value));
+        }
+        MoveList = list;
+        OnPropertyChanged(nameof(MoveList));
+        // The ComboBoxes drop their selection while swapping ItemsSource; push the
+        // selected values back once they have processed the new list.
+        Dispatcher.UIThread.Post(() =>
+        {
+            OnPropertyChanged(nameof(Move1));
+            OnPropertyChanged(nameof(Move2));
+            OnPropertyChanged(nameof(Move3));
+            OnPropertyChanged(nameof(Move4));
+        });
+    }
 
     public bool LegalityValid { get; private set; }
     public string LegalitySummary { get; private set; } = string.Empty;
@@ -443,7 +484,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             var la = new LegalityAnalysis(_pk);
             LegalityValid = la.Valid;
             LegalitySummary = la.Valid ? validLabel : invalidLabel;
+            _legalMoves.ReloadMoves(la); // clears the ordered flags when legality changed
         }
+        if (MoveList.Count == 0)
+            EnsureMoveChoicesOrdered(); // initial population
         OnPropertyChanged(nameof(LegalityValid));
         OnPropertyChanged(nameof(LegalitySummary));
     }
