@@ -22,6 +22,18 @@ public sealed partial class PokemonEditorView : UserControl
 
     private void CaptureModifiers(object? sender, PointerPressedEventArgs e) => _pressModifiers = e.KeyModifiers;
 
+    private void OnRerollPidClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is PokemonEditorViewModel vm)
+            vm.RerollPid();
+    }
+
+    private void OnPidLostFocus(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is PokemonEditorViewModel vm)
+            vm.NormalizePidText(); // snap partial input back to the stored 8-digit value
+    }
+
     private void OnMoveDropDownOpened(object? sender, EventArgs e)
     {
         if (DataContext is PokemonEditorViewModel vm)

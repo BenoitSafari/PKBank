@@ -79,30 +79,42 @@
   <ScrollViewer>
     <StackPanel Spacing="10" Margin="0,0,8,0">
 
-      <!-- Header: sprite + summary + QR -->
-      <Grid ColumnDefinitions="Auto,*,Auto">
-        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
-          <Border Background="{DynamicResource SystemControlBackgroundListLowBrush}" CornerRadius="6" Padding="6">
-            <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
-          </Border>
-          <StackPanel VerticalAlignment="Center" Spacing="4">
-            <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
-            <Button
-                HorizontalAlignment="Left"
-                Padding="8,4"
-                Click="OnLegalityClicked"
-                IsEnabled="{Binding HasSpecies}"
-                ToolTip.Tip="Open the full legality report"
-            >
-              <TextBlock
-                  Text="{Binding LegalitySummary}"
-                  FontWeight="SemiBold"
-                  Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"
-              />
-            </Button>
+      <!-- Header: sprite + name/PID block, legality badge + QR at the top right -->
+      <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+        <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundListLowBrush}"
+                CornerRadius="6" Padding="6" VerticalAlignment="Top">
+          <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="12,0,8,0" VerticalAlignment="Center" Spacing="5">
+          <TextBlock Text="{Binding Nickname}" FontSize="18" FontWeight="SemiBold"/>
+          <StackPanel Orientation="Horizontal" Spacing="10">
+            <CheckBox Content="Shiny" IsChecked="{Binding IsShiny, Mode=TwoWay}"/>
+            <Button Content="{Binding GenderSymbol}" MinWidth="42"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    IsEnabled="{Binding CanCycleGender}" Command="{Binding CycleGender}"
+                    ToolTip.Tip="Toggle gender (rerolls a valid PID)"/>
+            <CheckBox Content="Egg" IsChecked="{Binding IsEgg, Mode=TwoWay}" IsVisible="{Binding HasEgg}"/>
+          </StackPanel>
+          <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasPID}">
+            <TextBlock Text="PID" VerticalAlignment="Center" Opacity="0.85" Margin="0,0,2,0"/>
+            <TextBox Text="{Binding PIDText, Mode=TwoWay}" MaxLength="8" Width="102"
+                     HorizontalContentAlignment="Center" FontFamily="monospace"
+                     LostFocus="OnPidLostFocus"/>
+            <Button Content="♻" MinWidth="34"
+                    HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                    Click="OnRerollPidClicked"
+                    ToolTip.Tip="Generate a new valid PID"/>
           </StackPanel>
         </StackPanel>
-        <Button Grid.Column="2" Content="QR" VerticalAlignment="Top" MinWidth="42"
+        <Button Grid.Column="2" Padding="8,4" Margin="0,0,8,0" VerticalAlignment="Top"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                Click="OnLegalityClicked" IsEnabled="{Binding HasSpecies}"
+                ToolTip.Tip="Open the full legality report">
+          <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+                     Foreground="{Binding LegalityValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
+        </Button>
+        <Button Grid.Column="3" Content="QR" VerticalAlignment="Top" MinWidth="42"
+                HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
                 IsEnabled="{Binding HasSpecies}" Click="OnQrClicked"
                 ToolTip.Tip="Show the QR code for this Pokémon"/>
       </Grid>
@@ -129,13 +141,8 @@
         </Grid>
 
         <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Level"/>
-        <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="120,Auto,Auto,Auto">
-          <NumericUpDown Grid.Column="0" Minimum="1" Maximum="100" Increment="1"
-                         Value="{Binding Level, Mode=TwoWay}" Margin="0,2"/>
-          <CheckBox Grid.Column="1" Content="Shiny" Margin="12,0,0,0" IsChecked="{Binding IsShiny, Mode=TwoWay}"/>
-          <Button Grid.Column="2" Content="{Binding GenderSymbol}" Margin="12,0,0,0" MinWidth="42"
-                  IsEnabled="{Binding CanCycleGender}" Command="{Binding CycleGender}"/>
-        </Grid>
+        <NumericUpDown Grid.Row="3" Grid.Column="1" Minimum="1" Maximum="100" Increment="1"
+                       Value="{Binding Level, Mode=TwoWay}" Margin="0,2" Width="120" HorizontalAlignment="Left"/>
 
         <TextBlock Grid.Row="4" Grid.Column="0" Classes="fieldLabel" Text="Nature" IsVisible="{Binding HasNature}"/>
         <ComboBox Grid.Row="4" Grid.Column="1" Classes="field" IsVisible="{Binding HasNature}"
@@ -179,6 +186,11 @@
                   ItemTemplate="{StaticResource ComboItemTemplate}"
                   SelectedValueBinding="{ReflectionBinding Value}"
                   SelectedValue="{Binding Language, Mode=TwoWay}"/>
+
+        <TextBlock Grid.Row="9" Grid.Column="0" Classes="fieldLabel" Text="Pokérus" IsVisible="{Binding HasPokerus}"/>
+        <ComboBox Grid.Row="9" Grid.Column="1" Classes="field" IsVisible="{Binding HasPokerus}"
+                  ItemsSource="{x:Static vm:PokemonEditorViewModel.PokerusOptions}"
+                  SelectedIndex="{Binding PokerusStatus, Mode=TwoWay}"/>
       </Grid>
 
       <!-- Moves -->

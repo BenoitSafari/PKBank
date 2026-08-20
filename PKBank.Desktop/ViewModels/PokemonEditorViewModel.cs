@@ -172,8 +172,11 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         {
             if (_loading || value < 0 || value == (int)_pk.Nature)
                 return;
-            _pk.SetNature((Nature)value);
+            _pk.SetNature((Nature)value); // Gen 3/4: rerolls a PID matching the nature
             OnPropertyChanged();
+            OnPropertyChanged(nameof(PIDText));
+            OnPropertyChanged(nameof(GenderSymbol));
+            OnPropertyChanged(nameof(AbilityIndex));
             RefreshDerived();
         }
     }
@@ -237,13 +240,118 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         {
             if (_loading || value == _pk.IsShiny)
                 return;
+            // CommonEdits.SetIsShiny keeps the PID valid: SetShiny rerolls the
+            // PID/shiny relation, SetUnshiny rerolls via SetPIDGender.
             _pk.SetIsShiny(value);
             OnPropertyChanged();
+            OnPropertyChanged(nameof(PIDText));
+            OnPropertyChanged(nameof(GenderSymbol));
             RefreshDerived();
         }
     }
 
     public string GenderSymbol => _pk.Gender switch { 0 => "♂", 1 => "♀", _ => "—" };
+
+    // ----- PID -------------------------------------------------------------
+
+    public bool HasPID => _pk.Format >= 3;
+
+    /// <summary>
+    /// PID as 8 hex digits. Manual edits parse leniently while typing; derived
+    /// attributes (nature/gender/ability/shiny on old formats) refresh live.
+    /// </summary>
+    public string PIDText
+    {
+        get => _pk.PID.ToString("X8");
+        set
+        {
+            if (_loading)
+                return;
+            var text = value?.Trim() ?? string.Empty;
+            if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var pid) || pid == _pk.PID)
+                return;
+            _pk.PID = pid;
+            NotifyPidDerived();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    /// <summary>Re-displays the normalized 8-digit value (called on focus loss).</summary>
+    public void NormalizePidText() => OnPropertyChanged(nameof(PIDText));
+
+    /// <summary>
+    /// Generates a fresh valid PID like WinForms' reroll button: keeps species,
+    /// gender, nature and form consistent, never lands on an accidental shiny.
+    /// </summary>
+    public void RerollPid()
+    {
+        if (_pk.Format < 3)
+            return;
+        _pk.SetPIDGender(_pk.Gender);
+        OnPropertyChanged(nameof(PIDText));
+        NotifyPidDerived();
+        RefreshDerived(refreshInputTexts: false);
+    }
+
+    private void NotifyPidDerived()
+    {
+        OnPropertyChanged(nameof(IsShiny));
+        OnPropertyChanged(nameof(GenderSymbol));
+        OnPropertyChanged(nameof(Nature));
+        OnPropertyChanged(nameof(AbilityIndex));
+    }
+
+    // ----- Egg & Pokérus ---------------------------------------------------
+
+    public bool HasEgg => _pk.Format >= 2;
+
+    public bool IsEgg
+    {
+        get => _pk.IsEgg;
+        set
+        {
+            if (_loading || value == _pk.IsEgg)
+                return;
+            _pk.IsEgg = value;
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
+
+    public bool HasPokerus => _pk.Format >= 2;
+
+    public static readonly IReadOnlyList<string> PokerusOptions = ["None", "Infected", "Cured"];
+
+    /// <summary>0 none, 1 infected, 2 cured — mapped onto PokerusStrain/PokerusDays like WinForms.</summary>
+    public int PokerusStatus
+    {
+        get => _pk.IsPokerusCured ? 2 : _pk.IsPokerusInfected ? 1 : 0;
+        set
+        {
+            if (_loading || value < 0 || value == PokerusStatus)
+                return;
+            switch (value)
+            {
+                case 0:
+                    _pk.PokerusStrain = 0;
+                    _pk.PokerusDays = 0;
+                    break;
+                case 1:
+                    if (_pk.PokerusStrain == 0)
+                        _pk.PokerusStrain = 1;
+                    if (_pk.PokerusDays == 0)
+                        _pk.PokerusDays = 1;
+                    break;
+                default:
+                    if (_pk.PokerusStrain == 0)
+                        _pk.PokerusStrain = 1;
+                    _pk.PokerusDays = 0;
+                    break;
+            }
+            OnPropertyChanged();
+            RefreshDerived(refreshInputTexts: false);
+        }
+    }
 
     public int Move1 { get => _pk.GetMove(0); set => SetMove(0, value); }
     public int Move2 { get => _pk.GetMove(1); set => SetMove(1, value); }
@@ -405,11 +513,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         if (!CanCycleGender)
             return;
         var gender = (byte)(_pk.Gender == 0 ? 1 : 0);
-        if (_pk.Format <= 5)
-            _pk.SetPIDGender(gender);
-        else
-            _pk.Gender = gender;
+        // WinForms behavior: set the gender, then reroll a valid PID for it
+        // (on Gen 3-5 the PID encodes the gender; SetPIDGender also keeps the
+        // nature/form consistent and avoids accidental shinies).
+        _pk.Gender = gender;
+        _pk.SetPIDGender(gender);
         OnPropertyChanged(nameof(GenderSymbol));
+        OnPropertyChanged(nameof(PIDText));
+        OnPropertyChanged(nameof(IsShiny));
         RefreshDerived();
     }
 
@@ -509,6 +620,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(HasLanguage));
         OnPropertyChanged(nameof(CanCycleGender));
         OnPropertyChanged(nameof(HasSpecies));
+        OnPropertyChanged(nameof(HasPID));
+        OnPropertyChanged(nameof(PIDText));
+        OnPropertyChanged(nameof(HasEgg));
+        OnPropertyChanged(nameof(IsEgg));
+        OnPropertyChanged(nameof(HasPokerus));
+        OnPropertyChanged(nameof(PokerusStatus));
         RefreshDerived();
     }
 
