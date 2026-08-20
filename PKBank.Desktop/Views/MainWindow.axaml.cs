@@ -277,6 +277,12 @@ public sealed partial class MainWindow : Window
     private async void OnAboutClicked(object? sender, RoutedEventArgs e)
         => await new AboutWindow().ShowDialog(this);
 
+    private async void OnPokedexClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { SAV: { HasPokeDex: true } sav })
+            await new Pokedex.PokedexEditorWindow(sav).ShowDialog(this);
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (ViewModel is not { } vm)

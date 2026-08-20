@@ -105,6 +105,9 @@
         <Separator/>
         <MenuItem Header="E_xit" Click="OnExitClicked"/>
       </MenuItem>
+      <MenuItem Header="_Edit">
+        <MenuItem Header="_Pokédex…" Click="OnPokedexClicked" IsEnabled="{Binding CanEditPokedex}"/>
+      </MenuItem>
       <MenuItem Header="_Options">
         <MenuItem x:Name="LanguageMenu" Header="_Language"/>
         <Separator/>

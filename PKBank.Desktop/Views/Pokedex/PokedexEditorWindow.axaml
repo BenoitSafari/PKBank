@@ -1,0 +1,63 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PKBank.Desktop.ViewModels"
+        x:Class="PKBank.Desktop.Views.Pokedex.PokedexEditorWindow"
+        Title="Pokédex Editor"
+        Width="520" Height="640"
+        MinWidth="440" MinHeight="420"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <DataTemplate x:Key="SeenTemplate" DataType="vm:PokedexEntryViewModel">
+            <CheckBox Content="{Binding Label}" IsChecked="{Binding Seen, Mode=TwoWay}"/>
+        </DataTemplate>
+        <DataTemplate x:Key="CaughtTemplate" DataType="vm:PokedexEntryViewModel">
+            <CheckBox Content="{Binding Label}" IsChecked="{Binding Caught, Mode=TwoWay}"/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Window.Styles>
+        <!-- The rows are plain checkbox lists: keep them compact, no selection chrome. -->
+        <Style Selector="ListBox > ListBoxItem">
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="MinHeight" Value="30"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid RowDefinitions="Auto,*,Auto,Auto" ColumnDefinitions="*,12,*" Margin="14">
+
+        <TextBlock Grid.Row="0" Grid.Column="0" Text="Seen:" Margin="0,0,0,6"/>
+        <TextBlock Grid.Row="0" Grid.Column="2" Text="Caught:" Margin="0,0,0,6"/>
+
+        <Border Grid.Row="1" Grid.Column="0"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6">
+            <ListBox x:Name="SeenList" ItemTemplate="{StaticResource SeenTemplate}"/>
+        </Border>
+        <Border Grid.Row="1" Grid.Column="2"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6">
+            <ListBox x:Name="CaughtList" ItemTemplate="{StaticResource CaughtTemplate}"/>
+        </Border>
+
+        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" ColumnDefinitions="*,12,*"
+              RowDefinitions="Auto,Auto" Margin="0,10,0,0">
+            <Button Grid.Row="0" Grid.Column="0" Content="All Seen" HorizontalAlignment="Stretch"
+                    Margin="0,0,0,6" Click="OnAllSeenClicked"/>
+            <Button Grid.Row="0" Grid.Column="2" Content="All Caught" HorizontalAlignment="Stretch"
+                    Margin="0,0,0,6" Click="OnAllCaughtClicked"/>
+            <Button Grid.Row="1" Grid.Column="0" Content="None Seen" HorizontalAlignment="Stretch"
+                    Click="OnNoneSeenClicked"/>
+            <Button Grid.Row="1" Grid.Column="2" Content="None Caught" HorizontalAlignment="Stretch"
+                    Click="OnNoneCaughtClicked"/>
+        </Grid>
+
+        <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="3" Orientation="Horizontal"
+                    HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+            <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked"/>
+            <Button Content="Save" MinWidth="96" Click="OnSaveClicked"/>
+        </StackPanel>
+
+    </Grid>
+
+</Window>
