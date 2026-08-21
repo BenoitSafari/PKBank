@@ -277,6 +277,15 @@ public sealed partial class MainWindow : Window
     private async void OnAboutClicked(object? sender, RoutedEventArgs e)
         => await new AboutWindow().ShowDialog(this);
 
+    private async void OnTrainerClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { SAV: { } sav })
+        {
+            await new Trainer.TrainerEditorWindow(sav).ShowDialog(this);
+            ViewModel.RefreshTrainerInfo();
+        }
+    }
+
     private async void OnPokedexClicked(object? sender, RoutedEventArgs e)
     {
         if (ViewModel is { SAV: { HasPokeDex: true } sav })

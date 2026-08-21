@@ -106,6 +106,7 @@
         <MenuItem Header="E_xit" Click="OnExitClicked"/>
       </MenuItem>
       <MenuItem Header="_Edit">
+        <MenuItem Header="_Trainer…" Click="OnTrainerClicked" IsEnabled="{Binding CanEditTrainer}"/>
         <MenuItem Header="_Pokédex…" Click="OnPokedexClicked" IsEnabled="{Binding CanEditPokedex}"/>
         <MenuItem Header="_Inventory…" Click="OnInventoryClicked" IsEnabled="{Binding CanEditInventory}"/>
       </MenuItem>
