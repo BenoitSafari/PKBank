@@ -39,6 +39,33 @@ public static class SpriteService
         return item <= 0 ? null : Load($"{ItemResourcePrefix}_{item}.png");
     }
 
+    /// <summary>Replicates WinForms' MysteryGiftSpriteUtil: entity species, item, or unknown.</summary>
+    public static Bitmap? GetMysteryGiftSprite(MysteryGift gift)
+    {
+        if (gift.IsEmpty)
+            return null;
+
+        if (gift.IsEntity)
+        {
+            if (gift.IsEgg)
+                return Load(PkmResourceEgg);
+            var name = SpriteName.GetResourceStringSprite(gift.Species, gift.Form, gift.Gender, 0, gift.Context, gift.IsShiny);
+            return Load($"{PkmResourcePrefix}{name}.png")
+                   ?? Load($"{PkmResourcePrefix}_{gift.Species}.png") // fall back to base form
+                   ?? Load(PkmResourceUnknown);
+        }
+
+        if (gift.IsItem)
+        {
+            var item = (ushort)gift.ItemID;
+            if (ItemStorage7USUM.GetCrystalHeld(item, out var value))
+                item = value;
+            return GetItemSprite(item) ?? Load(PkmResourceUnknown);
+        }
+
+        return Load(PkmResourceUnknown);
+    }
+
     public static Bitmap? GetLegalityOverlay(bool valid)
     {
         return Load(valid ? MiscValidResource : MiscWarnResource);

@@ -26,6 +26,16 @@ public sealed partial class QRCodeWindow : Window
         LinesControl.ItemsSource = display;
     }
 
+    public QRCodeWindow(DataMysteryGift gift) : this()
+    {
+        QrImage.Source = GenerateQr(QRMessageUtil.GetMessage(gift));
+        SpriteImage.Source = SpriteService.GetMysteryGiftSprite(gift);
+        LegalityImage.Source = null;
+
+        string[] lines = [$"({gift.Type})", .. gift.GetDescription(), "PKBank.Desktop Wonder Card"];
+        LinesControl.ItemsSource = lines;
+    }
+
     private static Bitmap GenerateQr(string message)
     {
         using var data = QRCodeGenerator.GenerateQrCode(message, QRCodeGenerator.ECCLevel.Q);

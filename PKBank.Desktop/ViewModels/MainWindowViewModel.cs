@@ -40,6 +40,10 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public SaveFile? SAV => _sav;
     public bool HasSave => _sav is not null;
     public bool CanEditTrainer => _sav is not null;
+    public bool CanEditMysteryGift => _sav is IMysteryGiftStorageProvider;
+    public bool IsGen3Save => _sav is SAV3;
+    public bool IsGen3FRLGE => _sav is SAV3FRLG or SAV3E;
+    public bool IsGen3RSE => _sav is SAV3RS or SAV3E;
     public bool CanEditPokedex => _sav?.HasPokeDex == true;
     public bool CanEditInventory => _sav?.Inventory.Pouches.Count > 0;
     public AppSettings Settings { get; } = settings;
@@ -501,6 +505,10 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         StatusMessage = "Save loaded.";
         OnPropertyChanged(nameof(HasSave));
         OnPropertyChanged(nameof(CanEditTrainer));
+        OnPropertyChanged(nameof(CanEditMysteryGift));
+        OnPropertyChanged(nameof(IsGen3Save));
+        OnPropertyChanged(nameof(IsGen3FRLGE));
+        OnPropertyChanged(nameof(IsGen3RSE));
         OnPropertyChanged(nameof(CanEditPokedex));
         OnPropertyChanged(nameof(CanEditInventory));
         OnPropertyChanged(nameof(HasBox));

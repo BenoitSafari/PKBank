@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -284,6 +285,39 @@ public sealed partial class MainWindow : Window
             await new Trainer.TrainerEditorWindow(sav).ShowDialog(this);
             ViewModel.RefreshTrainerInfo();
         }
+    }
+
+    private async void OnMysteryGiftClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { SAV: IMysteryGiftStorageProvider and SaveFile sav })
+            await new Events.MysteryGiftEditorWindow(sav).ShowDialog(this);
+    }
+
+    private async void OnWC3Clicked(object? sender, RoutedEventArgs e)
+        => await OpenGen3EventAsync(Events.Gen3EventFileKind.WC3);
+
+    private async void OnME3Clicked(object? sender, RoutedEventArgs e)
+        => await OpenGen3EventAsync(Events.Gen3EventFileKind.ME3);
+
+    private async void OnECTClicked(object? sender, RoutedEventArgs e)
+        => await OpenGen3EventAsync(Events.Gen3EventFileKind.ECT);
+
+    private async void OnECBClicked(object? sender, RoutedEventArgs e)
+        => await OpenGen3EventAsync(Events.Gen3EventFileKind.ECB);
+
+    private async void OnWN3Clicked(object? sender, RoutedEventArgs e)
+        => await OpenGen3EventAsync(Events.Gen3EventFileKind.WN3);
+
+    private async Task OpenGen3EventAsync(Events.Gen3EventFileKind kind)
+    {
+        if (ViewModel is { SAV: SAV3 sav })
+            await new Events.Gen3EventFileWindow(sav, kind).ShowDialog(this);
+    }
+
+    private async void OnRecordMixingClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { SAV: SAV3 sav } && sav.LargeBlock is ISaveBlock3LargeHoenn)
+            await new Events.RecordMixingWindow(sav).ShowDialog(this);
     }
 
     private async void OnPokedexClicked(object? sender, RoutedEventArgs e)

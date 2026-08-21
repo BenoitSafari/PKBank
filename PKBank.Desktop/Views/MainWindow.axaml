@@ -109,6 +109,17 @@
         <MenuItem Header="_Trainer…" Click="OnTrainerClicked" IsEnabled="{Binding CanEditTrainer}"/>
         <MenuItem Header="_Pokédex…" Click="OnPokedexClicked" IsEnabled="{Binding CanEditPokedex}"/>
         <MenuItem Header="_Inventory…" Click="OnInventoryClicked" IsEnabled="{Binding CanEditInventory}"/>
+        <Separator/>
+        <MenuItem Header="_Mystery Gift…" Click="OnMysteryGiftClicked" IsEnabled="{Binding CanEditMysteryGift}"/>
+        <MenuItem Header="_Gen 3 Events" IsEnabled="{Binding IsGen3Save}">
+          <MenuItem Header="Mystery Gift (WC3)…" Click="OnWC3Clicked" IsEnabled="{Binding IsGen3FRLGE}"/>
+          <MenuItem Header="Mystery Event (ME3)…" Click="OnME3Clicked" IsEnabled="{Binding IsGen3RSE}"/>
+          <MenuItem Header="e-Card Trainer (ECT)…" Click="OnECTClicked"/>
+          <MenuItem Header="e-Card Berry (ECB)…" Click="OnECBClicked"/>
+          <MenuItem Header="Wonder News (WN3)…" Click="OnWN3Clicked" IsEnabled="{Binding IsGen3FRLGE}"/>
+          <Separator/>
+          <MenuItem Header="Record Mixing…" Click="OnRecordMixingClicked" IsEnabled="{Binding IsGen3RSE}"/>
+        </MenuItem>
       </MenuItem>
       <MenuItem Header="_Options">
         <MenuItem x:Name="LanguageMenu" Header="_Language"/>
