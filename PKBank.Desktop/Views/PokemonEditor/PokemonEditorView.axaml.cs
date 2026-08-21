@@ -42,6 +42,8 @@ public sealed partial class PokemonEditorView : UserControl
         var path = e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath();
         if (path is null)
             return;
+        if (SaveFileDrop.IsSaveFile(path))
+            return; // save files load at the window level, not into the editor
         vm.TryLoadEntityFromFile(path, out var message);
         if (MainViewModel is { } main)
             main.StatusMessage = message;

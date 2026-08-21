@@ -220,7 +220,7 @@ public sealed partial class MainWindow : Window
         e.DragEffects = DragDropEffects.None;
     }
 
-    private void OnWindowDrop(object? sender, DragEventArgs e)
+    private async void OnWindowDrop(object? sender, DragEventArgs e)
     {
         if (e.DataTransfer.Contains(SlotDragFormats.Multi))
             return; // multi-selection drags only mean something outside the app
@@ -234,14 +234,41 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        // External file dropped onto a slot: import it there.
         var path = e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath();
         if (path is null)
             return;
+
+        // A dropped save file replaces the loaded one, wherever it lands.
+        if (SaveFileDrop.TryGetSaveFile(path, out var dropped))
+        {
+            e.Handled = true;
+            await LoadDroppedSaveAsync(dropped, path);
+            return;
+        }
+
+        // External Pokémon file dropped onto a slot: import it there.
         if (HitTestSlot(e.GetPosition(this)) is not { } slot)
             return;
         ViewModel?.TryImportFileToSlot(path, slot);
         e.Handled = true;
+    }
+
+    private async Task LoadDroppedSaveAsync(SaveFile dropped, string path)
+    {
+        if (ViewModel is not { } vm)
+            return;
+
+        if (vm.SAV is { } current)
+        {
+            var name = Path.GetFileName(path);
+            var message = current.State.Edited
+                ? $"The currently loaded save has unsaved changes.\n\nLoading “{name}” will discard them. Continue?"
+                : $"Replace the currently loaded save with “{name}”?";
+            if (!await ConfirmationWindow.ShowAsync(this, "Load Save File", message, "Load"))
+                return;
+        }
+
+        vm.LoadSaveFromPath(dropped, path);
     }
 
     private SlotViewModel? HitTestSlot(Point position)

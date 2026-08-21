@@ -121,13 +121,19 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
                 StatusMessage = $"Not a recognized save file: {Path.GetFileName(path)}";
                 return;
             }
-            _savePath = path;
-            LoadSave(sav);
+            LoadSaveFromPath(sav, path);
         }
         catch (Exception ex)
         {
             StatusMessage = $"Failed to load save: {ex.Message}";
         }
+    }
+
+    /// <summary>Loads an already-parsed save file, remembering where it came from.</summary>
+    public void LoadSaveFromPath(SaveFile sav, string path)
+    {
+        _savePath = path;
+        LoadSave(sav);
     }
 
     public void NewBlank(GameVersion version)
