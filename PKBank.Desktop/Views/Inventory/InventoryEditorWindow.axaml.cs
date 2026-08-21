@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
@@ -40,20 +39,9 @@ public sealed partial class InventoryEditorWindow : Window
 
         PouchTabs.ItemsSource = _pouches;
         PouchTabs.SelectedIndex = 0;
-        PouchTabs.SelectionChanged += (_, _) => SyncGiveCountMax();
-        SyncGiveCountMax();
     }
 
     private InventoryPouchViewModel? CurrentPouch => PouchTabs.SelectedItem as InventoryPouchViewModel;
-
-    private void SyncGiveCountMax()
-    {
-        if (CurrentPouch is not { } pouch)
-            return;
-        GiveCount.Maximum = pouch.MaxCount;
-        // WinForms default: just shy of the cap (999 -> 995).
-        GiveCount.Value = Math.Max(1, pouch.MaxCount - 4);
-    }
 
     private void OnSortClicked(object? sender, RoutedEventArgs e)
     {
@@ -62,16 +50,6 @@ public sealed partial class InventoryEditorWindow : Window
         ApplyRowsToPouch(pouch);
         pouch.Pouch.SortByName(_itemNames);
         pouch.Pouch.SortByEmpty();
-        pouch.ReloadFromPouch();
-    }
-
-    private void OnGiveAllClicked(object? sender, RoutedEventArgs e)
-    {
-        if (CurrentPouch is not { } pouch || _bag is not { } bag)
-            return;
-        ApplyRowsToPouch(pouch);
-        var count = Math.Clamp((int)(GiveCount.Value ?? 1), 1, pouch.MaxCount);
-        pouch.Pouch.GiveAllItems(bag, pouch.Pouch.GetAllItems(), count);
         pouch.ReloadFromPouch();
     }
 
