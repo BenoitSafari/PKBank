@@ -266,11 +266,11 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     /// <summary>Set requires an entity in the editor, whatever the target slot is.</summary>
     public bool CanSetToSlot => Editor is { HasSpecies: true };
 
-    // View/Set/Import are single-slot actions; Delete/Export also work on a multi-selection.
+    // View/Set are single-slot actions; Import/Delete/Export also work on a multi-selection.
     public bool CanViewSelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
     public bool CanSetSelected => !IsMultiSelection && SelectedSlot is not null && CanSetToSlot;
     public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
-    public bool CanImportSelected => !IsMultiSelection && SelectedSlot is not null;
+    public bool CanImportSelected => SelectedSlot is not null;
     public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
 
     /// <summary>
@@ -298,6 +298,64 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             Editor.Revert(); // the displayed entity's slot changed underneath it
         NotifySlotActionStates();
         return true;
+    }
+
+    /// <summary>Selected slots in display order: the party bar first, then each open box panel.</summary>
+    public IReadOnlyList<SlotViewModel> GetSelectedSlotsInDisplayOrder()
+    {
+        var selected = new HashSet<SlotViewModel>(_selectedSlots);
+        var result = new List<SlotViewModel>(_selectedSlots.Count);
+        foreach (var slot in PartySlots)
+        {
+            if (selected.Contains(slot))
+                result.Add(slot);
+        }
+        foreach (var panel in OpenBoxes)
+        {
+            foreach (var slot in panel.Slots)
+            {
+                if (selected.Contains(slot))
+                    result.Add(slot);
+            }
+        }
+        return result;
+    }
+
+    /// <summary>Imports files into the current selection in display order (see <see cref="ImportFilesToSlots"/>).</summary>
+    public void ImportFilesToSelection(IReadOnlyList<string> paths)
+        => ImportFilesToSlots(paths, GetSelectedSlotsInDisplayOrder());
+
+    /// <summary>
+    /// Multi-import: the first file goes into the first target slot and so on;
+    /// files beyond the target count are ignored. Two panels showing the same
+    /// box expose the same physical slot twice — it only receives one file.
+    /// </summary>
+    public void ImportFilesToSlots(IReadOnlyList<string> paths, IReadOnlyList<SlotViewModel> targets)
+    {
+        if (paths.Count == 0 || targets.Count == 0)
+            return;
+
+        var seen = new HashSet<(bool IsParty, int Box, int Slot)>();
+        var unique = new List<SlotViewModel>(targets.Count);
+        foreach (var target in targets)
+        {
+            if (seen.Add((target.IsParty, target.Box, target.Slot)))
+                unique.Add(target);
+        }
+
+        int count = Math.Min(unique.Count, paths.Count);
+        int imported = 0;
+        for (int i = 0; i < count; i++)
+        {
+            if (TryImportFileToSlot(paths[i], unique[i]))
+                imported++;
+        }
+
+        if (paths.Count > 1 || unique.Count > 1)
+        {
+            var ignored = paths.Count > unique.Count ? $" ({paths.Count - unique.Count} extra file(s) ignored)" : string.Empty;
+            StatusMessage = $"Imported {imported} of {count} file(s) into the selected slots{ignored}.";
+        }
     }
 
     public void ViewSelected()
@@ -379,13 +437,9 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             return;
         }
 
-        // Ranges only span a single area: the party bar or one box panel.
-        var list = slot.IsParty ? PartySlots : OpenBoxes.FirstOrDefault(p => p.Slots.Contains(slot))?.Slots;
-        if (list is null)
-        {
-            SelectSlot(slot);
-            return;
-        }
+        // Box ranges span the open panels in display order, so Shift+click can
+        // select across boxes; party ranges stay within the party bar.
+        var list = slot.IsParty ? PartySlots.ToList() : OpenBoxes.SelectMany(p => p.Slots).ToList();
         int from = list.IndexOf(anchor);
         int to = list.IndexOf(slot);
         if (from < 0 || to < 0)

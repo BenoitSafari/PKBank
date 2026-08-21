@@ -230,9 +230,19 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        var path = e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath();
-        if (path is null)
+        var paths = e.DataTransfer.TryGetFiles()?.Select(f => f.TryGetLocalPath()).OfType<string>().ToArray() ?? [];
+        if (paths.Length == 0)
             return;
+
+        // Several files dropped: import them into the selected slots in display order.
+        if (paths.Length > 1)
+        {
+            e.Handled = true;
+            ViewModel?.ImportFilesToSelection(paths);
+            return;
+        }
+
+        var path = paths[0];
 
         // A dropped save file replaces the loaded one, wherever it lands.
         if (SaveFileDrop.TryGetSaveFile(path, out var dropped))
@@ -428,7 +438,7 @@ public sealed partial class MainWindow : Window
     {
         if (sender is not ContextMenu { DataContext: SlotViewModel slot } menu || ViewModel is not { } vm)
             return;
-        // View/Set/Import are single-slot actions; Export/Delete follow the
+        // View/Set are single-slot actions; Import/Export/Delete follow the
         // action targets (whole selection when the clicked slot is part of it).
         var multi = vm.IsMultiSelection;
         var targets = vm.GetActionTargets(slot);
@@ -441,7 +451,7 @@ public sealed partial class MainWindow : Window
             {
                 "view" => !multi && !slot.IsEmpty,
                 "set" => !multi && vm.CanSetToSlot,
-                "import" => !multi,
+                "import" => true,
                 "export" => anyOccupied,
                 "delete" => anyOccupied,
                 _ => menuItem.IsEnabled,
@@ -472,8 +482,11 @@ public sealed partial class MainWindow : Window
 
     private async void OnSlotImportClicked(object? sender, RoutedEventArgs e)
     {
-        if (GetMenuSlot(sender) is { } slot)
-            await ImportIntoSlotAsync(slot);
+        if (GetMenuSlot(sender) is not { } slot || ViewModel is not { } vm)
+            return;
+        // Whole selection when the clicked slot is part of it, else just that slot.
+        var targets = vm.GetActionTargets(slot).Count > 1 ? vm.GetSelectedSlotsInDisplayOrder() : [slot];
+        await ImportIntoSlotsAsync(targets);
     }
 
     private async void OnSlotExportClicked(object? sender, RoutedEventArgs e)
@@ -484,8 +497,8 @@ public sealed partial class MainWindow : Window
 
     private async void OnImportSelectedClicked(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel?.SelectedSlot is { } slot)
-            await ImportIntoSlotAsync(slot);
+        if (ViewModel is { SelectedSlot: not null } vm)
+            await ImportIntoSlotsAsync(vm.GetSelectedSlotsInDisplayOrder());
     }
 
     private async void OnExportSelectedClicked(object? sender, RoutedEventArgs e)
@@ -494,19 +507,23 @@ public sealed partial class MainWindow : Window
             await ExportSlotsAsync(vm.SelectedSlots);
     }
 
-    private async System.Threading.Tasks.Task ImportIntoSlotAsync(SlotViewModel slot)
+    private async Task ImportIntoSlotsAsync(IReadOnlyList<SlotViewModel> targets)
     {
-        if (ViewModel is not { SAV: { } sav } vm)
+        if (ViewModel is not { SAV: { } sav } vm || targets.Count == 0)
             return;
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = "Import Pokémon File",
-            AllowMultiple = false,
+            Title = targets.Count > 1 ? $"Import Pokémon Files ({targets.Count} slots selected)" : "Import Pokémon File",
+            AllowMultiple = targets.Count > 1,
             FileTypeFilter = PkmFileService.GetPickerFileTypes(sav),
         });
-        var path = files.FirstOrDefault()?.TryGetLocalPath();
-        if (path is not null)
-            vm.TryImportFileToSlot(path, slot);
+        var paths = files.Select(f => f.TryGetLocalPath()).OfType<string>().ToArray();
+        if (paths.Length == 0)
+            return;
+        if (targets.Count == 1)
+            vm.TryImportFileToSlot(paths[0], targets[0]);
+        else
+            vm.ImportFilesToSlots(paths, targets);
     }
 
     private async System.Threading.Tasks.Task ExportSlotsAsync(IReadOnlyList<SlotViewModel> slots)
