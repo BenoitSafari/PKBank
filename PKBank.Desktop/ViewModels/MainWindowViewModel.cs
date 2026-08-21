@@ -46,7 +46,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public bool IsGen3RSE => _sav is SAV3RS or SAV3E;
     public bool CanEditPokedex => _sav?.HasPokeDex == true;
     public bool CanEditInventory => _sav?.Inventory.Pouches.Count > 0;
-    public bool CanEditRoamer => _sav is SAV3 or SAV6XY;
+    public bool CanEditRoamer => _sav is SAV3 or SAV4 or SAV6XY;
     public AppSettings Settings { get; } = settings;
 
     /// <summary>At most this many box panels can be open side by side.</summary>
@@ -592,6 +592,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
                 {
                     name = null; // blank saves may lack the underlying blocks
                 }
+                name = DisplayText.Sanitize(name ?? string.Empty);
                 names[i] = string.IsNullOrWhiteSpace(name) ? BoxDetailNameExtensions.GetDefaultBoxName(i) : name;
             }
             BoxNames = names;

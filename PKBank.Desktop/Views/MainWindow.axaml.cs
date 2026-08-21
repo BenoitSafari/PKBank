@@ -321,6 +321,8 @@ public sealed partial class MainWindow : Window
     {
         if (ViewModel?.SAV is SAV3 s3)
             await new Roamer.Roamer3EditorWindow(s3).ShowDialog(this);
+        else if (ViewModel?.SAV is SAV4 s4)
+            await new Roamer.Roamer4EditorWindow(s4).ShowDialog(this);
         else if (ViewModel?.SAV is SAV6XY xy)
             await new Roamer.Roamer6EditorWindow(xy).ShowDialog(this);
     }

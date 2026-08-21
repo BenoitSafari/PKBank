@@ -106,7 +106,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public string Nickname
     {
-        get => _pk.Nickname;
+        get => DisplayText.Sanitize(_pk.Nickname);
         set
         {
             if (_loading || value == _pk.Nickname)
@@ -414,7 +414,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public string OTName
     {
-        get => _pk.OriginalTrainerName;
+        get => DisplayText.Sanitize(_pk.OriginalTrainerName);
         set
         {
             var name = value ?? string.Empty;
