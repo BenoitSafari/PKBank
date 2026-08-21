@@ -40,6 +40,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public SaveFile? SAV => _sav;
     public bool HasSave => _sav is not null;
     public bool CanEditPokedex => _sav?.HasPokeDex == true;
+    public bool CanEditInventory => _sav?.Inventory.Pouches.Count > 0;
     public AppSettings Settings { get; } = settings;
 
     public ObservableCollection<SlotViewModel> BoxSlots { get; } = [];
@@ -508,6 +509,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         StatusMessage = "Save loaded.";
         OnPropertyChanged(nameof(HasSave));
         OnPropertyChanged(nameof(CanEditPokedex));
+        OnPropertyChanged(nameof(CanEditInventory));
         OnPropertyChanged(nameof(HasBox));
         OnPropertyChanged(nameof(HasParty));
         OnPropertyChanged(nameof(WindowTitle));

@@ -107,6 +107,7 @@
       </MenuItem>
       <MenuItem Header="_Edit">
         <MenuItem Header="_Pokédex…" Click="OnPokedexClicked" IsEnabled="{Binding CanEditPokedex}"/>
+        <MenuItem Header="_Inventory…" Click="OnInventoryClicked" IsEnabled="{Binding CanEditInventory}"/>
       </MenuItem>
       <MenuItem Header="_Options">
         <MenuItem x:Name="LanguageMenu" Header="_Language"/>

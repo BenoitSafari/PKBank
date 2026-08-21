@@ -283,6 +283,12 @@ public sealed partial class MainWindow : Window
             await new Pokedex.PokedexEditorWindow(sav).ShowDialog(this);
     }
 
+    private async void OnInventoryClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { SAV: { } sav } && sav.Inventory.Pouches.Count > 0)
+            await new Inventory.InventoryEditorWindow(sav).ShowDialog(this);
+    }
+
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (ViewModel is not { } vm)
