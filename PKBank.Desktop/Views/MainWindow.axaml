@@ -109,6 +109,7 @@
         <MenuItem Header="_Trainer…" Click="OnTrainerClicked" IsEnabled="{Binding CanEditTrainer}"/>
         <MenuItem Header="_Pokédex…" Click="OnPokedexClicked" IsEnabled="{Binding CanEditPokedex}"/>
         <MenuItem Header="_Inventory…" Click="OnInventoryClicked" IsEnabled="{Binding CanEditInventory}"/>
+        <MenuItem Header="_Roamer…" Click="OnRoamerClicked" IsEnabled="{Binding CanEditRoamer}"/>
         <Separator/>
         <MenuItem Header="_Mystery Gift…" Click="OnMysteryGiftClicked" IsEnabled="{Binding CanEditMysteryGift}"/>
         <MenuItem Header="_Gen 3 Events" IsEnabled="{Binding IsGen3Save}">

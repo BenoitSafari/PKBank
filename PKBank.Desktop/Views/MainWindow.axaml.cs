@@ -317,6 +317,14 @@ public sealed partial class MainWindow : Window
         }
     }
 
+    private async void OnRoamerClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel?.SAV is SAV3 s3)
+            await new Roamer.Roamer3EditorWindow(s3).ShowDialog(this);
+        else if (ViewModel?.SAV is SAV6XY xy)
+            await new Roamer.Roamer6EditorWindow(xy).ShowDialog(this);
+    }
+
     private async void OnMysteryGiftClicked(object? sender, RoutedEventArgs e)
     {
         if (ViewModel is { SAV: IMysteryGiftStorageProvider and SaveFile sav })
