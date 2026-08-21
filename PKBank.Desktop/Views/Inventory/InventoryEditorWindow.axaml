@@ -14,6 +14,15 @@
         </DataTemplate>
     </Window.Resources>
 
+    <Window.Styles>
+        <!-- Fluent tab headers default to 24px text; match the button text size. -->
+        <Style Selector="TabItem">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,6"/>
+            <Setter Property="MinHeight" Value="32"/>
+        </Style>
+    </Window.Styles>
+
     <Grid RowDefinitions="*,Auto,Auto" Margin="14">
 
         <TabControl x:Name="PouchTabs" Grid.Row="0">
@@ -27,7 +36,7 @@
                     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                             BorderThickness="1" CornerRadius="6" Margin="0,6,0,0">
                         <Grid RowDefinitions="Auto,*">
-                            <Grid ColumnDefinitions="*,96" Margin="10,8,26,4">
+                            <Grid ColumnDefinitions="*,120" Margin="10,8,26,4">
                                 <TextBlock Grid.Column="0" Text="Item" Opacity="0.7" FontSize="12"/>
                                 <TextBlock Grid.Column="1" Text="Count" Opacity="0.7" FontSize="12" HorizontalAlignment="Center"/>
                             </Grid>
@@ -39,7 +48,7 @@
                                 </ListBox.Styles>
                                 <ListBox.ItemTemplate>
                                     <DataTemplate DataType="vm:InventoryItemViewModel">
-                                        <Grid ColumnDefinitions="*,96">
+                                        <Grid ColumnDefinitions="*,120">
                                             <ComboBox Grid.Column="0" HorizontalAlignment="Stretch" Margin="0,2,8,2"
                                                       ItemsSource="{Binding $parent[ListBox].((vm:InventoryPouchViewModel)DataContext).ItemChoices}"
                                                       ItemTemplate="{StaticResource ItemChoiceTemplate}"
