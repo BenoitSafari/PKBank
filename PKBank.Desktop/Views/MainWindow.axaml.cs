@@ -34,11 +34,7 @@ public sealed partial class MainWindow : Window
         DataContextChanged += (_, _) =>
         {
             if (ViewModel is { } vm)
-            {
-                vm.PropertyChanged += OnViewModelPropertyChanged;
-                SyncBoxCombo(vm);
                 BuildLanguageMenu(vm);
-            }
         };
         InitializeSlotDragDrop();
     }
@@ -49,7 +45,7 @@ public sealed partial class MainWindow : Window
 
     private void InitializeSlotDragDrop()
     {
-        foreach (var area in new Control[] { BoxItems, PartyItems })
+        foreach (var area in new Control[] { BoxPanelsItems, PartyItems })
         {
             area.AddHandler(PointerPressedEvent, OnSlotAreaPointerPressed, RoutingStrategies.Tunnel);
             area.AddHandler(PointerMovedEvent, OnSlotAreaPointerMoved, RoutingStrategies.Tunnel);
@@ -258,12 +254,9 @@ public sealed partial class MainWindow : Window
         if (ViewModel is not { } vm)
             return;
 
-        if (vm.SAV is { } current)
+        if (vm.SAV is { State.Edited: true })
         {
-            var name = Path.GetFileName(path);
-            var message = current.State.Edited
-                ? $"The currently loaded save has unsaved changes.\n\nLoading “{name}” will discard them. Continue?"
-                : $"Replace the currently loaded save with “{name}”?";
+            var message = $"The currently loaded save has unsaved changes.\n\nLoading “{Path.GetFileName(path)}” will discard them. Continue?";
             if (!await ConfirmationWindow.ShowAsync(this, "Load Save File", message, "Load"))
                 return;
         }
@@ -359,26 +352,19 @@ public sealed partial class MainWindow : Window
             await new Inventory.InventoryEditorWindow(sav).ShowDialog(this);
     }
 
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (ViewModel is not { } vm)
-            return;
-        if (e.PropertyName == nameof(MainWindowViewModel.BoxNames))
-            SyncBoxCombo(vm);
-        else if (e.PropertyName == nameof(MainWindowViewModel.CurrentBox) && BoxCombo.SelectedIndex != vm.CurrentBox)
-            BoxCombo.SelectedIndex = vm.CurrentBox;
-    }
+    // ----- Box panels -------------------------------------------------------
 
-    private void SyncBoxCombo(MainWindowViewModel vm)
-    {
-        BoxCombo.ItemsSource = vm.BoxNames;
-        BoxCombo.SelectedIndex = vm.CurrentBox;
-    }
+    private static BoxPanelViewModel? FindPanel(object? sender)
+        => (sender as Control)?.DataContext as BoxPanelViewModel;
 
-    private void OnBoxComboSelectionChanged(object? sender, SelectionChangedEventArgs e)
+    private void OnPanelPrevBoxClicked(object? sender, RoutedEventArgs e) => FindPanel(sender)?.PrevBox();
+    private void OnPanelNextBoxClicked(object? sender, RoutedEventArgs e) => FindPanel(sender)?.NextBox();
+    private void OnAddBoxClicked(object? sender, RoutedEventArgs e) => ViewModel?.AddBoxPanel();
+
+    private void OnCloseBoxClicked(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is { } vm && BoxCombo.SelectedIndex >= 0)
-            vm.CurrentBox = BoxCombo.SelectedIndex;
+        if (FindPanel(sender) is { } panel)
+            ViewModel?.CloseBoxPanel(panel);
     }
 
     private void BuildNewSaveMenu()
@@ -588,7 +574,5 @@ public sealed partial class MainWindow : Window
     }
 
     private void OnDeleteClicked(object? sender, RoutedEventArgs e) => ViewModel?.DeleteSelected();
-    private void OnPrevBoxClicked(object? sender, RoutedEventArgs e) => ViewModel?.PrevBox();
-    private void OnNextBoxClicked(object? sender, RoutedEventArgs e) => ViewModel?.NextBox();
     private void OnExitClicked(object? sender, RoutedEventArgs e) => Close();
 }

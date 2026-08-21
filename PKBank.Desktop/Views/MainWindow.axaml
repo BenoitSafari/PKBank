@@ -179,24 +179,46 @@
             </ItemsControl>
           </StackPanel>
 
-          <!-- Box navigation: below the party, above the box grid -->
-          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6" Margin="0,10,0,0"
-                      IsVisible="{Binding HasBox}">
-            <Button Content="◀" Click="OnPrevBoxClicked"/>
-            <!-- Selection managed in code-behind: swapping ItemsSource on a databound
-                 ComboBox clears the selection asynchronously and drops re-entrant writes. -->
-            <ComboBox x:Name="BoxCombo" MinWidth="170" SelectionChanged="OnBoxComboSelectionChanged"/>
-            <Button Content="▶" Click="OnNextBoxClicked"/>
-          </StackPanel>
-
-          <ScrollViewer Margin="0,8,0,0" IsVisible="{Binding HasBox}">
-            <ItemsControl x:Name="BoxItems" ItemsSource="{Binding BoxSlots}" ItemTemplate="{StaticResource SlotTemplate}"
+          <!-- Open box panels: fixed-size boxes flowing left to right, wrapping to the next line -->
+          <ScrollViewer Margin="0,10,0,0" IsVisible="{Binding HasBox}">
+            <ItemsControl x:Name="BoxPanelsItems" ItemsSource="{Binding OpenBoxes}"
                           HorizontalAlignment="Left" VerticalAlignment="Top">
               <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
-                  <UniformGrid Columns="6"/>
+                  <WrapPanel Orientation="Horizontal"/>
                 </ItemsPanelTemplate>
               </ItemsControl.ItemsPanel>
+              <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:BoxPanelViewModel">
+                  <Border Width="478" Margin="0,0,10,10"
+                          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                          BorderThickness="1" CornerRadius="6" Padding="8">
+                    <DockPanel>
+                      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                        <Button Grid.Column="0" Content="◀" Click="OnPanelPrevBoxClicked"/>
+                        <ComboBox Grid.Column="1" Margin="6,0" HorizontalAlignment="Stretch"
+                                  ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).BoxNames}"
+                                  SelectedIndex="{Binding BoxIndex, Mode=TwoWay}"/>
+                        <Button Grid.Column="2" Content="▶" Click="OnPanelNextBoxClicked"/>
+                        <Button Grid.Column="3" Content="+" MinWidth="34" Margin="8,0,0,0" Click="OnAddBoxClicked"
+                                IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanAddBox}"
+                                ToolTip.Tip="Open another box view"/>
+                        <Button Grid.Column="4" Content="✕" MinWidth="34" Margin="6,0,0,0" Click="OnCloseBoxClicked"
+                                IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanCloseBox}"
+                                ToolTip.Tip="Close this box view"/>
+                      </Grid>
+                      <ItemsControl ItemsSource="{Binding Slots}" ItemTemplate="{StaticResource SlotTemplate}"
+                                    Margin="0,8,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <ItemsControl.ItemsPanel>
+                          <ItemsPanelTemplate>
+                            <UniformGrid Columns="6"/>
+                          </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                      </ItemsControl>
+                    </DockPanel>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
             </ItemsControl>
           </ScrollViewer>
 

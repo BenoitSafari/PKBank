@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Linq;
 using PKBank.Desktop.Services;
 using PKHeX.Core;
 using PKHeX.Drawing.PokeSprite;
@@ -13,7 +14,6 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     private SaveFile? _sav;
     private FilteredGameDataSource? _sources;
     private string? _savePath;
-    private int _currentBox;
     private SlotViewModel? _selectedSlot;
     private PokemonEditorViewModel? _editor;
     private string _statusMessage = "Open a save file to get started (File → Open…).";
@@ -48,7 +48,10 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public bool CanEditInventory => _sav?.Inventory.Pouches.Count > 0;
     public AppSettings Settings { get; } = settings;
 
-    public ObservableCollection<SlotViewModel> BoxSlots { get; } = [];
+    /// <summary>At most this many box panels can be open side by side.</summary>
+    public const int MaxOpenBoxes = 20;
+
+    public ObservableCollection<BoxPanelViewModel> OpenBoxes { get; } = [];
     public ObservableCollection<SlotViewModel> PartySlots { get; } = [];
 
     public IReadOnlyList<string> BoxNames { get => _boxNames; private set => SetField(ref _boxNames, value); }
@@ -62,25 +65,63 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public bool HasBox => _sav?.HasBox == true;
     public bool HasParty => _sav?.HasParty == true;
 
-    public int CurrentBox
+    public bool CanAddBox => HasBox && OpenBoxes.Count < MaxOpenBoxes;
+    public bool CanCloseBox => OpenBoxes.Count > 1;
+
+    /// <summary>Opens another box panel, defaulting to the box after the last open one (wrapping).</summary>
+    public void AddBoxPanel()
     {
-        get => _currentBox;
-        set
+        if (_sav is not { HasBox: true } sav || OpenBoxes.Count >= MaxOpenBoxes)
+            return;
+        var box = OpenBoxes.Count == 0 ? sav.CurrentBox : (OpenBoxes[^1].BoxIndex + 1) % sav.BoxCount;
+        AddBoxPanel(box);
+    }
+
+    private void AddBoxPanel(int box)
+    {
+        if (_sav is not { } sav)
+            return;
+        OpenBoxes.Add(new BoxPanelViewModel(sav, box));
+        OnPropertyChanged(nameof(CanAddBox));
+        OnPropertyChanged(nameof(CanCloseBox));
+    }
+
+    public void CloseBoxPanel(BoxPanelViewModel panel)
+    {
+        if (OpenBoxes.Count <= 1 || !OpenBoxes.Remove(panel))
+            return;
+
+        // Drop the panel's slots from the selection so no ghost selection remains.
+        bool selectionChanged = false;
+        for (int i = _selectedSlots.Count - 1; i >= 0; i--)
         {
-            if (_sav is not { HasBox: true } sav)
-                return;
-            var box = Math.Clamp(value, 0, sav.BoxCount - 1);
-            if (SetField(ref _currentBox, box))
-            {
-                foreach (var slot in BoxSlots)
-                    slot.ChangeBox(box);
-            }
-            else if (value != box)
-            {
-                // The view pushed an out-of-range value (e.g. -1 while ItemsSource resets);
-                // notify so it re-reads the clamped value.
-                OnPropertyChanged();
-            }
+            if (!panel.Slots.Contains(_selectedSlots[i]))
+                continue;
+            _selectedSlots[i].IsSelected = false;
+            _selectedSlots.RemoveAt(i);
+            selectionChanged = true;
+        }
+        if (SelectedSlot is { } selected && panel.Slots.Contains(selected))
+            SelectedSlot = _selectedSlots.Count > 0 ? _selectedSlots[^1] : null;
+        if (selectionChanged)
+            NotifySlotActionStates();
+
+        OnPropertyChanged(nameof(CanAddBox));
+        OnPropertyChanged(nameof(CanCloseBox));
+    }
+
+    /// <summary>A write through one panel's slot must also show in other panels viewing the same box.</summary>
+    private void RefreshMirrorSlots(SlotViewModel written)
+    {
+        if (written.IsParty)
+            return;
+        foreach (var panel in OpenBoxes)
+        {
+            if (panel.BoxIndex != written.Box || written.Slot >= panel.Slots.Count)
+                continue;
+            var mirror = panel.Slots[written.Slot];
+            if (mirror != written)
+                mirror.Refresh();
         }
     }
 
@@ -166,28 +207,32 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         Settings.ShinySprites = value;
         Settings.Save();
         SpriteName.AllowShinySprite = value;
-        foreach (var slot in BoxSlots)
-            slot.Refresh();
+        foreach (var panel in OpenBoxes)
+            panel.RefreshSlots();
         foreach (var slot in PartySlots)
             slot.Refresh();
         Editor?.RefreshSprite();
     }
 
-    /// <summary>Rebuilds all view-models from the current save (e.g. after a language change), keeping the selection.</summary>
+    /// <summary>Rebuilds all view-models from the current save (e.g. after a language change), keeping the open boxes and selection.</summary>
     public void ReloadCurrentSave()
     {
         if (_sav is not { } sav)
             return;
-        var box = _currentBox;
+        var openBoxes = OpenBoxes.Select(p => p.BoxIndex).ToArray();
         var previous = SelectedSlot;
         LoadSave(sav);
-        if (HasBox)
-            CurrentBox = box;
+        if (HasBox && openBoxes.Length > 0)
+        {
+            OpenBoxes[0].BoxIndex = openBoxes[0];
+            for (int i = 1; i < openBoxes.Length; i++)
+                AddBoxPanel(openBoxes[i]);
+        }
         if (previous is not { } prev)
             return;
         var match = prev.IsParty
             ? (prev.Slot < PartySlots.Count ? PartySlots[prev.Slot] : null)
-            : (prev.Slot < BoxSlots.Count ? BoxSlots[prev.Slot] : null);
+            : OpenBoxes.FirstOrDefault(p => p.BoxIndex == prev.Box) is { } panel && prev.Slot < panel.Slots.Count ? panel.Slots[prev.Slot] : null;
         if (match is not null)
             ViewSlot(match);
     }
@@ -246,6 +291,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         pk.RefreshChecksum();
         slot.Write(pk);
         sav.State.Edited = true;
+        RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
         if (Editor?.Origin == slot)
@@ -333,7 +379,13 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             return;
         }
 
-        var list = slot.IsParty ? PartySlots : BoxSlots;
+        // Ranges only span a single area: the party bar or one box panel.
+        var list = slot.IsParty ? PartySlots : OpenBoxes.FirstOrDefault(p => p.Slots.Contains(slot))?.Slots;
+        if (list is null)
+        {
+            SelectSlot(slot);
+            return;
+        }
         int from = list.IndexOf(anchor);
         int to = list.IndexOf(slot);
         if (from < 0 || to < 0)
@@ -387,6 +439,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
             return;
         slot.Write(sav.BlankPKM);
         sav.State.Edited = true;
+        RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
         NotifySlotActionStates();
@@ -423,6 +476,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         }
 
         sav.State.Edited = true;
+        RefreshMirrorSlots(source);
+        RefreshMirrorSlots(target);
         if (source.IsParty || target.IsParty)
             RefreshParty();
         NotifySlotActionStates();
@@ -440,6 +495,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         pk.RefreshChecksum();
         slot.Write(pk);
         sav.State.Edited = true;
+        RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
         if (slot == editor.Origin)
@@ -447,9 +503,6 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         NotifySlotActionStates();
         StatusMessage = "Editor content written to slot.";
     }
-
-    public void NextBox() => CurrentBox = _sav is { } sav && _currentBox >= sav.BoxCount - 1 ? 0 : _currentBox + 1;
-    public void PrevBox() => CurrentBox = _sav is { } sav && _currentBox <= 0 ? sav.BoxCount - 1 : _currentBox - 1;
 
     private void RefreshParty()
     {
@@ -467,7 +520,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         _selectedSlots.Clear();
         Editor = null;
 
-        BoxSlots.Clear();
+        OpenBoxes.Clear();
         PartySlots.Clear();
 
         if (sav.HasBox)
@@ -487,14 +540,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
                 names[i] = string.IsNullOrWhiteSpace(name) ? BoxDetailNameExtensions.GetDefaultBoxName(i) : name;
             }
             BoxNames = names;
-
-            var target = Math.Clamp(sav.CurrentBox, 0, sav.BoxCount - 1);
-            for (int i = 0; i < sav.BoxSlotCount; i++)
-                BoxSlots.Add(new SlotViewModel(sav, isParty: false, target, i));
-            // The binding deduplicates writes: the ComboBox dropped the initial index while its
-            // ItemsSource was still empty, so force a real value transition now that items exist.
-            _currentBox = -1;
-            CurrentBox = target;
+            AddBoxPanel(Math.Clamp(sav.CurrentBox, 0, sav.BoxCount - 1));
         }
         else
         {
@@ -519,6 +565,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         OnPropertyChanged(nameof(CanEditInventory));
         OnPropertyChanged(nameof(HasBox));
         OnPropertyChanged(nameof(HasParty));
+        OnPropertyChanged(nameof(CanAddBox));
+        OnPropertyChanged(nameof(CanCloseBox));
         OnPropertyChanged(nameof(WindowTitle));
 
         SelectFirstOccupiedSlot();
@@ -547,7 +595,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
 
     private void SelectFirstOccupiedSlot()
     {
-        foreach (var slot in BoxSlots)
+        var boxSlots = OpenBoxes.Count > 0 ? OpenBoxes[0].Slots : [];
+        foreach (var slot in boxSlots)
         {
             if (!slot.IsEmpty)
             {
@@ -563,8 +612,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
                 return;
             }
         }
-        if (BoxSlots.Count > 0)
-            ViewSlot(BoxSlots[0]);
+        if (boxSlots.Count > 0)
+            ViewSlot(boxSlots[0]);
         else if (PartySlots.Count > 0)
             ViewSlot(PartySlots[0]);
     }
