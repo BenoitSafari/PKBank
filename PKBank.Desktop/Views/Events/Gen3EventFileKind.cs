@@ -29,7 +29,7 @@ public sealed record Gen3EventFileKind(
     public static readonly Gen3EventFileKind ME3 = new(
         "Mystery Event (ME3)", "me3",
         static sav => sav.HasME3(),
-        static _ => string.Empty, // events have no displayable title
+        static sav => sav.GetME3Summary(), // scripts have no title; show the embedded dialog text
         static sav => sav.LargeBlock is ISaveBlock3LargeHoenn
             ? [sav.GetME3FileSize(), sav.GetME3FileSize() + RecordMixing3Gift.SIZE]
             : [sav.GetME3FileSize()],
