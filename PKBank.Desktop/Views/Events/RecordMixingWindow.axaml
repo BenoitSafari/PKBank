@@ -1,6 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:c="using:PKBank.Desktop.Controls"
         x:Class="PKBank.Desktop.Views.Events.RecordMixingWindow"
         Title="Record Mixing Gift"
         Width="420" SizeToContent="Height"
@@ -17,7 +16,7 @@
 
                 <Grid ColumnDefinitions="90,*" Margin="0,4,0,0">
                     <TextBlock Text="Item" VerticalAlignment="Center" Opacity="0.8"/>
-                    <c:AutoCompleteSelect x:Name="ItemCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                    <ComboBox x:Name="ItemCombo" Grid.Column="1" HorizontalAlignment="Stretch"
                               SelectionChanged="OnItemChanged"/>
                 </Grid>
 

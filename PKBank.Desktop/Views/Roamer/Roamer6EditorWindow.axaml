@@ -1,6 +1,5 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:c="using:PKBank.Desktop.Controls"
         x:Class="PKBank.Desktop.Views.Roamer.Roamer6EditorWindow"
         Title="Roamer Editor"
         Width="420" SizeToContent="Height"
@@ -24,7 +23,7 @@
 
                 <Grid ColumnDefinitions="150,*">
                     <TextBlock Classes="fieldLabel" Text="Species"/>
-                    <c:AutoCompleteSelect x:Name="SpeciesCombo" Grid.Column="1" HorizontalAlignment="Stretch"/>
+                    <ComboBox x:Name="SpeciesCombo" Grid.Column="1" HorizontalAlignment="Stretch"/>
                 </Grid>
 
                 <Grid ColumnDefinitions="150,*">
@@ -34,7 +33,7 @@
 
                 <Grid ColumnDefinitions="150,*">
                     <TextBlock Classes="fieldLabel" Text="State"/>
-                    <c:AutoCompleteSelect x:Name="StateCombo" Grid.Column="1" HorizontalAlignment="Stretch"/>
+                    <ComboBox x:Name="StateCombo" Grid.Column="1" HorizontalAlignment="Stretch"/>
                 </Grid>
             </StackPanel>
         </Border>

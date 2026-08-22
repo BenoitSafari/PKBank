@@ -37,9 +37,6 @@
       <Setter Property="MinHeight" Value="32"/>
       <Setter Property="VerticalContentAlignment" Value="Center"/>
     </Style>
-    <Style Selector="AutoCompleteBox">
-      <Setter Property="MinHeight" Value="32"/>
-    </Style>
     <Style Selector="NumericUpDown">
       <Setter Property="MinHeight" Value="32"/>
     </Style>

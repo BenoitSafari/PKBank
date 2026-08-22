@@ -1,6 +1,5 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:c="using:PKBank.Desktop.Controls"
              xmlns:vm="using:PKBank.Desktop.ViewModels"
              x:Class="PKBank.Desktop.Views.PokemonEditor.PokemonEditorMoves"
              x:DataType="vm:PokemonEditorViewModel">
@@ -49,7 +48,7 @@
         <Style Selector="TextBlock.illegal">
             <Setter Property="Foreground" Value="IndianRed"/>
         </Style>
-        <Style Selector="AutoCompleteBox.field">
+        <Style Selector="ComboBox.field">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Margin" Value="0,2"/>
         </Style>
@@ -62,49 +61,41 @@
             <TextBlock Grid.Column="2" Text="PP" HorizontalAlignment="Center" Opacity="0.7" FontSize="12"/>
         </Grid>
         <StackPanel Spacing="2">
-            <Grid ColumnDefinitions="Auto,*,104,40">
-                <Image Grid.Column="0" Width="20" Height="20" Margin="0,0,7,0" VerticalAlignment="Center"
-                       Source="{ReflectionBinding #Move1Box.SelectedItem.TypeSprite}"/>
-                <c:AutoCompleteSelect Grid.Column="1" ValueMemberBinding="{ReflectionBinding Text}" Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+            <Grid ColumnDefinitions="*,104,40">
+                <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                           DropDownOpened="OnMoveDropDownOpened"
-                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}" x:Name="Move1Box"
+                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move1, Mode=TwoWay}"
                           ToolTip.Tip="{Binding MoveTip1}"/>
-                <NumericUpDown Grid.Column="2" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                                Value="{Binding PPUps1, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
-                <TextBlock Grid.Column="3" Text="{Binding PP1Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding PP1Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
-            <Grid ColumnDefinitions="Auto,*,104,40">
-                <Image Grid.Column="0" Width="20" Height="20" Margin="0,0,7,0" VerticalAlignment="Center"
-                       Source="{ReflectionBinding #Move2Box.SelectedItem.TypeSprite}"/>
-                <c:AutoCompleteSelect Grid.Column="1" ValueMemberBinding="{ReflectionBinding Text}" Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+            <Grid ColumnDefinitions="*,104,40">
+                <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                           DropDownOpened="OnMoveDropDownOpened"
-                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}" x:Name="Move2Box"
+                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move2, Mode=TwoWay}"
                           ToolTip.Tip="{Binding MoveTip2}"/>
-                <NumericUpDown Grid.Column="2" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                                Value="{Binding PPUps2, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
-                <TextBlock Grid.Column="3" Text="{Binding PP2Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding PP2Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
-            <Grid ColumnDefinitions="Auto,*,104,40">
-                <Image Grid.Column="0" Width="20" Height="20" Margin="0,0,7,0" VerticalAlignment="Center"
-                       Source="{ReflectionBinding #Move3Box.SelectedItem.TypeSprite}"/>
-                <c:AutoCompleteSelect Grid.Column="1" ValueMemberBinding="{ReflectionBinding Text}" Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+            <Grid ColumnDefinitions="*,104,40">
+                <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                           DropDownOpened="OnMoveDropDownOpened"
-                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}" x:Name="Move3Box"
+                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move3, Mode=TwoWay}"
                           ToolTip.Tip="{Binding MoveTip3}"/>
-                <NumericUpDown Grid.Column="2" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                                Value="{Binding PPUps3, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
-                <TextBlock Grid.Column="3" Text="{Binding PP3Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding PP3Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
-            <Grid ColumnDefinitions="Auto,*,104,40">
-                <Image Grid.Column="0" Width="20" Height="20" Margin="0,0,7,0" VerticalAlignment="Center"
-                       Source="{ReflectionBinding #Move4Box.SelectedItem.TypeSprite}"/>
-                <c:AutoCompleteSelect Grid.Column="1" ValueMemberBinding="{ReflectionBinding Text}" Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
+            <Grid ColumnDefinitions="*,104,40">
+                <ComboBox Classes="field" ItemsSource="{Binding MoveList}" ItemTemplate="{StaticResource MoveChoiceTemplate}"
                           DropDownOpened="OnMoveDropDownOpened"
-                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}" x:Name="Move4Box"
+                          SelectedValueBinding="{ReflectionBinding Value}" SelectedValue="{Binding Move4, Mode=TwoWay}"
                           ToolTip.Tip="{Binding MoveTip4}"/>
-                <NumericUpDown Grid.Column="2" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
+                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="3" Increment="1" Margin="6,2,0,2"
                                Value="{Binding PPUps4, Mode=TwoWay}" ToolTip.Tip="PP Ups used (0-3)"/>
-                <TextBlock Grid.Column="3" Text="{Binding PP4Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="2" Text="{Binding PP4Display}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
             </Grid>
         </StackPanel>
     </StackPanel>
