@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:PKBank.Desktop.Controls"
         x:Class="PKBank.Desktop.Views.SettingsWindow"
         Title="Settings"
         Width="440" SizeToContent="Height"
@@ -13,12 +14,12 @@
     <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto" Margin="4,0,0,0">
 
       <TextBlock Grid.Row="0" Grid.Column="0" Text="Game data language" VerticalAlignment="Center"/>
-      <ComboBox Grid.Row="0" Grid.Column="1" x:Name="LanguageCombo"
+      <c:AutoCompleteSelect Grid.Row="0" Grid.Column="1" x:Name="LanguageCombo"
                 HorizontalAlignment="Stretch" Margin="0,3"
                 SelectionChanged="OnLanguageChanged"/>
 
       <TextBlock Grid.Row="1" Grid.Column="0" Text="Blank save version" VerticalAlignment="Center"/>
-      <ComboBox Grid.Row="1" Grid.Column="1" x:Name="BlankVersionCombo"
+      <c:AutoCompleteSelect Grid.Row="1" Grid.Column="1" x:Name="BlankVersionCombo"
                 HorizontalAlignment="Stretch" Margin="0,3"
                 SelectionChanged="OnBlankVersionChanged"/>
 

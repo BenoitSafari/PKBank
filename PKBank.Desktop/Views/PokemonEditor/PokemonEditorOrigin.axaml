@@ -1,5 +1,6 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:c="using:PKBank.Desktop.Controls"
              xmlns:vm="using:PKBank.Desktop.ViewModels"
              xmlns:core="using:PKHeX.Core"
              x:Class="PKBank.Desktop.Views.PokemonEditor.PokemonEditorOrigin"
@@ -17,7 +18,7 @@
             <Setter Property="Margin" Value="0,0,8,0"/>
             <Setter Property="Opacity" Value="0.85"/>
         </Style>
-        <Style Selector="ComboBox.field">
+        <Style Selector="AutoCompleteBox.field">
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="Margin" Value="0,2"/>
         </Style>
@@ -57,14 +58,14 @@
         <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
 
             <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="Game" IsVisible="{Binding HasOriginGame}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" Classes="field" IsVisible="{Binding HasOriginGame}"
+            <c:AutoCompleteSelect ValueMemberBinding="{ReflectionBinding Text}" Grid.Row="0" Grid.Column="1" Classes="field" IsVisible="{Binding HasOriginGame}"
                       ItemsSource="{Binding OriginGameList}"
                       ItemTemplate="{StaticResource ComboItemTemplate}"
                       SelectedValueBinding="{ReflectionBinding Value}"
                       SelectedValue="{Binding OriginGame, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Location" IsVisible="{Binding HasMetLocation}"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" Classes="field" IsVisible="{Binding HasMetLocation}"
+            <c:AutoCompleteSelect ValueMemberBinding="{ReflectionBinding Text}" Grid.Row="1" Grid.Column="1" Classes="field" IsVisible="{Binding HasMetLocation}"
                       ItemsSource="{Binding MetLocationList}"
                       ItemTemplate="{StaticResource ComboItemTemplate}"
                       SelectedValueBinding="{ReflectionBinding Value}"
@@ -83,7 +84,7 @@
             <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Extra Bytes" IsVisible="{Binding HasExtraBytes}"/>
             <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,2"
                         IsVisible="{Binding HasExtraBytes}">
-                <ComboBox Width="110"
+                <c:AutoCompleteSelect Width="110"
                           ItemsSource="{Binding ExtraByteOffsets}"
                           SelectedIndex="{Binding ExtraByteIndex, Mode=TwoWay}"
                           ToolTip.Tip="Unused byte offset in this format"/>

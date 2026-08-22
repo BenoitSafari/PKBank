@@ -30,7 +30,7 @@ public sealed partial class RecordMixingWindow : Window
             .OrderBy(z => z.Text));
 
         ItemCombo.ItemsSource = choices;
-        ItemCombo.DisplayMemberBinding = new global::Avalonia.Data.Binding(nameof(ComboItem.Text));
+        ItemCombo.ValueMemberBinding = new global::Avalonia.Data.Binding(nameof(ComboItem.Text));
 
         var current = sav.GetRecordMixing();
         var item = current is not null && sav.IsValidForRecordMixing(current.Item) ? current.Item : (ushort)0;

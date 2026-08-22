@@ -1,5 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:c="using:PKBank.Desktop.Controls"
         xmlns:vm="using:PKBank.Desktop.ViewModels"
         xmlns:core="using:PKHeX.Core"
         x:Class="PKBank.Desktop.Views.Inventory.InventoryEditorWindow"
@@ -49,7 +50,7 @@
                                 <ListBox.ItemTemplate>
                                     <DataTemplate DataType="vm:InventoryItemViewModel">
                                         <Grid ColumnDefinitions="*,120">
-                                            <ComboBox Grid.Column="0" HorizontalAlignment="Stretch" Margin="0,2,8,2"
+                                            <c:AutoCompleteSelect ValueMemberBinding="{ReflectionBinding Text}" Grid.Column="0" HorizontalAlignment="Stretch" Margin="0,2,8,2"
                                                       ItemsSource="{Binding $parent[ListBox].((vm:InventoryPouchViewModel)DataContext).ItemChoices}"
                                                       ItemTemplate="{StaticResource ItemChoiceTemplate}"
                                                       SelectedValueBinding="{ReflectionBinding Value}"
