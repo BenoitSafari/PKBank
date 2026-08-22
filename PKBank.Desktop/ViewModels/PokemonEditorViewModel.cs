@@ -348,6 +348,111 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         RefreshDerived(refreshInputTexts: false);
     }
 
+    /// <summary>
+    /// Rebuilds a PID/IV pair the matched encounter could actually have produced.
+    /// Gen 3-5 encounters derive both from one RNG seed, so a hand-edited PID or
+    /// IV set has no seed behind it and can only be fixed by regenerating both.
+    /// Keeps the current nature and IVs when the encounter allows them, otherwise
+    /// keeps the nature alone, and picks the best IV spread found across attempts.
+    /// </summary>
+    public bool TryFixPidIvs(out string message)
+    {
+        if (_pk.Species == 0)
+        {
+            message = "No Pokémon to fix.";
+            return false;
+        }
+
+        var la = new LegalityAnalysis(_pk);
+        if (la.Valid)
+        {
+            message = "This Pokémon is already legal.";
+            return false;
+        }
+        if (la.EncounterMatch is not IEncounterConvertible enc)
+        {
+            message = "No matching encounter to rebuild the PID from.";
+            return false;
+        }
+
+        var tr = new SimpleTrainerInfo(_pk.Version)
+        {
+            OT = _pk.OriginalTrainerName,
+            TID16 = _pk.TID16,
+            SID16 = _pk.SID16,
+            Gender = _pk.OriginalTrainerGender,
+            Language = _pk.Language,
+            Generation = _pk.Generation,
+        };
+
+        var nature = _pk.Nature;
+        EncounterCriteria[] tiers =
+        [
+            EncounterCriteria.Unrestricted with
+            {
+                Nature = nature,
+                IV_HP = (sbyte)_pk.IV_HP, IV_ATK = (sbyte)_pk.IV_ATK, IV_DEF = (sbyte)_pk.IV_DEF,
+                IV_SPA = (sbyte)_pk.IV_SPA, IV_SPD = (sbyte)_pk.IV_SPD, IV_SPE = (sbyte)_pk.IV_SPE,
+            },
+            EncounterCriteria.Unrestricted with { Nature = nature },
+            EncounterCriteria.Unrestricted,
+        ];
+
+        foreach (var criteria in tiers)
+        {
+            if (!TryGenerateLegal(enc, tr, criteria, out var pid, out var ivs))
+                continue;
+
+            _pk.PID = pid;
+            _pk.SetIVs(ivs);
+            _pk.RefreshChecksum();
+            Load();
+            message = _pk.Nature == nature
+                ? $"Rebuilt a valid PID/IV pair (nature kept, IVs {string.Join('/', ivs)})."
+                : $"Rebuilt a valid PID/IV pair (nature is now {_pk.Nature}, IVs {string.Join('/', ivs)}).";
+            return true;
+        }
+
+        message = "Could not rebuild a legal PID/IV pair; other fields are likely invalid too.";
+        return false;
+    }
+
+    /// <summary>
+    /// Generation draws randomly whenever the criteria leave room, so sample a
+    /// few times and keep the legal candidate with the best IV total.
+    /// </summary>
+    private bool TryGenerateLegal(IEncounterConvertible enc, ITrainerInfo tr, EncounterCriteria criteria,
+        out uint pid, out int[] ivs)
+    {
+        const int attempts = 256;
+        pid = 0;
+        ivs = [];
+        int best = -1;
+
+        var probe = _pk.Clone();
+        for (int i = 0; i < attempts; i++)
+        {
+            var template = enc.ConvertToPKM(tr, criteria);
+            int[] candidate = [template.IV_HP, template.IV_ATK, template.IV_DEF, template.IV_SPE, template.IV_SPA, template.IV_SPD];
+
+            probe.PID = template.PID;
+            probe.SetIVs(candidate);
+            probe.RefreshChecksum();
+            if (!new LegalityAnalysis(probe).Valid)
+                continue;
+
+            var total = 0;
+            foreach (var iv in candidate)
+                total += iv;
+            if (total <= best)
+                continue;
+            best = total;
+            pid = template.PID;
+            ivs = candidate;
+        }
+        return best >= 0;
+    }
+
     private void NotifyPidDerived()
     {
         OnPropertyChanged(nameof(IsShiny));

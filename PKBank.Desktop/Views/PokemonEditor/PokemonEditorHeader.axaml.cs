@@ -18,6 +18,15 @@ public sealed partial class PokemonEditorHeader : UserControl
         await new QRCodeWindow(vm.GetEntityClone()).ShowDialog(owner);
     }
 
+    private void OnFixLegalityClicked(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PokemonEditorViewModel vm)
+            return;
+        vm.TryFixPidIvs(out var message);
+        if (TopLevel.GetTopLevel(this)?.DataContext is MainWindowViewModel main)
+            main.StatusMessage = message;
+    }
+
     private async void OnLegalityClicked(object? sender, RoutedEventArgs e)
     {
         if (DataContext is not PokemonEditorViewModel vm || !vm.HasSpecies)
