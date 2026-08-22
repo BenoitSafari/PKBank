@@ -18,4 +18,11 @@ public static class Converters
             ? SpriteService.GetBallSprite((byte)ball)
             : null
         );
+
+    /// <summary>National dex number shown beside a species name; blank for the empty entry.</summary>
+    public static readonly IValueConverter DexNumber =
+        new FuncValueConverter<int, string>(species => species > 0
+            ? $"#{species:000}"
+            : string.Empty
+        );
 }

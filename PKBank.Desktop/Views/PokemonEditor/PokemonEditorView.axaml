@@ -11,6 +11,15 @@
         <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
             <TextBlock Text="{Binding Text}"/>
         </DataTemplate>
+        <!-- Species entries carry their National Dex number, like the move list carries its category. -->
+        <DataTemplate x:Key="SpeciesChoiceTemplate" DataType="core:ComboItem">
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Value, Converter={x:Static v:Converters.DexNumber}}"
+                           VerticalAlignment="Center" Margin="7,0,0,0"
+                           Opacity="0.6" FontSize="12"/>
+            </Grid>
+        </DataTemplate>
     </UserControl.Resources>
 
     <UserControl.Styles>
@@ -54,7 +63,7 @@
                 <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Species"/>
                 <ComboBox Grid.Row="1" Grid.Column="1" Classes="field"
                           ItemsSource="{Binding SpeciesList}"
-                          ItemTemplate="{StaticResource ComboItemTemplate}"
+                          ItemTemplate="{StaticResource SpeciesChoiceTemplate}"
                           SelectedValueBinding="{ReflectionBinding Value}"
                           SelectedValue="{Binding Species, Mode=TwoWay}"/>
 
