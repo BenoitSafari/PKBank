@@ -1,0 +1,29 @@
+<Window
+    xmlns="https://github.com/avaloniaui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    x:Class="PKBank.Desktop.Views.Settings.SettingsWindow"
+    Title="Settings"
+    Width="440"
+    SizeToContent="Height"
+    CanResize="False"
+    WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="16" Spacing="14">
+        <TextBlock Text="Program" FontWeight="SemiBold" FontSize="15" />
+        <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" Margin="4,0,0,0">
+            <TextBlock
+                Grid.Row="0"
+                Grid.Column="0"
+                Text="Game data language"
+                VerticalAlignment="Center" />
+            <ComboBox
+                Grid.Row="0"
+                Grid.Column="1"
+                x:Name="LanguageCombo"
+                HorizontalAlignment="Stretch" Margin="0,3"
+                SelectionChanged="OnLanguageChanged" />
+        </Grid>
+
+        <Button Content="Close" HorizontalAlignment="Right" Click="OnCloseClicked" />
+    </StackPanel>
+</Window>

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using PKHeX.Core;
@@ -35,7 +34,7 @@ public sealed class InventoryPouchViewModel
     /// <summary>Re-reads the rows from the pouch (after sort/give-all mutated it).</summary>
     public void ReloadFromPouch()
     {
-        for (int i = 0; i < Rows.Count; i++)
+        for (var i = 0; i < Rows.Count; i++)
         {
             Rows[i].ItemId = Pouch.Items[i].Index;
             Rows[i].Count = Pouch.Items[i].Count;

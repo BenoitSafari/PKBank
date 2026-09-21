@@ -2,7 +2,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:PKBank.Desktop.ViewModels"
         xmlns:v="using:PKBank.Desktop.Views"
-        xmlns:pe="using:PKBank.Desktop.Views.PokemonEditor"
+        xmlns:u="using:PKBank.Desktop.Utils"
+        xmlns:pe="using:PKBank.Desktop.Views.Components.PokemonEditor"
         x:Class="PKBank.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.png"
@@ -10,230 +11,206 @@
         Width="1200" Height="800"
         WindowStartupLocation="CenterScreen">
 
-  <Window.Resources>
-    <SolidColorBrush x:Key="SlotSelectedBorderBrush" Color="{DynamicResource SystemAccentColor}"/>
-    <SolidColorBrush x:Key="SlotHoverBorderBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.45"/>
-    <SolidColorBrush x:Key="SlotOccupiedBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.16"/>
+    <Window.Resources>
+        <SolidColorBrush x:Key="SlotSelectedBorderBrush" Color="{DynamicResource SystemAccentColor}" />
+        <SolidColorBrush x:Key="SlotHoverBorderBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.45" />
+        <SolidColorBrush x:Key="SlotOccupiedBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.16" />
 
-    <DataTemplate x:Key="SlotTemplate" DataType="vm:SlotViewModel">
-      <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.occupied="{Binding !IsEmpty}"
-              Click="OnSlotClicked" ToolTip.Tip="{Binding Preview}">
-        <Button.ContextMenu>
-          <ContextMenu Opening="OnSlotMenuOpening">
-            <MenuItem Header="View" Tag="view" Click="OnSlotViewClicked"/>
-            <MenuItem Header="Set" Tag="set" Click="OnSlotSetClicked"/>
-            <Separator/>
-            <MenuItem Header="Import…" Tag="import" Click="OnSlotImportClicked"/>
-            <MenuItem Header="Export…" Tag="export" Click="OnSlotExportClicked"/>
-            <Separator/>
-            <MenuItem Header="Delete" Tag="delete" Click="OnSlotDeleteClicked"/>
-          </ContextMenu>
-        </Button.ContextMenu>
-        <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None"/>
-      </Button>
-    </DataTemplate>
-  </Window.Resources>
+        <DataTemplate x:Key="SlotTemplate" DataType="vm:SlotViewModel">
+            <Button Classes="slot" Classes.selected="{Binding IsSelected}" Classes.occupied="{Binding !IsEmpty}"
+                    Click="OnSlotClicked" ToolTip.Tip="{Binding Preview}">
+                <Button.ContextMenu>
+                    <ContextMenu Opening="OnSlotMenuOpening">
+                        <MenuItem Header="View" Tag="view" Click="OnSlotViewClicked" />
+                        <MenuItem Header="Set" Tag="set" Click="OnSlotSetClicked" />
+                        <Separator />
+                        <MenuItem Header="Import…" Tag="import" Click="OnSlotImportClicked" />
+                        <MenuItem Header="Export…" Tag="export" Click="OnSlotExportClicked" />
+                        <Separator />
+                        <MenuItem Header="Delete" Tag="delete" Click="OnSlotDeleteClicked" />
+                    </ContextMenu>
+                </Button.ContextMenu>
+                <Image Source="{Binding Sprite}" Width="68" Height="56" Stretch="None" />
+            </Button>
+        </DataTemplate>
+    </Window.Resources>
 
-  <Window.DataTemplates>
-    <!-- Rich hover preview shown as the slot tooltip -->
-    <DataTemplate DataType="vm:SlotPreviewViewModel">
-      <StackPanel Spacing="3" MaxWidth="340">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <Image Source="{Binding BallSprite}" Width="20" Height="20" Stretch="None"
-                 IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center"/>
-        </StackPanel>
-        <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
-                   Foreground="{Binding IsValid, Converter={x:Static v:Converters.LegalityBrush}}"/>
-        <ItemsControl ItemsSource="{Binding Lines}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="x:String">
-              <TextBlock Text="{Binding}" FontSize="12"/>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <TextBlock Text="{Binding LegalityLine}" FontSize="12" TextWrapping="Wrap"
-                   Foreground="IndianRed"
-                   IsVisible="{Binding HasLegalityLine}"/>
-        <ItemsControl ItemsSource="{Binding DetailLines}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="x:String">
-              <TextBlock Text="{Binding}" FontSize="12" Opacity="0.85"/>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-    </DataTemplate>
-  </Window.DataTemplates>
+    <Window.DataTemplates>
+        <!-- Rich hover preview shown as the slot tooltip -->
+        <DataTemplate DataType="vm:SlotPreviewViewModel">
+            <StackPanel Spacing="3" MaxWidth="340">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="{Binding BallSprite}" Width="20" Height="20" Stretch="None"
+                           IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+                           Foreground="{Binding IsValid, Converter={x:Static u:Converters.LegalityBrush}}" />
+                <ItemsControl ItemsSource="{Binding Lines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="x:String">
+                            <TextBlock Text="{Binding}" FontSize="12" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding LegalityLine}" FontSize="12" TextWrapping="Wrap"
+                           Foreground="IndianRed"
+                           IsVisible="{Binding HasLegalityLine}" />
+                <ItemsControl ItemsSource="{Binding DetailLines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="x:String">
+                            <TextBlock Text="{Binding}" FontSize="12" Opacity="0.85" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+    </Window.DataTemplates>
 
-  <Window.Styles>
-    <Style Selector="Button.slot">
-      <Setter Property="Padding" Value="2"/>
-      <Setter Property="Margin" Value="1"/>
-      <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}"/>
-      <Setter Property="BorderThickness" Value="1"/>
-      <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}"/>
-      <Setter Property="CornerRadius" Value="4"/>
-      <Setter Property="HorizontalContentAlignment" Value="Center"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-    <!-- Occupied slots get a subtle accent-tinted background -->
-    <Style Selector="Button.slot.occupied">
-      <Setter Property="Background" Value="{StaticResource SlotOccupiedBrush}"/>
-    </Style>
-    <Style Selector="Button.slot.selected">
-      <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}"/>
-    </Style>
-    <!-- Hover: faded accent border (the Fluent theme normally overrides it away) -->
-    <Style Selector="Button.slot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="BorderBrush" Value="{StaticResource SlotHoverBorderBrush}"/>
-    </Style>
-    <Style Selector="Button.slot.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}"/>
-    </Style>
-  </Window.Styles>
+    <Window.Styles>
+        <Style Selector="Button.slot">
+            <Setter Property="Padding" Value="2" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <!-- Occupied slots get a subtle accent-tinted background -->
+        <Style Selector="Button.slot.occupied">
+            <Setter Property="Background" Value="{StaticResource SlotOccupiedBrush}" />
+        </Style>
+        <Style Selector="Button.slot.selected">
+            <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}" />
+        </Style>
+        <!-- Hover: faded accent border (the Fluent theme normally overrides it away) -->
+        <Style Selector="Button.slot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource SlotHoverBorderBrush}" />
+        </Style>
+        <Style Selector="Button.slot.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}" />
+        </Style>
+    </Window.Styles>
 
-  <Panel>
-  <DockPanel>
-
-    <Menu DockPanel.Dock="Top">
-      <MenuItem Header="_File">
-        <MenuItem Header="_Open…" Click="OnOpenClicked" InputGesture="Ctrl+O"/>
-        <MenuItem Header="Save _As…" Click="OnSaveAsClicked" IsEnabled="{Binding HasSave}" InputGesture="Ctrl+Shift+S"/>
-        <Separator/>
-        <MenuItem x:Name="NewMenu" Header="_New (Blank Save)"/>
-        <Separator/>
-        <MenuItem Header="E_xit" Click="OnExitClicked"/>
-      </MenuItem>
-      <MenuItem Header="_Edit">
-        <MenuItem Header="_Trainer…" Click="OnTrainerClicked" IsEnabled="{Binding CanEditTrainer}"/>
-        <MenuItem Header="_Pokédex…" Click="OnPokedexClicked" IsEnabled="{Binding CanEditPokedex}"/>
-        <MenuItem Header="_Inventory…" Click="OnInventoryClicked" IsEnabled="{Binding CanEditInventory}"/>
-        <MenuItem Header="_Roamer…" Click="OnRoamerClicked" IsEnabled="{Binding CanEditRoamer}"/>
-        <Separator/>
-        <MenuItem Header="_Mystery Gift…" Click="OnMysteryGiftClicked" IsEnabled="{Binding CanEditMysteryGift}"/>
-        <MenuItem Header="_Gen 3 Events" IsEnabled="{Binding IsGen3Save}">
-          <MenuItem Header="Mystery Gift (WC3)…" Click="OnWC3Clicked" IsEnabled="{Binding IsGen3FRLGE}"/>
-          <MenuItem Header="Mystery Event (ME3)…" Click="OnME3Clicked" IsEnabled="{Binding IsGen3RSE}"/>
-          <MenuItem Header="e-Card Trainer (ECT)…" Click="OnECTClicked"/>
-          <MenuItem Header="e-Card Berry (ECB)…" Click="OnECBClicked"/>
-          <MenuItem Header="Wonder News (WN3)…" Click="OnWN3Clicked" IsEnabled="{Binding IsGen3FRLGE}"/>
-          <Separator/>
-          <MenuItem Header="Record Mixing…" Click="OnRecordMixingClicked" IsEnabled="{Binding IsGen3RSE}"/>
-        </MenuItem>
-      </MenuItem>
-      <MenuItem Header="_Options">
-        <MenuItem x:Name="LanguageMenu" Header="_Language"/>
-        <Separator/>
-        <MenuItem Header="_Settings…" Click="OnSettingsClicked"/>
-        <MenuItem Header="_About PKBank.Desktop…" Click="OnAboutClicked"/>
-      </MenuItem>
-    </Menu>
-
-    <Border DockPanel.Dock="Bottom" Padding="10,6" Background="{DynamicResource SystemControlBackgroundListLowBrush}">
-      <DockPanel>
-        <TextBlock DockPanel.Dock="Right" Text="{Binding TrainerInfo}" Opacity="0.8"/>
-        <TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0"/>
-      </DockPanel>
-    </Border>
-
-    <Grid ColumnDefinitions="478,*" Margin="10">
-
-      <!-- Pokémon editor (left) -->
-      <Border Grid.Column="0"
-              IsVisible="{Binding Editor, Converter={x:Static ObjectConverters.IsNotNull}}"
-              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-              BorderThickness="1" CornerRadius="6" Padding="10">
-        <ContentControl Content="{Binding Editor}">
-          <ContentControl.ContentTemplate>
-            <DataTemplate DataType="vm:PokemonEditorViewModel">
-              <pe:PokemonEditorView/>
-            </DataTemplate>
-          </ContentControl.ContentTemplate>
-        </ContentControl>
-      </Border>
-
-      <!-- Storage (right) -->
-      <Border Grid.Column="1" Margin="10,0,0,0"
-              IsVisible="{Binding HasSave}"
-              BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-              BorderThickness="1" CornerRadius="6" Padding="10">
+    <Panel>
         <DockPanel>
+            <v:MainWindowMenu DockPanel.Dock="Top" />
 
-          <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
-          <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
-            <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}"/>
-            <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}"/>
-            <Button Content="Import" Click="OnImportSelectedClicked" IsEnabled="{Binding CanImportSelected}"/>
-            <Button Content="Export" Click="OnExportSelectedClicked" IsEnabled="{Binding CanExportSelected}"/>
-            <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}"/>
-          </StackPanel>
+            <Border DockPanel.Dock="Bottom" Padding="10,6"
+                    Background="{DynamicResource SystemControlBackgroundListLowBrush}">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right" Text="{Binding TrainerInfo}" Opacity="0.8" />
+                    <TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0" />
+                </DockPanel>
+            </Border>
 
-          <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
-            <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4"/>
-            <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}" ItemTemplate="{StaticResource SlotTemplate}">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-            </ItemsControl>
-          </StackPanel>
+            <Grid ColumnDefinitions="478,*" Margin="10">
 
-          <!-- Open box panels: fixed-size boxes flowing left to right, wrapping to the next line -->
-          <ScrollViewer Margin="0,10,0,0" IsVisible="{Binding HasBox}">
-            <ItemsControl x:Name="BoxPanelsItems" ItemsSource="{Binding OpenBoxes}"
-                          HorizontalAlignment="Left" VerticalAlignment="Top">
-              <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                  <WrapPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-              </ItemsControl.ItemsPanel>
-              <ItemsControl.ItemTemplate>
-                <DataTemplate DataType="vm:BoxPanelViewModel">
-                  <Border Width="478" Margin="0,0,10,10"
-                          BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                          BorderThickness="1" CornerRadius="6" Padding="8">
+                <!-- Pokémon editor (left) -->
+                <Border Grid.Column="0"
+                        IsVisible="{Binding Editor, Converter={x:Static ObjectConverters.IsNotNull}}"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" CornerRadius="6" Padding="10">
+                    <ContentControl Content="{Binding Editor}">
+                        <ContentControl.ContentTemplate>
+                            <DataTemplate DataType="vm:PokemonEditorViewModel">
+                                <pe:PokemonEditorView />
+                            </DataTemplate>
+                        </ContentControl.ContentTemplate>
+                    </ContentControl>
+                </Border>
+
+                <!-- Storage (right) -->
+                <Border Grid.Column="1" Margin="10,0,0,0"
+                        IsVisible="{Binding HasSave}"
+                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                        BorderThickness="1" CornerRadius="6" Padding="10">
                     <DockPanel>
-                      <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
-                        <Button Grid.Column="0" Content="◀" Click="OnPanelPrevBoxClicked"/>
-                        <ComboBox Grid.Column="1" Margin="6,0" HorizontalAlignment="Stretch"
-                                  ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).BoxNames}"
-                                  SelectedIndex="{Binding BoxIndex, Mode=TwoWay}"/>
-                        <Button Grid.Column="2" Content="▶" Click="OnPanelNextBoxClicked"/>
-                        <Button Grid.Column="3" Content="+" MinWidth="34" Margin="8,0,0,0" Click="OnAddBoxClicked"
-                                IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanAddBox}"
-                                ToolTip.Tip="Open another box view"/>
-                        <Button Grid.Column="4" Content="✕" MinWidth="34" Margin="6,0,0,0" Click="OnCloseBoxClicked"
-                                IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanCloseBox}"
-                                ToolTip.Tip="Close this box view"/>
-                      </Grid>
-                      <ItemsControl ItemsSource="{Binding Slots}" ItemTemplate="{StaticResource SlotTemplate}"
-                                    Margin="0,8,0,0" HorizontalAlignment="Left" VerticalAlignment="Top">
-                        <ItemsControl.ItemsPanel>
-                          <ItemsPanelTemplate>
-                            <UniformGrid Columns="6"/>
-                          </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                      </ItemsControl>
+
+                        <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
+                            <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}" />
+                            <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}" />
+                            <Button Content="Import" Click="OnImportSelectedClicked"
+                                    IsEnabled="{Binding CanImportSelected}" />
+                            <Button Content="Export" Click="OnExportSelectedClicked"
+                                    IsEnabled="{Binding CanExportSelected}" />
+                            <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}" />
+                        </StackPanel>
+
+                        <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
+                            <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4" />
+                            <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}"
+                                          ItemTemplate="{StaticResource SlotTemplate}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                        </StackPanel>
+
+                        <!-- Open box panels: fixed-size boxes flowing left to right, wrapping to the next line -->
+                        <ScrollViewer Margin="0,10,0,0" IsVisible="{Binding HasBox}">
+                            <ItemsControl x:Name="BoxPanelsItems" ItemsSource="{Binding OpenBoxes}"
+                                          HorizontalAlignment="Left" VerticalAlignment="Top">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <WrapPanel Orientation="Horizontal" />
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate DataType="vm:BoxPanelViewModel">
+                                        <Border Width="478" Margin="0,0,10,10"
+                                                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                                                BorderThickness="1" CornerRadius="6" Padding="8">
+                                            <DockPanel>
+                                                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                                                    <Button Grid.Column="0" Content="◀" Click="OnPanelPrevBoxClicked" />
+                                                    <ComboBox Grid.Column="1" Margin="6,0"
+                                                              HorizontalAlignment="Stretch"
+                                                              ItemsSource="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).BoxNames}"
+                                                              SelectedIndex="{Binding BoxIndex, Mode=TwoWay}" />
+                                                    <Button Grid.Column="2" Content="▶" Click="OnPanelNextBoxClicked" />
+                                                    <Button Grid.Column="3" Content="+" MinWidth="34" Margin="8,0,0,0"
+                                                            Click="OnAddBoxClicked"
+                                                            IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanAddBox}"
+                                                            ToolTip.Tip="Open another box view" />
+                                                    <Button Grid.Column="4" Content="✕" MinWidth="34" Margin="6,0,0,0"
+                                                            Click="OnCloseBoxClicked"
+                                                            IsEnabled="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CanCloseBox}"
+                                                            ToolTip.Tip="Close this box view" />
+                                                </Grid>
+                                                <ItemsControl ItemsSource="{Binding Slots}"
+                                                              ItemTemplate="{StaticResource SlotTemplate}"
+                                                              Margin="0,8,0,0" HorizontalAlignment="Left"
+                                                              VerticalAlignment="Top">
+                                                    <ItemsControl.ItemsPanel>
+                                                        <ItemsPanelTemplate>
+                                                            <UniformGrid Columns="6" />
+                                                        </ItemsPanelTemplate>
+                                                    </ItemsControl.ItemsPanel>
+                                                </ItemsControl>
+                                            </DockPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
                     </DockPanel>
-                  </Border>
-                </DataTemplate>
-              </ItemsControl.ItemTemplate>
-            </ItemsControl>
-          </ScrollViewer>
+                </Border>
+
+            </Grid>
 
         </DockPanel>
-      </Border>
 
-    </Grid>
-
-  </DockPanel>
-
-  <!-- Ghost sprite following the cursor during a slot drag -->
-  <Canvas x:Name="DragGhostLayer" IsHitTestVisible="False" IsVisible="False">
-    <Image x:Name="DragGhostImage" Width="68" Height="56" Stretch="None" Opacity="0.65"/>
-  </Canvas>
-  </Panel>
+        <!-- Ghost sprite following the cursor during a slot drag -->
+        <Canvas x:Name="DragGhostLayer" IsHitTestVisible="False" IsVisible="False">
+            <Image x:Name="DragGhostImage" Width="68" Height="56" Stretch="None" Opacity="0.65" />
+        </Canvas>
+    </Panel>
 
 </Window>

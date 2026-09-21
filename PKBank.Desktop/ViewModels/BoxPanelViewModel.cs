@@ -20,7 +20,7 @@ public sealed class BoxPanelViewModel : ViewModelBase
     {
         _sav = sav;
         _boxIndex = Math.Clamp(box, 0, sav.BoxCount - 1);
-        for (int i = 0; i < sav.BoxSlotCount; i++)
+        for (var i = 0; i < sav.BoxSlotCount; i++)
             Slots.Add(new SlotViewModel(sav, isParty: false, _boxIndex, i));
     }
 

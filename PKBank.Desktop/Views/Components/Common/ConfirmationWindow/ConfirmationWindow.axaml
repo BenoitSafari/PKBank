@@ -1,0 +1,20 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Views.Components.Common.ConfirmationWindow"
+        Width="420" SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="14" Spacing="14">
+
+        <TextBlock x:Name="MessageText" TextWrapping="Wrap"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button x:Name="CancelButton" Content="Cancel" MinWidth="96" Click="OnCancelClicked"/>
+            <Button x:Name="ConfirmButton" Content="OK" MinWidth="96" Click="OnConfirmClicked"/>
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

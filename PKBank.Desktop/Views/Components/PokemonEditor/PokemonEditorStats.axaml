@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.ViewModels"
+             x:Class="PKBank.Desktop.Views.Components.PokemonEditor.PokemonEditorStats"
+             x:DataType="vm:PokemonEditorViewModel">
+
+    <UserControl.Styles>
+        <!-- Stat inputs: keep the bound background (e.g. maxed-EV red) on hover and
+             focus, where the Fluent theme normally swaps in its own brushes. -->
+        <Style Selector="TextBox.stat:pointerover /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{Binding $parent[TextBox].Background}"/>
+        </Style>
+        <Style Selector="TextBox.stat:focus /template/ Border#PART_BorderElement">
+            <Setter Property="Background" Value="{Binding $parent[TextBox].Background}"/>
+        </Style>
+        <!-- Graded EV total: black text over the colored grade background -->
+        <Style Selector="TextBlock.graded">
+            <Setter Property="Foreground" Value="Black"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Spacing="4" Margin="0,8,0,0">
+        <TextBlock Text="Stats" FontWeight="SemiBold" FontSize="16" />
+        <Grid ColumnDefinitions="64,52,72,72,46">
+            <TextBlock Grid.Column="1" Text="Base" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="2" Text="IV" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="3" Text="EV" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
+            <TextBlock Grid.Column="4" Text="Stat" HorizontalAlignment="Center" Opacity="0.7" VerticalAlignment="Center"/>
+        </Grid>
+        <ItemsControl ItemsSource="{Binding StatRows}" LostFocus="OnStatInputLostFocus">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate DataType="vm:StatRowViewModel">
+                    <Grid ColumnDefinitions="64,52,72,72,46" Margin="0,1">
+                        <TextBlock Grid.Column="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                        <Border Grid.Column="1" Background="{Binding BaseBrush}" CornerRadius="3" Margin="2,0" MinHeight="32">
+                            <TextBlock Text="{Binding Base}" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <TextBox Grid.Column="2" Classes="stat" Tag="iv" MaxLength="2" Margin="2,0" HorizontalContentAlignment="Center"
+                                 ToolTip.Tip="{Binding IVTip}" TextChanged="OnStatTextChanged"
+                                 Text="{Binding IVText, Mode=TwoWay}"/>
+                        <TextBox Grid.Column="3" Classes="stat" Tag="ev" MaxLength="3" Margin="2,0" HorizontalContentAlignment="Center"
+                                 ToolTip.Tip="{Binding EVTip}" TextChanged="OnStatTextChanged"
+                                 Background="{Binding EVBrush}"
+                                 Text="{Binding EVText, Mode=TwoWay}"/>
+                        <TextBlock Grid.Column="4" Text="{Binding Stat}" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                    </Grid>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <!-- Column totals (Format >= 3, as in WinForms) -->
+        <Grid ColumnDefinitions="64,52,72,72,46" Margin="0,1" IsVisible="{Binding ShowTotalsRow}">
+            <TextBlock Grid.Column="0" Text="Total" VerticalAlignment="Center" Opacity="0.85"/>
+            <Border Grid.Column="1" Background="{Binding BSTBrush}" CornerRadius="3" Margin="2,0" MinHeight="32">
+                <TextBlock Text="{Binding BST}" Foreground="Black" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+            <TextBlock Grid.Column="2" Text="{Binding IVTotal}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            <Border Grid.Column="3" Background="{Binding EVTotalBrush}" CornerRadius="3" Margin="2,0" MinHeight="32"
+                    ToolTip.Tip="{Binding EVRemainingTip}">
+                <TextBlock Text="{Binding EVTotal}" Classes.graded="{Binding EVTotalHasColor}"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+        </Grid>
+        <!-- Random generation actions -->
+        <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4,0,0">
+            <Button x:Name="RandomIVsButton" Content="Randomize IVs" Click="OnRandomIVsClicked"
+                    ToolTip.Tip="Click: random (encounter-aware) · Ctrl: max · Alt: clear"/>
+            <Button x:Name="RandomEVsButton" Content="Randomize EVs" Click="OnRandomEVsClicked"
+                    ToolTip.Tip="Click: random · Ctrl: max · Alt: clear"/>
+        </StackPanel>
+    </StackPanel>
+
+</UserControl>

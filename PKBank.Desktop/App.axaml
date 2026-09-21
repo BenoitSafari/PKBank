@@ -6,24 +6,17 @@
   <Application.Styles>
     <FluentTheme />
 
-    <!-- Scrollbars: always fully expanded (no hover-only thin state) and
-         reserving layout space instead of overlaying the content. -->
+
     <Style Selector="ScrollViewer">
       <Setter Property="AllowAutoHide" Value="False"/>
     </Style>
     <Style Selector="ScrollBar">
       <Setter Property="AllowAutoHide" Value="False"/>
     </Style>
-    <!-- ListBox's template forwards its own attached value to the inner
-         ScrollViewer, bypassing the style above: set it on the control too so
-         list scrollbars also stay expanded and reserve their gutter. -->
     <Style Selector="ListBox">
       <Setter Property="ScrollViewer.AllowAutoHide" Value="False"/>
     </Style>
 
-    <!-- Uniform control sizing: buttons and inputs are 32px tall with centered
-         content. MinHeight (not Height) so intentionally larger controls, like
-         the 68x56 slot buttons, keep their size. -->
     <Style Selector="Button">
       <Setter Property="MinHeight" Value="32"/>
       <Setter Property="HorizontalContentAlignment" Value="Center"/>

@@ -43,11 +43,13 @@ csharp_style_var_for_built_in_types = true:warning
 csharp_style_var_when_type_is_apparent = true:warning
 csharp_style_var_elsewhere = true:warning
 csharp_style_expression_bodied_methods = true:warning
-csharp_style_expression_bodied_constructors = false:warning
-csharp_style_expression_bodied_operators = false:warning
+csharp_style_expression_bodied_constructors = true:warning
+csharp_style_expression_bodied_operators = true:warning
 csharp_style_expression_bodied_properties = true:warning
 csharp_style_expression_bodied_indexers = true:warning
 csharp_style_expression_bodied_accessors = true:warning
+csharp_style_expression_bodied_lambdas = true:warning
+csharp_style_expression_bodied_local_functions = true:warning
 csharp_style_pattern_matching_over_is_with_cast_check = true:warning
 csharp_style_pattern_matching_over_as_with_null_check = true:warning
 csharp_style_throw_expression = true:warning
@@ -55,6 +57,14 @@ csharp_style_conditional_delegate_call = true:warning
 csharp_preferred_modifier_order = public, private, protected, internal, file, static, extern, new, virtual, abstract, sealed, override, readonly, unsafe, required, volatile, async:warning
 
 resharper_csharp_max_attribute_length_for_same_line = 1
+
+# ReSharper/Rider drives "Code body does not conform to code style settings" from these,
+# not from the csharp_style_expression_bodied_* keys above. Prefer an expression body
+# wherever one is possible.
+resharper_constructor_or_destructor_body = expression_body
+resharper_method_or_operator_body = expression_body
+resharper_local_function_body = expression_body
+resharper_accessor_owner_body = expression_body
 
 # Symbol specifications
 

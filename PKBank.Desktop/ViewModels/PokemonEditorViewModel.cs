@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
+using PKBank.Core.Moves;
 using PKBank.Desktop.Services;
 using PKBank.Desktop.Sprites;
 using PKHeX.Core;
-using PKBank.Core.Moves;
 
 namespace PKBank.Desktop.ViewModels;
 
@@ -216,7 +217,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             if (_loading || value is null)
                 return;
             var list = AbilityList;
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
             {
                 if (!ReferenceEquals(list[i], value) && list[i] != value)
                     continue;
@@ -239,7 +240,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             if (_loading || value is null)
                 return;
             var list = FormList;
-            for (int i = 0; i < list.Count; i++)
+            for (var i = 0; i < list.Count; i++)
             {
                 if (list[i] != value)
                     continue;
@@ -323,7 +324,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             if (_loading)
                 return;
             var text = value?.Trim() ?? string.Empty;
-            if (!uint.TryParse(text, System.Globalization.NumberStyles.HexNumber, System.Globalization.CultureInfo.InvariantCulture, out var pid) || pid == _pk.PID)
+            if (!uint.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var pid) || pid == _pk.PID)
                 return;
             _pk.PID = pid;
             NotifyPidDerived();
@@ -427,10 +428,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         const int attempts = 256;
         pid = 0;
         ivs = [];
-        int best = -1;
+        var best = -1;
 
         var probe = _pk.Clone();
-        for (int i = 0; i < attempts; i++)
+        for (var i = 0; i < attempts; i++)
         {
             var template = enc.ConvertToPKM(tr, criteria);
             int[] candidate = [template.IV_HP, template.IV_ATK, template.IV_DEF, template.IV_SPE, template.IV_SPA, template.IV_SPD];
@@ -710,7 +711,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         var offsets = _pk.ExtraBytes;
         var list = new string[offsets.Length];
-        for (int i = 0; i < offsets.Length; i++)
+        for (var i = 0; i < offsets.Length; i++)
             list[i] = $"0x{offsets[i]:X2}";
         ExtraByteOffsets = list;
         _extraByteIndex = 0;
@@ -799,7 +800,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         var context = _pk.Context;
         var generation = _pk.Format;
         var list = new MoveChoice[source.Count];
-        for (int i = 0; i < source.Count; i++)
+        for (var i = 0; i < source.Count; i++)
         {
             var item = source[i];
             var move = (ushort)item.Value;

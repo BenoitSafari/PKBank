@@ -21,23 +21,6 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     private IReadOnlyList<string> _boxNames = [];
     private string _trainerInfo = string.Empty;
 
-    /// <summary>Game versions offered by the File → New menu.</summary>
-    public static readonly IReadOnlyList<(string Label, GameVersion Version)> NewSaveOptions =
-    [
-        ("Legends: Z-A", GameVersion.ZA),
-        ("Scarlet/Violet", GameVersion.SL),
-        ("Legends: Arceus", GameVersion.PLA),
-        ("Brilliant Diamond/Shining Pearl", GameVersion.BD),
-        ("Sword/Shield", GameVersion.SW),
-        ("Ultra Sun/Ultra Moon", GameVersion.US),
-        ("Omega Ruby/Alpha Sapphire", GameVersion.OR),
-        ("Black 2/White 2", GameVersion.B2),
-        ("HeartGold/SoulSilver", GameVersion.HG),
-        ("Emerald", GameVersion.E),
-        ("Crystal", GameVersion.C),
-        ("Red", GameVersion.RD),
-    ];
-
     public SaveFile? SAV => _sav;
     public bool HasSave => _sav is not null;
     public bool CanEditTrainer => _sav is not null;
@@ -94,8 +77,8 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             return;
 
         // Drop the panel's slots from the selection so no ghost selection remains.
-        bool selectionChanged = false;
-        for (int i = _selectedSlots.Count - 1; i >= 0; i--)
+        var selectionChanged = false;
+        for (var i = _selectedSlots.Count - 1; i >= 0; i--)
         {
             if (!panel.Slots.Contains(_selectedSlots[i]))
                 continue;
@@ -179,15 +162,13 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         LoadSave(sav);
     }
 
-    public void NewBlank(GameVersion version)
+    public void LoadStartupBlank()
     {
+        var version = Config.BlankSaveVersion;
         _savePath = null;
         LoadSave(BlankSaveFile.Get(version, _sav));
         StatusMessage = $"Created a blank {GameInfo.GetVersionName(version)} save.";
     }
-
-    /// <summary>Loads the configured blank save at startup when no file argument was given.</summary>
-    public void LoadStartupBlank() => NewBlank(Config.BlankSaveVersion);
 
     public void SetLanguage(string code)
     {
@@ -211,7 +192,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         if (HasBox && openBoxes.Length > 0)
         {
             OpenBoxes[0].BoxIndex = openBoxes[0];
-            for (int i = 1; i < openBoxes.Length; i++)
+            for (var i = 1; i < openBoxes.Length; i++)
                 AddBoxPanel(openBoxes[i]);
         }
         if (previous is not { } prev)
@@ -329,9 +310,9 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
                 unique.Add(target);
         }
 
-        int count = Math.Min(unique.Count, paths.Count);
-        int imported = 0;
-        for (int i = 0; i < count; i++)
+        var count = Math.Min(unique.Count, paths.Count);
+        var imported = 0;
+        for (var i = 0; i < count; i++)
         {
             if (TryImportFileToSlot(paths[i], unique[i]))
                 imported++;
@@ -426,8 +407,8 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         // Box ranges span the open panels in display order, so Shift+click can
         // select across boxes; party ranges stay within the party bar.
         var list = slot.IsParty ? PartySlots.ToList() : OpenBoxes.SelectMany(p => p.Slots).ToList();
-        int from = list.IndexOf(anchor);
-        int to = list.IndexOf(slot);
+        var from = list.IndexOf(anchor);
+        var to = list.IndexOf(slot);
         if (from < 0 || to < 0)
         {
             SelectSlot(slot);
@@ -435,7 +416,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         }
 
         var (start, end) = from <= to ? (from, to) : (to, from);
-        for (int i = start; i <= end; i++)
+        for (var i = start; i <= end; i++)
         {
             var member = list[i];
             if (_selectedSlots.Contains(member))
@@ -566,7 +547,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         if (sav.HasBox)
         {
             var names = new string[sav.BoxCount];
-            for (int i = 0; i < names.Length; i++)
+            for (var i = 0; i < names.Length; i++)
             {
                 string? name;
                 try
@@ -590,7 +571,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
         if (sav.HasParty)
         {
-            for (int i = 0; i < 6; i++)
+            for (var i = 0; i < 6; i++)
                 PartySlots.Add(new SlotViewModel(sav, isParty: true, -1, i));
         }
 
