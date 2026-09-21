@@ -281,13 +281,13 @@ public sealed partial class MainWindow : Window
     private void BuildLanguageMenu(MainWindowViewModel vm)
     {
         LanguageMenu.Items.Clear();
-        foreach (var (code, name) in Services.AppSettings.Languages)
+        foreach (var (code, name) in Core.Configuration.GameLanguages.All)
         {
             var item = new MenuItem
             {
                 Header = name,
                 ToggleType = MenuItemToggleType.Radio,
-                IsChecked = code == vm.Settings.Language,
+                IsChecked = code == vm.Config.Language,
             };
             item.Click += (_, _) =>
             {

@@ -1,15 +1,16 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using PKBank.Core.Configuration;
 using PKBank.Desktop.Services;
 using PKHeX.Core;
-using PKHeX.Drawing.PokeSprite;
 
 namespace PKBank.Desktop.ViewModels;
 
-public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
+public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 {
     private SaveFile? _sav;
     private FilteredGameDataSource? _sources;
@@ -47,7 +48,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public bool CanEditPokedex => _sav?.HasPokeDex == true;
     public bool CanEditInventory => _sav?.Inventory.Pouches.Count > 0;
     public bool CanEditRoamer => _sav is SAV3 or SAV4 or SAV6XY;
-    public AppSettings Settings { get; } = settings;
+    public AppConfigService Config { get; } = config;
 
     /// <summary>At most this many box panels can be open side by side.</summary>
     public const int MaxOpenBoxes = 20;
@@ -60,8 +61,8 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     public string TrainerInfo { get => _trainerInfo; private set => SetField(ref _trainerInfo, value); }
 
     public string WindowTitle => _sav is null
-        ? "PKBank.Desktop"
-        : $"PKBank.Desktop — {GameInfo.GetVersionName(_sav.Version)} — {(_savePath is null ? "(new)" : Path.GetFileName(_savePath))}";
+        ? "PKBank"
+        : $"PKBank: {GameInfo.GetVersionName(_sav.Version)} - {(_savePath is null ? "(new)" : Path.GetFileName(_savePath))}";
 
     public bool HasBox => _sav?.HasBox == true;
     public bool HasParty => _sav?.HasParty == true;
@@ -143,7 +144,7 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
         OnPropertyChanged(nameof(IsMultiSelection));
     }
 
-    private void OnEditorPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(PokemonEditorViewModel.HasSpecies))
         {
@@ -186,33 +187,17 @@ public sealed class MainWindowViewModel(AppSettings settings) : ViewModelBase
     }
 
     /// <summary>Loads the configured blank save at startup when no file argument was given.</summary>
-    public void LoadStartupBlank() => NewBlank(Settings.BlankSaveVersion);
+    public void LoadStartupBlank() => NewBlank(Config.BlankSaveVersion);
 
     public void SetLanguage(string code)
     {
-        if (!GameLanguage.IsLanguageValid(code) || code == Settings.Language)
+        if (!Config.SetLanguage(code))
             return;
-        Settings.Language = code;
-        Settings.Save();
         GameInfo.CurrentLanguage = code;
         // Actually reload the cached string tables (setting CurrentLanguage alone does not).
         LocalizeUtil.InitializeStrings(code, _sav);
         ReloadCurrentSave();
         StatusMessage = "Game data language changed.";
-    }
-
-    public void SetShinySprites(bool value)
-    {
-        if (value == Settings.ShinySprites)
-            return;
-        Settings.ShinySprites = value;
-        Settings.Save();
-        SpriteName.AllowShinySprite = value;
-        foreach (var panel in OpenBoxes)
-            panel.RefreshSlots();
-        foreach (var slot in PartySlots)
-            slot.Refresh();
-        Editor?.RefreshSprite();
     }
 
     /// <summary>Rebuilds all view-models from the current save (e.g. after a language change), keeping the open boxes and selection.</summary>

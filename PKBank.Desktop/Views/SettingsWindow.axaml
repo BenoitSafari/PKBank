@@ -10,7 +10,7 @@
 
     <TextBlock Text="Program" FontWeight="SemiBold" FontSize="15"/>
 
-    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto,Auto" Margin="4,0,0,0">
+    <Grid ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" Margin="4,0,0,0">
 
       <TextBlock Grid.Row="0" Grid.Column="0" Text="Game data language" VerticalAlignment="Center"/>
       <ComboBox Grid.Row="0" Grid.Column="1" x:Name="LanguageCombo"
@@ -21,10 +21,6 @@
       <ComboBox Grid.Row="1" Grid.Column="1" x:Name="BlankVersionCombo"
                 HorizontalAlignment="Stretch" Margin="0,3"
                 SelectionChanged="OnBlankVersionChanged"/>
-
-      <CheckBox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" x:Name="ShinyCheck"
-                Content="Show shiny sprites" Margin="0,6,0,0"
-                IsCheckedChanged="OnShinyChanged"/>
     </Grid>
 
     <TextBlock Text="The blank save version is loaded at startup when no file is opened."
