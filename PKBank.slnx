@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="PKBank.Core/PKBank.Core.csproj" />
+  <Project Path="PKBank.Desktop/PKBank.Desktop.csproj" />
+  <Folder Name="/packages/">
+    <Project Path="packages/PKHeX/PKHeX.Core/PKHeX.Core.csproj" />
+  </Folder>
+</Solution>

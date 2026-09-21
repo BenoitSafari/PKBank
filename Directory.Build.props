@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <Version>0.1.0</Version>
+    <LangVersion>14</LangVersion>
+    <Nullable>enable</Nullable>
+    <NeutralLanguage>en</NeutralLanguage>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <Product>PKBank</Product>
+    <Authors>BenoitSafari</Authors>
+    <SourceRevisionId>$([System.DateTime]::UtcNow.ToString("yyMMddHHmmss"))</SourceRevisionId>
+  </PropertyGroup>
+</Project>
