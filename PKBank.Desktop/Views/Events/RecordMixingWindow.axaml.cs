@@ -1,9 +1,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Interactivity;
+using PKBank.Core.Events.Files.Gen3Events;
 using PKHeX.Core;
-using PKBank.Core.Events.Files;
 
 namespace PKBank.Desktop.Views.Events;
 
@@ -30,7 +31,7 @@ public sealed partial class RecordMixingWindow : Window
             .OrderBy(z => z.Text));
 
         ItemCombo.ItemsSource = choices;
-        ItemCombo.DisplayMemberBinding = new global::Avalonia.Data.Binding(nameof(ComboItem.Text));
+        ItemCombo.DisplayMemberBinding = new Binding(nameof(ComboItem.Text));
 
         var current = sav.GetRecordMixing();
         var item = current is not null && sav.IsValidForRecordMixing(current.Item) ? current.Item : (ushort)0;

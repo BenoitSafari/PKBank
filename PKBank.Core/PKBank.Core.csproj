@@ -10,8 +10,4 @@
     <ProjectReference Include="..\packages\PKHeX\PKHeX.Core\PKHeX.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Configuration\"/>
-  </ItemGroup>
-
 </Project>
