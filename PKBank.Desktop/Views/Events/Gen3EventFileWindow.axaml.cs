@@ -5,6 +5,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using PKBank.Core.Events.Files;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Views.Events;

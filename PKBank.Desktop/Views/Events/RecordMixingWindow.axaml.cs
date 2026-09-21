@@ -3,7 +3,7 @@ using System.Linq;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PKHeX.Core;
-using PKBank.Core.Events;
+using PKBank.Core.Events.Files;
 
 namespace PKBank.Desktop.Views.Events;
 

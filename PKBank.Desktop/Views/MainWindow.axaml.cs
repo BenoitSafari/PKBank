@@ -9,6 +9,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using PKBank.Core.Events.Files;
 using PKBank.Desktop.Services;
 using PKBank.Desktop.ViewModels;
 using PKHeX.Core;
@@ -334,21 +335,21 @@ public sealed partial class MainWindow : Window
     }
 
     private async void OnWC3Clicked(object? sender, RoutedEventArgs e)
-        => await OpenGen3EventAsync(Events.Gen3EventFileKind.WC3);
+        => await OpenGen3EventAsync(Gen3EventFileKind.WC3);
 
     private async void OnME3Clicked(object? sender, RoutedEventArgs e)
-        => await OpenGen3EventAsync(Events.Gen3EventFileKind.ME3);
+        => await OpenGen3EventAsync(Gen3EventFileKind.ME3);
 
     private async void OnECTClicked(object? sender, RoutedEventArgs e)
-        => await OpenGen3EventAsync(Events.Gen3EventFileKind.ECT);
+        => await OpenGen3EventAsync(Gen3EventFileKind.ECT);
 
     private async void OnECBClicked(object? sender, RoutedEventArgs e)
-        => await OpenGen3EventAsync(Events.Gen3EventFileKind.ECB);
+        => await OpenGen3EventAsync(Gen3EventFileKind.ECB);
 
     private async void OnWN3Clicked(object? sender, RoutedEventArgs e)
-        => await OpenGen3EventAsync(Events.Gen3EventFileKind.WN3);
+        => await OpenGen3EventAsync(Gen3EventFileKind.WN3);
 
-    private async Task OpenGen3EventAsync(Events.Gen3EventFileKind kind)
+    private async Task OpenGen3EventAsync(Gen3EventFileKind kind)
     {
         if (ViewModel is { SAV: SAV3 sav })
             await new Events.Gen3EventFileWindow(sav, kind).ShowDialog(this);
