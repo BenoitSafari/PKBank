@@ -1,0 +1,15 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.ViewModels"
+             x:Class="PKBank.Desktop.Views.MainWindowStatus"
+             x:DataType="vm:MainWindowViewModel">
+
+    <Border Padding="10,6"
+            Background="{DynamicResource SystemControlBackgroundListLowBrush}">
+        <DockPanel>
+            <TextBlock DockPanel.Dock="Right" Text="{Binding TrainerInfo}" Opacity="0.8" />
+            <TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0" />
+        </DockPanel>
+    </Border>
+
+</UserControl>

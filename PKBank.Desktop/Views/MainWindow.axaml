@@ -4,6 +4,7 @@
         xmlns:v="using:PKBank.Desktop.Views"
         xmlns:u="using:PKBank.Desktop.Utils"
         xmlns:pe="using:PKBank.Desktop.Views.Components.PokemonEditor"
+        xmlns:ss="using:PKBank.Desktop.Views.Components.SaveSelection"
         x:Class="PKBank.Desktop.Views.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.png"
@@ -98,15 +99,12 @@
         <DockPanel>
             <v:MainWindowMenu DockPanel.Dock="Top" />
 
-            <Border DockPanel.Dock="Bottom" Padding="10,6"
-                    Background="{DynamicResource SystemControlBackgroundListLowBrush}">
-                <DockPanel>
-                    <TextBlock DockPanel.Dock="Right" Text="{Binding TrainerInfo}" Opacity="0.8" />
-                    <TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0" />
-                </DockPanel>
-            </Border>
+            <v:MainWindowStatus DockPanel.Dock="Bottom" />
 
             <Grid ColumnDefinitions="478,*" Margin="10">
+
+                <!-- No save loaded: the selection screen takes over the content area -->
+                <ss:SaveSelectionView Grid.Column="0" Grid.ColumnSpan="2" IsVisible="{Binding !HasSave}" />
 
                 <!-- Pokémon editor (left) -->
                 <Border Grid.Column="0"

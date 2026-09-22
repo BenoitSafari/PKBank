@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
@@ -8,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using PKBank.Core.Configuration;
 using PKBank.Core.Events.Files;
+using PKBank.Desktop.Services.SaveFiles;
 using PKBank.Desktop.ViewModels;
 using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
 using PKBank.Desktop.Views.Components.Events;
@@ -87,20 +87,8 @@ public sealed partial class MainWindowMenu : UserControl
 
     private async void OnOpenClicked(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { } vm || Storage is not { } storage)
-            return;
-
-        var files = await storage.OpenFilePickerAsync(
-            new FilePickerOpenOptions
-            {
-                Title = "Open Save File",
-                AllowMultiple = false
-            }
-        );
-
-        var path = files.FirstOrDefault()?.TryGetLocalPath();
-        if (path is not null)
-            vm.LoadSaveFromPath(path);
+        if (ViewModel is { } vm && TopLevel.GetTopLevel(this) is { } top)
+            await SaveFileDialogs.OpenAsync(top, vm);
     }
 
     private async void OnSaveAsClicked(object? sender, RoutedEventArgs e)
@@ -133,7 +121,7 @@ public sealed partial class MainWindowMenu : UserControl
                 return;
         }
 
-        vm.LoadStartupBlank();
+        vm.CloseSave();
     }
 
     private void OnExitClicked(object? sender, RoutedEventArgs e) => Host?.Close();

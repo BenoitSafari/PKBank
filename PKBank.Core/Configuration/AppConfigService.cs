@@ -13,7 +13,6 @@ public sealed class AppConfigService(IConfigStore store)
     public event EventHandler? Changed;
 
     public string Language => _config.Language;
-    public GameVersion BlankSaveVersion => _config.BlankSaveVersion;
     public IReadOnlyList<string> SavPaths => _config.SavPaths;
     public IReadOnlyList<string> BankPaths => _config.BankPaths;
 
@@ -22,15 +21,6 @@ public sealed class AppConfigService(IConfigStore store)
         if (!GameLanguage.IsLanguageValid(code) || code == _config.Language)
             return false;
         _config.Language = code;
-        Commit();
-        return true;
-    }
-
-    public bool SetBlankSaveVersion(GameVersion version)
-    {
-        if (!version.IsValidSavedVersion() || version == _config.BlankSaveVersion)
-            return false;
-        _config.BlankSaveVersion = version;
         Commit();
         return true;
     }
@@ -123,8 +113,6 @@ public sealed class AppConfigService(IConfigStore store)
     {
         if (!GameLanguage.IsLanguageValid(config.Language))
             config.Language = GameLanguage.DefaultLanguage;
-        if (!config.BlankSaveVersion.IsValidSavedVersion())
-            config.BlankSaveVersion = Latest.Version;
 
         Sanitize(config.SavPaths);
         Sanitize(config.BankPaths);

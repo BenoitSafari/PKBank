@@ -7,9 +7,9 @@ using PKHeX.Core;
 namespace PKBank.Desktop.Views.Components.Roamer;
 
 /// <summary>
-/// Gen 4 roamer editor: one tab per roamer slot the save can hold at the same
-/// time (HGSS: Raikou/Entei/Latias/Latios, D/P/Pt: Mesprit/Cresselia).
-/// WinForms never had this editor; the fields mirror Core's Roamer4 structure.
+///     Gen 4 roamer editor: one tab per roamer slot the save can hold at the same
+///     time (HGSS: Raikou/Entei/Latias/Latios, D/P/Pt: Mesprit/Cresselia).
+///     WinForms never had this editor; the fields mirror Core's Roamer4 structure.
 /// </summary>
 public sealed partial class Roamer4EditorWindow : Window
 {
@@ -34,22 +34,22 @@ public sealed partial class Roamer4EditorWindow : Window
     {
         SAV4HGSS hgss =>
         [
-            (hgss.RoamerRaikou, (ushort)PKHeX.Core.Species.Raikou),
-            (hgss.RoamerEntei, (ushort)PKHeX.Core.Species.Entei),
-            (hgss.RoamerLatias, (ushort)PKHeX.Core.Species.Latias),
-            (hgss.RoamerLatios, (ushort)PKHeX.Core.Species.Latios),
+            (hgss.RoamerRaikou, (ushort)Species.Raikou),
+            (hgss.RoamerEntei, (ushort)Species.Entei),
+            (hgss.RoamerLatias, (ushort)Species.Latias),
+            (hgss.RoamerLatios, (ushort)Species.Latios)
         ],
         SAV4Pt pt =>
         [
-            (pt.RoamerMesprit, (ushort)PKHeX.Core.Species.Mesprit),
-            (pt.RoamerCresselia, (ushort)PKHeX.Core.Species.Cresselia),
+            (pt.RoamerMesprit, (ushort)Species.Mesprit),
+            (pt.RoamerCresselia, (ushort)Species.Cresselia)
         ],
         SAV4DP dp =>
         [
-            (dp.RoamerMesprit, (ushort)PKHeX.Core.Species.Mesprit),
-            (dp.RoamerCresselia, (ushort)PKHeX.Core.Species.Cresselia),
+            (dp.RoamerMesprit, (ushort)Species.Mesprit),
+            (dp.RoamerCresselia, (ushort)Species.Cresselia)
         ],
-        _ => [],
+        _ => []
     };
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e) => Close();

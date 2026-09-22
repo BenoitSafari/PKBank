@@ -1,3 +1,3 @@
 [submodule "packages/PKHeX"]
 	path = packages/PKHeX
-	url = git@github.com:kwsch/PKHeX.git
+	url = git@github.com:BenoitSafari/PKHeX.git

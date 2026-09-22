@@ -26,11 +26,11 @@ public sealed class App : Application
             var vm = new MainWindowViewModel(config);
             desktop.MainWindow = new MainWindow { DataContext = vm };
 
-            // Open the file passed on the command line, else start on a blank save.
+            // Open the file passed on the command line
             if (desktop.Args is [{ Length: > 0 } path, ..])
                 vm.LoadSaveFromPath(path);
-            else
-                vm.LoadStartupBlank();
+            if (vm.SAV is null)
+                _ = vm.SaveSelection.RefreshAsync();
         }
 
         base.OnFrameworkInitializationCompleted();

@@ -10,7 +10,7 @@ using PKHeX.Core;
 
 namespace PKBank.Desktop.ViewModels;
 
-public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
+public sealed class MainWindowViewModel : ViewModelBase
 {
     public const int MaxOpenBoxes = 20;
 
@@ -22,10 +22,25 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     private string? _savePath;
     private SlotViewModel? _selectedSlot;
     private FilteredGameDataSource? _sources;
-    private string _statusMessage = "Open a save file to get started (File → Open…).";
+    private string _statusMessage = "Select a save file to edit.";
     private string _trainerInfo = string.Empty;
 
+    public MainWindowViewModel(AppConfigService config)
+    {
+        Config = config;
+        SaveSelection = new SaveSelectionViewModel(config);
+        // Adding or removing a save folder (or switching language) changes what the
+        // selection screen should list; only rescan while it is the visible screen.
+        Config.Changed += (_, _) =>
+        {
+            if (SAV is null)
+                _ = SaveSelection.RefreshAsync();
+        };
+    }
+
     public SaveFile? SAV { get; private set; }
+
+    public SaveSelectionViewModel SaveSelection { get; }
 
     public bool HasSave => SAV is not null;
     public bool CanEditTrainer => SAV is not null;
@@ -36,7 +51,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     public bool CanEditPokedex => SAV?.HasPokeDex == true;
     public bool CanEditInventory => SAV?.Inventory.Pouches.Count > 0;
     public bool CanEditRoamer => SAV is SAV3 or SAV4 or SAV6XY;
-    public AppConfigService Config { get; } = config;
+    public AppConfigService Config { get; }
 
     public ObservableCollection<BoxPanelViewModel> OpenBoxes { get; } = [];
     public ObservableCollection<SlotViewModel> PartySlots { get; } = [];
@@ -61,7 +76,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
     public string WindowTitle => SAV is null
         ? AppInfo.Name
-        : $"{AppInfo.Name}: {GameInfo.GetVersionName(SAV.Version)} - {(_savePath is null ? "(new)" : Path.GetFileName(_savePath))}";
+        : $"{AppInfo.Name}: {GameInfo.GetVersionName(SAV.Version)} - {Path.GetFileName(_savePath)}";
 
     public bool HasBox => SAV?.HasBox == true;
     public bool HasParty => SAV?.HasParty == true;
@@ -198,12 +213,24 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         LoadSave(sav);
     }
 
-    public void LoadStartupBlank()
+    public void CloseSave()
     {
-        var version = Config.BlankSaveVersion;
+        SAV = null;
         _savePath = null;
-        LoadSave(BlankSaveFile.Get(version, SAV));
-        StatusMessage = $"Created a blank {GameInfo.GetVersionName(version)} save.";
+        _sources = null;
+
+        SelectedSlot = null;
+        _selectedSlots.Clear();
+        Editor = null;
+        OpenBoxes.Clear();
+        PartySlots.Clear();
+        BoxNames = [];
+
+        TrainerInfo = string.Empty;
+        StatusMessage = "Select a save file to edit.";
+        NotifySaveStateChanged();
+        NotifySlotActionStates();
+        _ = SaveSelection.RefreshAsync();
     }
 
     public void SetLanguage(string code)
@@ -214,6 +241,10 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         // Actually reload the cached string tables (setting CurrentLanguage alone does not).
         LocalizeUtil.InitializeStrings(code, SAV);
         ReloadCurrentSave();
+        // The Changed handler already kicked a scan, but with the previous string
+        // tables; redo it so the listed game names follow the new language.
+        if (SAV is null)
+            _ = SaveSelection.RefreshAsync();
         StatusMessage = "Game data language changed.";
     }
 
@@ -568,7 +599,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
                 }
                 catch
                 {
-                    name = null; // blank saves may lack the underlying blocks
+                    name = null; // some saves lack the underlying blocks
                 }
 
                 name = DisplayText.Sanitize(name ?? string.Empty);
@@ -589,6 +620,14 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
         RefreshTrainerInfo();
         StatusMessage = "Save loaded.";
+        NotifySaveStateChanged();
+
+        SelectFirstOccupiedSlot();
+    }
+
+    /// <summary>Everything that depends on which save (if any) is currently loaded.</summary>
+    private void NotifySaveStateChanged()
+    {
         OnPropertyChanged(nameof(HasSave));
         OnPropertyChanged(nameof(CanEditTrainer));
         OnPropertyChanged(nameof(CanEditMysteryGift));
@@ -603,8 +642,6 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         OnPropertyChanged(nameof(CanAddBox));
         OnPropertyChanged(nameof(CanCloseBox));
         OnPropertyChanged(nameof(WindowTitle));
-
-        SelectFirstOccupiedSlot();
     }
 
     /// <summary>Rebuilds the status-bar trainer summary, e.g. after the trainer editor changed it.</summary>
@@ -623,7 +660,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         }
         catch
         {
-            playTime = "–"; // blank saves may lack the underlying blocks
+            playTime = "–"; // some saves lack the underlying blocks
         }
 
         TrainerInfo = $"{sav.OT}  ·  TID {sav.DisplayTID}  ·  {GameInfo.GetVersionName(sav.Version)}  ·  {playTime}";

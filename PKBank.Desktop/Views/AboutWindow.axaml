@@ -5,25 +5,30 @@
         CanResize="False"
         WindowStartupLocation="CenterOwner">
 
-  <StackPanel Margin="24" Spacing="10" MaxWidth="420">
+    <StackPanel Margin="24" Spacing="10" MaxWidth="420">
 
-    <StackPanel Orientation="Horizontal" Spacing="14">
-      <Image Source="/Assets/icon.png" Width="48" Height="48"/>
-      <StackPanel VerticalAlignment="Center">
-        <TextBlock x:Name="NameText" FontSize="20" FontWeight="SemiBold"/>
-        <TextBlock x:Name="VersionText" Opacity="0.75"/>
-      </StackPanel>
+        <StackPanel Orientation="Horizontal" Spacing="14">
+            <Image Source="/Assets/icon.png" Width="48" Height="48" />
+            <StackPanel VerticalAlignment="Center">
+                <TextBlock x:Name="NameText" FontSize="20" FontWeight="SemiBold" />
+                <TextBlock x:Name="VersionText" Opacity="0.75" />
+            </StackPanel>
+        </StackPanel>
+
+        <TextBlock
+            TextWrapping="Wrap"
+            Text="Cross-platform user interface for PKHeX, the Pokémon core-series save editor." />
+        <TextBlock
+            TextWrapping="Wrap"
+            Opacity="0.85"
+            Text="Save editing engine: PKHeX.Core by Kaphotics and Project Pokémon contributors." />
+        <TextBlock
+            TextWrapping="Wrap"
+            Opacity="0.85"
+            Text="Licensed under the GPL-3.0-or-later license. QR generation by QRCoder (MIT). Sprites from pokesprite (MIT) and community contributors." />
+
+        <Button Content="Close" HorizontalAlignment="Right" Margin="0,8,0,0" Click="OnCloseClicked" />
+
     </StackPanel>
-
-    <TextBlock TextWrapping="Wrap"
-               Text="Cross-platform user interface for PKHeX, the Pokémon core-series save editor."/>
-    <TextBlock TextWrapping="Wrap" Opacity="0.85"
-               Text="Save editing engine: PKHeX.Core by Kaphotics and Project Pokémon contributors."/>
-    <TextBlock TextWrapping="Wrap" Opacity="0.85"
-               Text="Licensed under the GPL-3.0-or-later license. QR generation by QRCoder (MIT). Sprites from pokesprite (MIT) and community contributors."/>
-
-    <Button Content="Close" HorizontalAlignment="Right" Margin="0,8,0,0" Click="OnCloseClicked"/>
-
-  </StackPanel>
 
 </Window>
