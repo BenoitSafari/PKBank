@@ -1,0 +1,35 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Styles.Resources>
+        <SolidColorBrush x:Key="SlotSelectedBorderBrush" Color="{DynamicResource SystemAccentColor}" />
+        <SolidColorBrush x:Key="SlotHoverBorderBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.45" />
+        <SolidColorBrush x:Key="SlotOccupiedBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.16" />
+    </Styles.Resources>
+
+    <Style Selector="Button.slot">
+        <Setter Property="Padding" Value="2" />
+        <Setter Property="Margin" Value="1" />
+        <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundListLowBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+        <Setter Property="CornerRadius" Value="4" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <!-- Occupied slots get a subtle accent-tinted background -->
+    <Style Selector="Button.slot.occupied">
+        <Setter Property="Background" Value="{StaticResource SlotOccupiedBrush}" />
+    </Style>
+    <Style Selector="Button.slot.selected">
+        <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}" />
+    </Style>
+    <!-- Hover: faded accent border (the Fluent theme normally overrides it away) -->
+    <Style Selector="Button.slot:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource SlotHoverBorderBrush}" />
+    </Style>
+    <Style Selector="Button.slot.selected:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="BorderBrush" Value="{StaticResource SlotSelectedBorderBrush}" />
+    </Style>
+
+</Styles>

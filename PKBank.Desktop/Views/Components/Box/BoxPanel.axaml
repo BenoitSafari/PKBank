@@ -1,0 +1,44 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.ViewModels"
+             x:Class="PKBank.Desktop.Views.Components.Box.BoxPanel"
+             x:DataType="vm:BoxPanelViewModelBase">
+
+    <Border Width="{Binding PanelWidth}" Margin="0,0,10,10"
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="1" CornerRadius="6" Padding="8">
+        <DockPanel>
+
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                <Button Grid.Column="0" Content="◀" Click="OnPrevClicked" />
+                <ComboBox Grid.Column="1" Margin="6,0" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding ContainerNames}"
+                          SelectedIndex="{Binding ContainerIndex, Mode=TwoWay}" />
+                <Button Grid.Column="2" Content="▶" Click="OnNextClicked" />
+                <Button Grid.Column="3" Content="+" MinWidth="34" Margin="8,0,0,0"
+                        Click="OnAddClicked"
+                        IsVisible="{Binding ShowAdd}" IsEnabled="{Binding CanAdd}"
+                        ToolTip.Tip="Open another box view" />
+                <Button Grid.Column="4" Content="✕" MinWidth="34" Margin="6,0,0,0"
+                        Click="OnCloseClicked"
+                        IsVisible="{Binding ShowClose}" IsEnabled="{Binding CanClose}"
+                        ToolTip.Tip="Close this box view" />
+            </Grid>
+
+            <!-- Slot cells are fixed size, so wrapping at an exact width yields exactly Columns per row.
+                 A UniformGrid would need its Columns bound from inside an ItemsPanelTemplate, which
+                 does not see the panel's DataContext. -->
+            <ItemsControl ItemsSource="{Binding Slots}" Margin="0,8,0,0"
+                          Width="{Binding SlotAreaWidth}"
+                          HorizontalAlignment="Left" VerticalAlignment="Top">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <WrapPanel Orientation="Horizontal" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+            </ItemsControl>
+
+        </DockPanel>
+    </Border>
+
+</UserControl>

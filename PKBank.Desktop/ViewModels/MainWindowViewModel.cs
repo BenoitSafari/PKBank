@@ -5,6 +5,8 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using PKBank.Core.Configuration;
+using PKBank.Desktop.Services.Slots;
+using PKBank.Desktop.Services.Slots.Types;
 using PKBank.Desktop.Utils;
 using PKHeX.Core;
 
@@ -17,8 +19,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     // ----- Selection -------------------------------------------------------
 
     private readonly List<SlotViewModel> _selectedSlots = [];
-    private IReadOnlyList<string> _boxNames = [];
+    private SaveBoxStore? _boxStore;
     private PokemonEditorViewModel? _editor;
+    private SavePartyStore? _partyStore;
     private string? _savePath;
     private SlotViewModel? _selectedSlot;
     private FilteredGameDataSource? _sources;
@@ -67,14 +70,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool CanEditRoamer => SAV is SAV3 or SAV4 or SAV6XY;
     public AppConfigService Config { get; }
 
-    public ObservableCollection<BoxPanelViewModel> OpenBoxes { get; } = [];
+    public ObservableCollection<SaveBoxPanelViewModel> OpenBoxes { get; } = [];
     public ObservableCollection<SlotViewModel> PartySlots { get; } = [];
-
-    public IReadOnlyList<string> BoxNames
-    {
-        get => _boxNames;
-        private set => SetField(ref _boxNames, value);
-    }
 
     public string StatusMessage
     {
@@ -129,20 +126,19 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         if (SAV is not { HasBox: true } sav || OpenBoxes.Count >= MaxOpenBoxes)
             return;
-        var box = OpenBoxes.Count == 0 ? sav.CurrentBox : (OpenBoxes[^1].BoxIndex + 1) % sav.BoxCount;
+        var box = OpenBoxes.Count == 0 ? sav.CurrentBox : (OpenBoxes[^1].ContainerIndex + 1) % sav.BoxCount;
         AddBoxPanel(box);
     }
 
     private void AddBoxPanel(int box)
     {
-        if (SAV is not { } sav)
+        if (_boxStore is not { } store)
             return;
-        OpenBoxes.Add(new BoxPanelViewModel(sav, box));
-        OnPropertyChanged(nameof(CanAddBox));
-        OnPropertyChanged(nameof(CanCloseBox));
+        OpenBoxes.Add(new SaveBoxPanelViewModel(this, store, box));
+        NotifyPanelStates();
     }
 
-    public void CloseBoxPanel(BoxPanelViewModel panel)
+    public void CloseBoxPanel(SaveBoxPanelViewModel panel)
     {
         if (OpenBoxes.Count <= 1 || !OpenBoxes.Remove(panel))
             return;
@@ -163,8 +159,19 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (selectionChanged)
             NotifySlotActionStates();
 
+        NotifyPanelStates();
+    }
+
+    /// <summary>Panels cannot know how many others are open, so the counts are pushed onto them.</summary>
+    private void NotifyPanelStates()
+    {
         OnPropertyChanged(nameof(CanAddBox));
         OnPropertyChanged(nameof(CanCloseBox));
+        foreach (var panel in OpenBoxes)
+        {
+            panel.CanAdd = CanAddBox;
+            panel.CanClose = CanCloseBox;
+        }
     }
 
     /// <summary>A write through one panel's slot must also show in other panels viewing the same box.</summary>
@@ -172,14 +179,11 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         if (written.IsParty)
             return;
+        var key = written.Key;
         foreach (var panel in OpenBoxes)
-        {
-            if (panel.BoxIndex != written.Box || written.Slot >= panel.Slots.Count)
-                continue;
-            var mirror = panel.Slots[written.Slot];
-            if (mirror != written)
+        foreach (var mirror in panel.Slots)
+            if (mirror != written && mirror.Key == key)
                 mirror.Refresh();
-        }
     }
 
     private void NotifySlotActionStates()
@@ -232,13 +236,13 @@ public sealed class MainWindowViewModel : ViewModelBase
         SAV = null;
         _savePath = null;
         _sources = null;
+        _boxStore = null;
+        _partyStore = null;
 
-        SelectedSlot = null;
-        _selectedSlots.Clear();
+        ClearSelection();
         Editor = null;
         OpenBoxes.Clear();
         PartySlots.Clear();
-        BoxNames = [];
 
         TrainerInfo = string.Empty;
         StatusMessage = "Select a save file to edit.";
@@ -270,22 +274,24 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         if (SAV is not { } sav)
             return;
-        var openBoxes = OpenBoxes.Select(p => p.BoxIndex).ToArray();
+        var openBoxes = OpenBoxes.Select(p => p.ContainerIndex).ToArray();
         var previous = SelectedSlot;
         LoadSave(sav);
         if (HasBox && openBoxes.Length > 0)
         {
-            OpenBoxes[0].BoxIndex = openBoxes[0];
+            OpenBoxes[0].ContainerIndex = openBoxes[0];
             for (var i = 1; i < openBoxes.Length; i++)
                 AddBoxPanel(openBoxes[i]);
         }
 
+        // The stores were rebuilt, so the old slot instances are gone: find the same coordinates again.
         if (previous is not { } prev)
             return;
         var match = prev.IsParty
-            ? prev.Slot < PartySlots.Count ? PartySlots[prev.Slot] : null
-            : OpenBoxes.FirstOrDefault(p => p.BoxIndex == prev.Box) is { } panel && prev.Slot < panel.Slots.Count
-                ? panel.Slots[prev.Slot]
+            ? prev.Index < PartySlots.Count ? PartySlots[prev.Index] : null
+            : OpenBoxes.FirstOrDefault(p => p.ContainerIndex == prev.Container) is { } panel &&
+              prev.Index < panel.Slots.Count
+                ? panel.Slots[prev.Index]
                 : null;
         if (match is not null)
             ViewSlot(match);
@@ -373,10 +379,10 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (paths.Count == 0 || targets.Count == 0)
             return;
 
-        var seen = new HashSet<(bool IsParty, int Box, int Slot)>();
+        var seen = new HashSet<SlotKey>();
         var unique = new List<SlotViewModel>(targets.Count);
         foreach (var target in targets)
-            if (seen.Add((target.IsParty, target.Box, target.Slot)))
+            if (seen.Add(target.Key))
                 unique.Add(target);
 
         var count = Math.Min(unique.Count, paths.Count);
@@ -418,19 +424,32 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// <summary>Plain left click: collapses any multi-selection back to a single slot.</summary>
     public void SelectSlot(SlotViewModel slot)
     {
-        foreach (var previous in _selectedSlots)
-            previous.IsSelected = false;
-        _selectedSlots.Clear();
+        ClearSelection();
         _selectedSlots.Add(slot);
         slot.IsSelected = true;
         SelectedSlot = slot;
         NotifySlotActionStates();
     }
 
+    private void ClearSelection()
+    {
+        foreach (var previous in _selectedSlots)
+            previous.IsSelected = false;
+        _selectedSlots.Clear();
+        SelectedSlot = null;
+    }
+
+    /// <summary>
+    ///     A selection never spans two scopes: extending it from a box into a bank page (or back) starts a
+    ///     fresh single selection instead.
+    /// </summary>
+    private bool LeavesSelectionScope(SlotViewModel slot)
+        => SelectedSlot is { } anchor && anchor.Store.Scope != slot.Store.Scope;
+
     /// <summary>Ctrl+click: adds the slot to the selection (or removes it when already selected).</summary>
     public void ToggleSelectSlot(SlotViewModel slot)
     {
-        if (_selectedSlots.Count == 0)
+        if (_selectedSlots.Count == 0 || LeavesSelectionScope(slot))
         {
             SelectSlot(slot);
             return;
@@ -458,15 +477,13 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// <summary>Shift+click: adds every slot between the anchor and the clicked slot (inclusive).</summary>
     public void RangeSelectSlot(SlotViewModel slot)
     {
-        if (SelectedSlot is not { } anchor || anchor.IsParty != slot.IsParty)
+        if (SelectedSlot is not { } anchor || anchor.Store != slot.Store)
         {
             SelectSlot(slot); // no same-area anchor: behave like a plain click
             return;
         }
 
-        // Box ranges span the open panels in display order, so Shift+click can
-        // select across boxes; party ranges stay within the party bar.
-        var list = slot.IsParty ? PartySlots.ToList() : OpenBoxes.SelectMany(p => p.Slots).ToList();
+        var list = GetRangeArea(slot);
         var from = list.IndexOf(anchor);
         var to = list.IndexOf(slot);
         if (from < 0 || to < 0)
@@ -487,6 +504,15 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         NotifySlotActionStates();
     }
+
+    /// <summary>
+    ///     Slots a Shift+click range may cover. Box ranges span the open panels in display order, so a range
+    ///     can select across boxes; party ranges stay within the party bar.
+    /// </summary>
+    private List<SlotViewModel> GetRangeArea(SlotViewModel slot)
+        => slot.Store == _partyStore
+            ? PartySlots.ToList()
+            : OpenBoxes.SelectMany(p => p.Slots).Where(s => s.Store == slot.Store).ToList();
 
     /// <summary>
     ///     Slots a context-menu action should apply to: the whole selection when the
@@ -519,7 +545,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         if (SAV is not { } sav)
             return;
-        slot.Write(sav.BlankPKM);
+        slot.Write(slot.Store.Blank);
         sav.State.Edited = true;
         RefreshMirrorSlots(slot);
         if (slot.IsParty)
@@ -529,16 +555,42 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     ///     Drag &amp; drop between slots: moves the Pokémon to the target slot,
-    ///     swapping when the target is occupied.
+    ///     swapping when the target is occupied. Crossing stores converts on the way.
     /// </summary>
     public void MoveOrSwapSlots(SlotViewModel source, SlotViewModel target)
     {
-        if (SAV is not { } sav || source == target)
+        if (SAV is not { } sav || source == target || source.Key == target.Key)
             return;
         var src = source.Read();
         if (src.Species == 0)
             return;
         var dst = target.Read();
+        var crossStore = source.Store != target.Store;
+
+        if (crossStore)
+        {
+            // Clone first: conversion returns the same instance when the type already matches, and
+            // AdaptToSaveFile mutates it — the origin store must not see that.
+            if (target.Store.TryAccept(src.Clone(), out var refused) is not { } accepted)
+            {
+                StatusMessage = refused;
+                return;
+            }
+
+            src = accepted;
+        }
+
+        if (dst.Species != 0 && crossStore)
+        {
+            // Swapping both ways: make sure the return trip is possible before writing anything.
+            if (source.Store.TryAccept(dst.Clone(), out var refused) is not { } accepted)
+            {
+                StatusMessage = refused;
+                return;
+            }
+
+            dst = accepted;
+        }
 
         if (target.IsParty)
             src.ResetPartyStats();
@@ -554,7 +606,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
         else
         {
-            source.Write(sav.BlankPKM);
+            source.Write(source.Store.Blank);
         }
 
         sav.State.Edited = true;
@@ -562,6 +614,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshMirrorSlots(target);
         if (source.IsParty || target.IsParty)
             RefreshParty();
+        if (Editor?.Origin == source || Editor?.Origin == target)
+            Editor.Revert(); // the displayed entity's slot changed underneath it
         NotifySlotActionStates();
         StatusMessage = dst.Species != 0 ? "Slots swapped." : "Pokémon moved.";
     }
@@ -598,43 +652,21 @@ public sealed class MainWindowViewModel : ViewModelBase
         _sources = new FilteredGameDataSource(sav, GameInfo.Sources);
         GameInfo.FilteredSources = _sources;
 
-        SelectedSlot = null;
-        _selectedSlots.Clear();
+        ClearSelection();
         Editor = null;
 
         OpenBoxes.Clear();
         PartySlots.Clear();
 
-        if (sav.HasBox)
-        {
-            var names = new string[sav.BoxCount];
-            for (var i = 0; i < names.Length; i++)
-            {
-                string? name;
-                try
-                {
-                    name = (sav as IBoxDetailNameRead)?.GetBoxName(i);
-                }
-                catch
-                {
-                    name = null; // some saves lack the underlying blocks
-                }
+        _boxStore = sav.HasBox ? SaveBoxStore.Create(sav) : null;
+        _partyStore = sav.HasParty ? new SavePartyStore(sav) : null;
 
-                name = DisplayText.Sanitize(name ?? string.Empty);
-                names[i] = string.IsNullOrWhiteSpace(name) ? BoxDetailNameExtensions.GetDefaultBoxName(i) : name;
-            }
-
-            BoxNames = names;
+        if (_boxStore is not null)
             AddBoxPanel(Math.Clamp(sav.CurrentBox, 0, sav.BoxCount - 1));
-        }
-        else
-        {
-            BoxNames = [];
-        }
 
-        if (sav.HasParty)
-            for (var i = 0; i < 6; i++)
-                PartySlots.Add(new SlotViewModel(sav, true, -1, i));
+        if (_partyStore is { } party)
+            for (var i = 0; i < party.SlotsPerContainer; i++)
+                PartySlots.Add(new SlotViewModel(party, 0, i));
 
         RefreshTrainerInfo();
         StatusMessage = "Save loaded.";
