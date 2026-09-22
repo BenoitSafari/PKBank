@@ -12,13 +12,13 @@ using PKHeX.Core;
 namespace PKBank.Desktop.ViewModels;
 
 /// <summary>
-/// The configured banks and the page currently on screen. Sessions are kept per folder so switching bank
+/// The configured banks and the box currently on screen. Sessions are kept per folder so switching bank
 /// in the picker never loses -- or silently commits -- what is pending in another one.
 /// </summary>
 public sealed class BankViewModel(AppConfigService config) : ViewModelBase
 {
     private readonly Dictionary<string, BankSession> _sessions = new(StringComparer.Ordinal);
-    private BankPagePanelViewModel? _currentPage;
+    private BankBoxPanelViewModel? _currentBox;
     private bool _isLoading;
     private string _language = GameLanguage.DefaultLanguage;
     private CancellationTokenSource? _load;
@@ -37,10 +37,10 @@ public sealed class BankViewModel(AppConfigService config) : ViewModelBase
         }
     }
 
-    public BankPagePanelViewModel? CurrentPage
+    public BankBoxPanelViewModel? CurrentBox
     {
-        get => _currentPage;
-        private set => SetField(ref _currentPage, value);
+        get => _currentBox;
+        private set => SetField(ref _currentBox, value);
     }
 
     public bool IsLoading
@@ -49,8 +49,8 @@ public sealed class BankViewModel(AppConfigService config) : ViewModelBase
         private set => SetField(ref _isLoading, value);
     }
 
-    /// <summary>The store behind the page on screen, used to tell bank slots from save slots.</summary>
-    public ISlotStore? CurrentStore => CurrentPage?.Store;
+    /// <summary>The store behind the box on screen, used to tell bank slots from save slots.</summary>
+    public ISlotStore? CurrentStore => CurrentBox?.Store;
 
     public bool IsDirty => _sessions.Values.Any(static s => s.IsDirty);
 
@@ -82,7 +82,7 @@ public sealed class BankViewModel(AppConfigService config) : ViewModelBase
 
         _sav = sav;
         _language = language;
-        CurrentPage = null;
+        CurrentBox = null;
 
         var selected = SelectedBank;
         _selectedBank = null;
@@ -120,12 +120,12 @@ public sealed class BankViewModel(AppConfigService config) : ViewModelBase
         OnPropertyChanged(nameof(IsDirty));
     }
 
-    /// <summary>Called by the page panel when the arrows or the picker moved to another page.</summary>
-    public void OnPageChanged(int page) => _ = LoadPageAsync(page);
+    /// <summary>Called by the box panel when the arrows or the picker moved to another box.</summary>
+    public void OnBoxChanged(int box) => _ = LoadBoxAsync(box);
 
     private async Task OpenSelectedAsync()
     {
-        CurrentPage = null;
+        CurrentBox = null;
         if (_sav is not { } sav || SelectedBank is not { } bank)
             return;
 
@@ -144,17 +144,17 @@ public sealed class BankViewModel(AppConfigService config) : ViewModelBase
         }
 
         bank.Name = session.Name;
-        CurrentPage = new BankPagePanelViewModel(this, new BankSlotStore(session, sav, _language), 0);
-        await LoadPageAsync(0);
+        CurrentBox = new BankBoxPanelViewModel(this, new BankSlotStore(session, sav, _language), 0);
+        await LoadBoxAsync(0);
     }
 
     /// <summary>
-    ///     Decodes one page off the UI thread, cancelling whatever page was loading before, then refreshes
-    ///     the slots. Until it lands the page shows as empty.
+    ///     Decodes one box off the UI thread, cancelling whatever box was loading before, then refreshes
+    ///     the slots. Until it lands the box shows as empty.
     /// </summary>
-    private async Task LoadPageAsync(int page)
+    private async Task LoadBoxAsync(int box)
     {
-        if (CurrentPage is not { Store: BankSlotStore store } panel)
+        if (CurrentBox is not { Store: BankSlotStore store } panel)
             return;
 
         var cts = new CancellationTokenSource();
@@ -162,13 +162,13 @@ public sealed class BankViewModel(AppConfigService config) : ViewModelBase
         IsLoading = true;
         try
         {
-            await Task.Run(() => store.Session.LoadPage(page, cts.Token), cts.Token);
+            await Task.Run(() => store.Session.LoadBox(box, cts.Token), cts.Token);
             if (!cts.Token.IsCancellationRequested)
                 panel.RefreshSlots();
         }
         catch (OperationCanceledException)
         {
-            // Superseded by a newer page.
+            // Superseded by a newer box.
         }
         finally
         {

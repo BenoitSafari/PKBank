@@ -10,7 +10,7 @@ using PKHeX.Core;
 namespace PKBank.Desktop.Services.Banks;
 
 /// <summary>
-///     One open bank: the slot layout in memory, the entities of the pages that have been looked at, and
+///     One open bank: the slot layout in memory, the entities of the boxes that have been looked at, and
 ///     the changes waiting on a successful save. Nothing reaches the folder until <see cref="Commit" />.
 /// </summary>
 public sealed class BankSession
@@ -18,10 +18,10 @@ public sealed class BankSession
     /// <summary>Entities staged for a file that does not exist yet.</summary>
     private readonly Dictionary<string, byte[]> _added = new(StringComparer.Ordinal);
 
-    /// <summary>Decoded entities by file name; only pages that were shown are in here.</summary>
+    /// <summary>Decoded entities by file name; only boxes that were shown are in here.</summary>
     private readonly Dictionary<string, PKM> _entities = new(StringComparer.Ordinal);
 
-    private readonly HashSet<int> _loadedPages = [];
+    private readonly HashSet<int> _loadedBoxes = [];
 
     /// <summary>Entity files present in the folder when the bank was opened.</summary>
     private readonly HashSet<string> _onDisk;
@@ -33,15 +33,15 @@ public sealed class BankSession
     {
         Folder = folder;
         Name = string.IsNullOrWhiteSpace(manifest.Name) ? BankStorage.DefaultName(folder) : manifest.Name;
-        PageCount = manifest.PageCount;
+        BoxCount = manifest.BoxCount;
         _onDisk = new HashSet<string>(onDisk, StringComparer.Ordinal);
         foreach (var entry in manifest.Slots)
-            _placement[(entry.Page * BankStorage.SlotsPerPage) + entry.Index] = entry.File;
+            _placement[(entry.Box * BankStorage.SlotsPerBox) + entry.Index] = entry.File;
     }
 
     public string Folder { get; }
     public string Name { get; }
-    public int PageCount { get; private set; }
+    public int BoxCount { get; private set; }
 
     public bool IsDirty => _changed;
 
@@ -54,14 +54,14 @@ public sealed class BankSession
         return new BankSession(folder, manifest, BankStorage.ScanEntityFiles(folder));
     }
 
-    /// <summary>Decodes the entities of one page. Safe to call off the UI thread; a no-op once loaded.</summary>
-    public void LoadPage(int page, CancellationToken token)
+    /// <summary>Decodes the entities of one box. Safe to call off the UI thread; a no-op once loaded.</summary>
+    public void LoadBox(int box, CancellationToken token)
     {
-        if (!_loadedPages.Add(page))
+        if (!_loadedBoxes.Add(box))
             return;
 
-        var first = page * BankStorage.SlotsPerPage;
-        for (var index = 0; index < BankStorage.SlotsPerPage; index++)
+        var first = box * BankStorage.SlotsPerBox;
+        for (var index = 0; index < BankStorage.SlotsPerBox; index++)
         {
             token.ThrowIfCancellationRequested();
             if (_placement.TryGetValue(first + index, out var file) && !_entities.ContainsKey(file)
@@ -74,23 +74,23 @@ public sealed class BankSession
     ///     The entity at that slot, or null when empty or not decoded yet. Never touches the disk: the
     ///     tooltip binding reads this on every hover.
     /// </summary>
-    public PKM? Peek(int page, int index) =>
-        _placement.TryGetValue((page * BankStorage.SlotsPerPage) + index, out var file)
+    public PKM? Peek(int box, int index) =>
+        _placement.TryGetValue((box * BankStorage.SlotsPerBox) + index, out var file)
         && _entities.TryGetValue(file, out var pk)
             ? pk
             : null;
 
     /// <summary>Puts an entity into a slot, or clears it with a blank one.</summary>
-    public void Place(int page, int index, PKM? pk)
+    public void Place(int box, int index, PKM? pk)
     {
-        var position = (page * BankStorage.SlotsPerPage) + index;
+        var position = (box * BankStorage.SlotsPerBox) + index;
         _placement.Remove(position);
 
         if (pk is { Species: > 0 })
         {
             _placement[position] = Stage(pk);
-            if (page >= PageCount)
-                PageCount = page + 1; // the spare page became real
+            if (box >= BoxCount)
+                BoxCount = box + 1; // the spare box became real
         }
 
         _changed = true;
@@ -99,7 +99,7 @@ public sealed class BankSession
     public BankPending BuildPending(string savePath) => new()
     {
         SavePath = savePath,
-        PageCount = PageCount,
+        BoxCount = BoxCount,
         Slots = [.. BuildEntries()],
         Added = [.. PendingAdds().Select(static a => new BankPendingFile
         {
@@ -140,7 +140,7 @@ public sealed class BankSession
             BankStorage.SaveManifest(Folder, new BankManifest
             {
                 Name = Name,
-                PageCount = PageCount,
+                BoxCount = BoxCount,
                 Slots = [.. BuildEntries()]
             });
             BankStorage.DiscardPending(Folder);
@@ -189,8 +189,8 @@ public sealed class BankSession
         _placement.OrderBy(static p => p.Key).Select(static p => new BankSlotEntry
         {
             File = p.Value,
-            Page = p.Key / BankStorage.SlotsPerPage,
-            Index = p.Key % BankStorage.SlotsPerPage
+            Box = p.Key / BankStorage.SlotsPerBox,
+            Index = p.Key % BankStorage.SlotsPerBox
         });
 
     private PKM? Decode(string file)

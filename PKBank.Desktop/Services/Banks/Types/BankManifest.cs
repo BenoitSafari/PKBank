@@ -16,7 +16,7 @@ public sealed class BankManifest
     /// <summary>Display name; empty means "use the folder name".</summary>
     public string Name { get; set; } = string.Empty;
 
-    public int PageCount { get; set; } = 1;
+    public int BoxCount { get; set; } = 1;
 
     public List<BankSlotEntry> Slots { get; set; } = [];
 }
@@ -25,7 +25,7 @@ public sealed class BankManifest
 public sealed class BankSlotEntry
 {
     public string File { get; set; } = string.Empty;
-    public int Page { get; set; }
+    public int Box { get; set; }
     public int Index { get; set; }
 }
 
@@ -42,7 +42,7 @@ public sealed class BankPending
     /// <summary>Save these changes were made against; informational only.</summary>
     public string SavePath { get; set; } = string.Empty;
 
-    public int PageCount { get; set; } = 1;
+    public int BoxCount { get; set; } = 1;
 
     /// <summary>The complete placement after the changes — authoritative, not a delta.</summary>
     public List<BankSlotEntry> Slots { get; set; } = [];

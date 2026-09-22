@@ -16,7 +16,7 @@ public static class BankStorage
 {
     public const string ManifestFileName = "bank.json";
     public const string PendingFileName = "bank.pending.json";
-    public const int SlotsPerPage = 60;
+    public const int SlotsPerBox = 60;
 
     /// <summary>Entity files, top level only: sub-folders are other banks' business.</summary>
     public static IReadOnlyList<string> ScanEntityFiles(string folder)
@@ -41,7 +41,7 @@ public static class BankStorage
     ///     A manifest that merely drifted (a file dropped in by hand, one deleted) is <em>repaired</em>:
     ///     orphans are dropped and strays adopted into the first free slots, so the user's arrangement
     ///     survives. A structurally broken one — unparseable, duplicate coordinates, out of bounds, or a
-    ///     PageCount that cannot hold its own entries — is rebuilt from scratch, exactly as when the bank
+    ///     BoxCount that cannot hold its own entries — is rebuilt from scratch, exactly as when the bank
     ///     is first seen.
     /// </summary>
     public static BankManifest LoadOrRebuild(string folder, out bool changed)
@@ -125,16 +125,16 @@ public static class BankStorage
 
     private static bool IsStructurallyValid(BankManifest manifest)
     {
-        if (manifest.PageCount < 1)
+        if (manifest.BoxCount < 1)
             return false;
 
-        var coordinates = new HashSet<(int Page, int Index)>();
+        var coordinates = new HashSet<(int Box, int Index)>();
         var names = new HashSet<string>(StringComparer.Ordinal);
         foreach (var entry in manifest.Slots)
         {
-            if (entry.Index is < 0 or >= SlotsPerPage || entry.Page < 0 || entry.Page >= manifest.PageCount)
+            if (entry.Index is < 0 or >= SlotsPerBox || entry.Box < 0 || entry.Box >= manifest.BoxCount)
                 return false;
-            if (!coordinates.Add((entry.Page, entry.Index)) || !names.Add(entry.File))
+            if (!coordinates.Add((entry.Box, entry.Index)) || !names.Add(entry.File))
                 return false;
         }
 
@@ -152,7 +152,7 @@ public static class BankStorage
         if (strays.Count == 0)
             return removed > 0;
 
-        var taken = new HashSet<int>(manifest.Slots.Select(static e => (e.Page * SlotsPerPage) + e.Index));
+        var taken = new HashSet<int>(manifest.Slots.Select(static e => (e.Box * SlotsPerBox) + e.Index));
         var position = 0;
         foreach (var stray in strays)
         {
@@ -162,12 +162,12 @@ public static class BankStorage
             manifest.Slots.Add(new BankSlotEntry
             {
                 File = stray,
-                Page = position / SlotsPerPage,
-                Index = position % SlotsPerPage
+                Box = position / SlotsPerBox,
+                Index = position % SlotsPerBox
             });
         }
 
-        manifest.PageCount = Math.Max(manifest.PageCount, (taken.Max() / SlotsPerPage) + 1);
+        manifest.BoxCount = Math.Max(manifest.BoxCount, (taken.Max() / SlotsPerBox) + 1);
         return true;
     }
 
@@ -176,14 +176,14 @@ public static class BankStorage
         var manifest = new BankManifest
         {
             Name = string.IsNullOrWhiteSpace(name) ? string.Empty : name,
-            PageCount = Math.Max(1, (files.Count + SlotsPerPage - 1) / SlotsPerPage)
+            BoxCount = Math.Max(1, (files.Count + SlotsPerBox - 1) / SlotsPerBox)
         };
         for (var i = 0; i < files.Count; i++)
             manifest.Slots.Add(new BankSlotEntry
             {
                 File = files[i],
-                Page = i / SlotsPerPage,
-                Index = i % SlotsPerPage
+                Box = i / SlotsPerBox,
+                Index = i % SlotsPerBox
             });
         return manifest;
     }

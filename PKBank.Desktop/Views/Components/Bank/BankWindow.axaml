@@ -30,8 +30,8 @@
                              IsVisible="{Binding Bank.IsLoading}" />
             </Grid>
 
-            <!-- Implicit template on BoxPanelViewModelBase renders the page -->
-            <ContentControl x:Name="PageHost" Content="{Binding Bank.CurrentPage}" />
+            <!-- Implicit template on BoxPanelViewModelBase renders the box -->
+            <ContentControl x:Name="BoxHost" Content="{Binding Bank.CurrentBox}" />
 
         </StackPanel>
 

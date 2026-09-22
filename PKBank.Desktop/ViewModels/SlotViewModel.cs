@@ -7,7 +7,7 @@ using PKHeX.Core;
 namespace PKBank.Desktop.ViewModels;
 
 /// <summary>
-/// A single slot of a <see cref="ISlotStore"/> — a box or party slot of the loaded save, or a bank page
+/// A single slot of a <see cref="ISlotStore"/> — a box or party slot of the loaded save, or a bank box
 /// slot. Reads decode a fresh <see cref="PKM"/> copy; writes push data back into the store.
 /// </summary>
 public sealed class SlotViewModel : ViewModelBase

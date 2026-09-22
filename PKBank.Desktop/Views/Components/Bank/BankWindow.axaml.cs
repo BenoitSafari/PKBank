@@ -8,7 +8,7 @@ using PKBank.Desktop.ViewModels;
 namespace PKBank.Desktop.Views.Components.Bank;
 
 /// <summary>
-///     A bank page, shown next to the main window. Not modal: entities are moved between the two by
+///     A bank box, shown next to the main window. Not modal: entities are moved between the two by
 ///     dragging across them.
 /// </summary>
 public sealed partial class BankWindow : Window
@@ -19,7 +19,7 @@ public sealed partial class BankWindow : Window
     {
         InitializeComponent();
         _drag = new SlotDragDropHost(this, DragGhostLayer, DragGhostImage);
-        _drag.AttachArea(PageHost);
+        _drag.AttachArea(BoxHost);
         _drag.AttachWindow();
         DataContextChanged += (_, _) => Subscribe();
     }

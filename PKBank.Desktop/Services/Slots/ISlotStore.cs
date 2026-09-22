@@ -5,7 +5,7 @@ using PKHeX.Core;
 namespace PKBank.Desktop.Services.Slots;
 
 /// <summary>
-///     Storage addressed by (container, index): the boxes of a save, its party, or the pages of a bank.
+///     Storage addressed by (container, index): the boxes of a save, its party, or the boxes of a bank.
 ///     The instance doubles as the identity of the storage — two slots sharing store, container and index
 ///     point at the same physical location.
 /// </summary>
@@ -14,7 +14,7 @@ public interface ISlotStore
     bool IsParty { get; }
     SlotScope Scope { get; }
 
-    /// <summary>Boxes, pages, or 1 for the party.</summary>
+    /// <summary>Boxes, or 1 for the party.</summary>
     int ContainerCount { get; }
 
     int SlotsPerContainer { get; }

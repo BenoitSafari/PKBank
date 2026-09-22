@@ -370,7 +370,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     ///     Every slot on screen, in reading order: the party bar, then each open box panel, then the bank
-    ///     page. A selection never spans two of these scopes, so the order between them never matters.
+    ///     box. A selection never spans two of these scopes, so the order between them never matters.
     /// </summary>
     private IEnumerable<SlotViewModel> DisplayedSlots()
     {
@@ -379,8 +379,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         foreach (var panel in OpenBoxes)
         foreach (var slot in panel.Slots)
             yield return slot;
-        if (Bank.CurrentPage is { } page)
-            foreach (var slot in page.Slots)
+        if (Bank.CurrentBox is { } bankBox)
+            foreach (var slot in bankBox.Slots)
                 yield return slot;
     }
 
@@ -466,7 +466,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>
-    ///     A selection never spans two scopes: extending it from a box into a bank page (or back) starts a
+    ///     A selection never spans two scopes: extending it from a save box into a bank box (or back) starts a
     ///     fresh single selection instead.
     /// </summary>
     private bool LeavesSelectionScope(SlotViewModel slot)
@@ -539,8 +539,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         if (slot.Store == _partyStore)
             return PartySlots.ToList();
-        if (Bank.CurrentPage is { } page && page.Store == slot.Store)
-            return page.Slots.ToList();
+        if (Bank.CurrentBox is { } bankBox && bankBox.Store == slot.Store)
+            return bankBox.Slots.ToList();
         return OpenBoxes.SelectMany(p => p.Slots).Where(s => s.Store == slot.Store).ToList();
     }
 
@@ -770,10 +770,10 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// <summary>Sends a slot to the first free bank slot; the entity leaves the save.</summary>
     public void SendToBank(SlotViewModel slot)
     {
-        if (Bank is { CurrentStore: { } bank, CurrentPage: { } page } && FindFreeSlot(bank, page.Slots) is { } target)
+        if (Bank is { CurrentStore: { } bank, CurrentBox: { } bankBox } && FindFreeSlot(bank, bankBox.Slots) is { } target)
             MoveOrSwapSlots(slot, target);
         else
-            StatusMessage = "No free slot on this bank page.";
+            StatusMessage = "No free slot in this bank box.";
     }
 
     /// <summary>Sends a bank slot to the first free box slot of the loaded save.</summary>

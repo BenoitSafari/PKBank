@@ -6,7 +6,7 @@ using PKBank.Desktop.Services.Slots;
 namespace PKBank.Desktop.ViewModels;
 
 /// <summary>
-/// One container of a <see cref="ISlotStore"/> shown as a grid: a box of the loaded save, or a page of a
+/// One container of a <see cref="ISlotStore"/> shown as a grid: a box of the loaded save, or a box of a
 /// bank. Everything the view needs is on the view-model, so the same control serves both windows.
 /// </summary>
 public abstract class BoxPanelViewModelBase : ViewModelBase
@@ -48,7 +48,7 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
         protected set => SetField(ref _containerNames, value);
     }
 
-    /// <summary>Whether the "+" and "x" buttons exist at all; a bank page has no use for either.</summary>
+    /// <summary>Whether the "+" and "x" buttons exist at all; a bank box has no use for either.</summary>
     public virtual bool ShowAdd => true;
 
     public virtual bool ShowClose => true;

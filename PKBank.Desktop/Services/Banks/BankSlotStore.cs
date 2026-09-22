@@ -7,26 +7,26 @@ using PKHeX.Core;
 namespace PKBank.Desktop.Services.Banks;
 
 /// <summary>
-///     A bank seen as slot storage: one container per page, plus a spare trailing page so the bank can
+///     A bank seen as slot storage: one container per box, plus a spare trailing box so the bank can
 ///     always grow. Writes go into the session, not the folder.
 /// </summary>
 public sealed class BankSlotStore(BankSession session, SaveFile sav, string language) : ISlotStore
 {
-    private const int PageColumns = 12;
+    private const int BoxColumns = 12;
 
     public BankSession Session { get; } = session;
 
     public bool IsParty => false;
     public SlotScope Scope => SlotScope.Bank;
 
-    /// <summary>One page past the end, so there is always somewhere to drop a new entity.</summary>
-    public int ContainerCount => Session.PageCount + 1;
+    /// <summary>One box past the end, so there is always somewhere to drop a new entity.</summary>
+    public int ContainerCount => Session.BoxCount + 1;
 
-    public int SlotsPerContainer => BankStorage.SlotsPerPage;
-    public int Columns => PageColumns;
+    public int SlotsPerContainer => BankStorage.SlotsPerBox;
+    public int Columns => BoxColumns;
 
     public IReadOnlyList<string> ContainerNames =>
-        Enumerable.Range(1, ContainerCount).Select(static n => $"Page {n}").ToArray();
+        Enumerable.Range(1, ContainerCount).Select(static n => $"Box {n}").ToArray();
 
     public PKM Blank => sav.BlankPKM;
 

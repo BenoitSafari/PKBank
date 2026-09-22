@@ -5,7 +5,7 @@ using PKBank.Desktop.ViewModels;
 namespace PKBank.Desktop.Views.Components.Box;
 
 /// <summary>
-///     One container of slots with its navigation bar: a box of the loaded save, or a page of a bank.
+///     One container of slots with its navigation bar: a box of the loaded save, or a box of a bank.
 ///     Everything configurable lives on <see cref="BoxPanelViewModelBase" />.
 /// </summary>
 public sealed partial class BoxPanel : UserControl
