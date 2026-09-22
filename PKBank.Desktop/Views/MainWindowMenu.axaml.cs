@@ -1,5 +1,3 @@
-using PKBank.Desktop.Views.Components.Common;
-using PKBank.Desktop.Views.Settings;
 using System.Collections;
 using System.Linq;
 using System.Threading.Tasks;
@@ -11,11 +9,13 @@ using Avalonia.Platform.Storage;
 using PKBank.Core.Configuration;
 using PKBank.Core.Events.Files;
 using PKBank.Desktop.ViewModels;
+using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
 using PKBank.Desktop.Views.Components.Events;
 using PKBank.Desktop.Views.Components.Inventory;
 using PKBank.Desktop.Views.Components.Pokedex;
 using PKBank.Desktop.Views.Components.Roamer;
 using PKBank.Desktop.Views.Components.Trainer;
+using PKBank.Desktop.Views.Settings;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Views;

@@ -5,7 +5,7 @@ using PKBank.Desktop.Sprites;
 using PKHeX.Core;
 using QRCoder;
 
-namespace PKBank.Desktop.Views.Components.Common;
+namespace PKBank.Desktop.Views.Components.Common.QRCodeWindow;
 
 public sealed partial class QRCodeWindow : Window
 {

@@ -1,4 +1,3 @@
-using PKBank.Desktop.Views.Components.Common;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -12,25 +11,26 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.Sprites;
+using PKBank.Desktop.Views.Components.Common.QRCodeWindow;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Views.Components.Events;
 
 /// <summary>
-/// Mystery Gift editor mirroring WinForms' SAV_Wondercard (Gen 4-7): the album
-/// slots on the left, the currently viewed card on the right acting as the
-/// clipboard for Set/Import/Export/QR, plus the received-flags list.
-/// Changes are only written to the save on Save.
+///     Mystery Gift editor mirroring WinForms' SAV_Wondercard (Gen 4-7): the album
+///     slots on the left, the currently viewed card on the right acting as the
+///     clipboard for Set/Import/Export/QR, plus the received-flags list.
+///     Changes are only written to the save on Save.
 /// </summary>
 public sealed partial class MysteryGiftEditorWindow : Window
 {
-    private readonly SaveFile? _sav;
+    private readonly DataMysteryGift[] _album = [];
     private readonly IMysteryGiftStorage? _cards;
     private readonly IMysteryGiftFlags? _flags;
-    private readonly DataMysteryGift[] _album = [];
+    private readonly ObservableCollection<string> _received = [];
+    private readonly SaveFile? _sav;
     private readonly List<Border> _slotBorders = [];
     private readonly List<Image> _slotImages = [];
-    private readonly ObservableCollection<string> _received = [];
 
     private DataMysteryGift? _current;
     private int _lastTouched = -1;
@@ -103,7 +103,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
             TextAlignment = TextAlignment.Right,
             Margin = new Thickness(0, 0, 6, 0),
             Opacity = 0.7,
-            FontSize = 12,
+            FontSize = 12
         });
         for (var i = 0; i < count; i++)
         {
@@ -116,7 +116,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
                 BorderBrush = Brushes.Transparent,
                 CornerRadius = new CornerRadius(4),
                 Background = Brushes.Transparent,
-                ContextMenu = BuildSlotMenu(index),
+                ContextMenu = BuildSlotMenu(index)
             };
             border.PointerPressed += (_, e) =>
             {
@@ -127,6 +127,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
             _slotImages.Add(image);
             row.Children.Add(border);
         }
+
         AlbumPanel.Children.Add(row);
     }
 
@@ -148,7 +149,9 @@ public sealed partial class MysteryGiftEditorWindow : Window
             _slotImages[i].Source = SpriteService.GetMysteryGiftSprite(_album[i]);
             _slotImages[i].Opacity = _album[i] is { IsEmpty: false, GiftUsed: true } ? 0.3 : 1.0;
             _slotBorders[i].BorderBrush = i == _lastTouched
-                ? (IBrush?)(this.TryFindResource("SystemControlHighlightAccentBrush", ActualThemeVariant, out var brush) ? brush as IBrush : Brushes.CornflowerBlue) ?? Brushes.CornflowerBlue
+                ? (IBrush?)(this.TryFindResource("SystemControlHighlightAccentBrush", ActualThemeVariant, out var brush)
+                    ? brush as IBrush
+                    : Brushes.CornflowerBlue) ?? Brushes.CornflowerBlue
                 : Brushes.Transparent;
         }
     }
@@ -207,6 +210,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
                 continue;
             return i;
         }
+
         return -1;
     }
 
@@ -233,6 +237,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
                 ShowError("Lock Capsule gifts require a HeartGold/SoulSilver save.");
                 return;
             }
+
             index = 11;
         }
 
@@ -246,11 +251,12 @@ public sealed partial class MysteryGiftEditorWindow : Window
             ShowError($"Slot type mismatch: {gift.Type} != {other.Type}");
             return;
         }
-        else if (gift is PCD g && (g is { IsLockCapsule: true } != (index == 11)))
+        else if (gift is PCD g && g is { IsLockCapsule: true } != (index == 11))
         {
             ShowError($"{GameInfo.Strings.Item[533]} slot not valid.");
             return;
         }
+
         _album[index] = (DataMysteryGift)gift.Clone();
         _lastTouched = index;
         SetCardID(gift.CardID);
@@ -273,6 +279,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
             i++;
             (_album[i - 1], _album[i]) = (_album[i], _album[i - 1]);
         }
+
         _lastTouched = i;
         RefreshAlbum();
     }
@@ -285,10 +292,8 @@ public sealed partial class MysteryGiftEditorWindow : Window
             return;
         var count = flags.MysteryGiftReceivedFlagMax;
         for (var i = 1; i < count; i++)
-        {
             if (flags.GetMysteryGiftReceivedFlag(i))
                 _received.Add(i.ToString("0000"));
-        }
     }
 
     private void SetCardID(int cardID)
@@ -316,7 +321,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
         EntityContext.Gen6 => ["*.wc6", "*.wc6full"],
         EntityContext.Gen7 => ["*.wc7", "*.wc7full"],
         EntityContext.Gen7b => ["*.wr7"],
-        _ => ["*"],
+        _ => ["*"]
     };
 
     private async void OnImportClicked(object? sender, RoutedEventArgs e)
@@ -330,9 +335,10 @@ public sealed partial class MysteryGiftEditorWindow : Window
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType($"Gen{sav.Generation} Mystery Gift") { Patterns = GetImportPatterns(sav.Context) },
-                FilePickerFileTypes.All,
-            ],
+                new FilePickerFileType($"Gen{sav.Generation} Mystery Gift")
+                    { Patterns = GetImportPatterns(sav.Context) },
+                FilePickerFileTypes.All
+            ]
         });
         if (files is [{ } file, ..] && file.TryGetLocalPath() is { } path)
             ImportFile(path);
@@ -347,12 +353,14 @@ public sealed partial class MysteryGiftEditorWindow : Window
             ShowError($"Invalid mystery gift file size: {Path.GetFileName(path)}");
             return;
         }
+
         var gift = MysteryGift.GetMysteryGift(File.ReadAllBytes(path), info.Extension);
         if (gift is null)
         {
             ShowError($"Unable to parse the mystery gift file: {Path.GetFileName(path)}");
             return;
         }
+
         ViewGift(gift);
     }
 
@@ -371,7 +379,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
             Title = "Save Mystery Gift file",
             SuggestedFileName = PathUtil.CleanFileName(gift.FileName),
             DefaultExtension = gift.Extension,
-            FileTypeChoices = [new FilePickerFileType(gift.Type) { Patterns = [$"*.{gift.Extension}"] }],
+            FileTypeChoices = [new FilePickerFileType(gift.Type) { Patterns = [$"*.{gift.Extension}"] }]
         });
         if (file?.TryGetLocalPath() is not { } path)
             return;
@@ -395,11 +403,13 @@ public sealed partial class MysteryGiftEditorWindow : Window
             ShowError("No mystery gift data to encode.");
             return;
         }
+
         if (sav.Generation == 6 && gift is { IsItem: true, ItemID: 726 })
         {
             ShowError("Eon Ticket QR codes are not readable by the games; inject the Eon Ticket directly instead.");
             return;
         }
+
         new QRCodeWindow(gift).Show(this);
     }
 
@@ -464,9 +474,7 @@ public sealed partial class MysteryGiftEditorWindow : Window
         // Store the list of set flag indexes back to the bitflag array.
         flags.ClearReceivedFlags();
         foreach (var item in _received)
-        {
             if (int.TryParse(item, out var index))
                 flags.SetMysteryGiftReceivedFlag(index, true);
-        }
     }
 }

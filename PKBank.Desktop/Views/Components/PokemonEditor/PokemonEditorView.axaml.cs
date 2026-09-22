@@ -1,11 +1,12 @@
-using PKBank.Desktop.Utils;
+using System;
+using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.Services;
+using PKBank.Desktop.Utils;
 using PKBank.Desktop.ViewModels;
 using PKHeX.Core;
 
@@ -63,7 +64,7 @@ public sealed partial class PokemonEditorView : UserControl
         {
             Title = "Export Pokémon File",
             SuggestedFileName = PathUtil.CleanFileName(pk.FileName),
-            ShowOverwritePrompt = true,
+            ShowOverwritePrompt = true
         });
         var path = file?.TryGetLocalPath();
         if (path is null)
@@ -72,9 +73,9 @@ public sealed partial class PokemonEditorView : UserControl
         {
             PkmFileService.Export(pk, path);
             if (MainViewModel is { } main)
-                main.StatusMessage = $"Exported {System.IO.Path.GetFileName(path)}.";
+                main.StatusMessage = $"Exported {Path.GetFileName(path)}.";
         }
-        catch (System.Exception ex)
+        catch (Exception ex)
         {
             if (MainViewModel is { } main)
                 main.StatusMessage = $"Export failed: {ex.Message}";

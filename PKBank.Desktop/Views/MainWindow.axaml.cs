@@ -1,5 +1,3 @@
-using PKBank.Desktop.Utils;
-using PKBank.Desktop.Views.Components.Common;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -12,7 +10,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.Services;
+using PKBank.Desktop.Utils;
 using PKBank.Desktop.ViewModels;
+using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Views;

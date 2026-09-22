@@ -10,11 +10,6 @@ using PKHeX.Core;
 
 namespace PKBank.Desktop.Views.Components.Events;
 
-/// <summary>
-/// Import/export window for one kind of Gen 3 event data file, mirroring the
-/// WC3 Plugin forms: shows what the save currently holds, validates the file
-/// size on import and fixes checksums through the Extensions backend.
-/// </summary>
 public sealed partial class Gen3EventFileWindow : Window
 {
     private readonly SAV3? _sav;
@@ -36,17 +31,17 @@ public sealed partial class Gen3EventFileWindow : Window
 
     private void RefreshStatus()
     {
-        if (_sav is not { } sav || _kind is not { } kind)
+        if (_sav is null || _kind is null)
             return;
 
-        ExportButton.IsEnabled = kind.Has(sav);
-        if (!kind.Has(sav))
+        ExportButton.IsEnabled = _kind.Has(_sav);
+        if (!_kind.Has(_sav))
         {
             StatusText.Text = "The save file currently holds no data of this kind.";
             return;
         }
 
-        var summary = kind.GetSummary(sav);
+        var summary = _kind.GetSummary(_sav);
         StatusText.Text = summary.Length == 0
             ? "The save file currently holds data of this kind."
             : $"Current content: “{summary}”";
@@ -60,16 +55,16 @@ public sealed partial class Gen3EventFileWindow : Window
 
     private async void OnImportClicked(object? sender, RoutedEventArgs e)
     {
-        if (_kind is not { } kind)
+        if (_kind is null)
             return;
 
         var files = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = $"Open {kind.Title} file",
+            Title = $"Open {_kind.Title} file",
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType(kind.Title) { Patterns = [$"*.{kind.Extension}"] },
+                new FilePickerFileType(_kind.Title) { Patterns = [$"*.{_kind.Extension}"] },
                 FilePickerFileTypes.All,
             ],
         });
@@ -79,22 +74,22 @@ public sealed partial class Gen3EventFileWindow : Window
 
     private void ImportFile(string path)
     {
-        if (_sav is not { } sav || _kind is not { } kind)
+        if (_sav is null || _kind is null)
             return;
 
         ErrorText.IsVisible = false;
         try
         {
             var data = File.ReadAllBytes(path);
-            var sizes = kind.GetValidSizes(sav);
+            var sizes = _kind.GetValidSizes(_sav);
             if (!sizes.Contains(data.Length))
             {
                 ShowError($"Invalid file size: 0x{data.Length:X} bytes (expected {string.Join(" or ", sizes.Select(z => $"0x{z:X}"))}).");
                 return;
             }
 
-            kind.Import(sav, data);
-            sav.State.Edited = true;
+            _kind.Import(_sav, data);
+            _sav.State.Edited = true;
             Close();
         }
         catch (Exception ex)
@@ -105,15 +100,15 @@ public sealed partial class Gen3EventFileWindow : Window
 
     private async void OnExportClicked(object? sender, RoutedEventArgs e)
     {
-        if (_sav is not { } sav || _kind is not { } kind)
+        if (_sav is null || _kind is null)
             return;
 
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
-            Title = $"Save {kind.Title} file",
-            DefaultExtension = kind.Extension,
-            SuggestedFileName = $"{PathUtil.CleanFileName(sav.OT)}.{kind.Extension}",
-            FileTypeChoices = [new FilePickerFileType(kind.Title) { Patterns = [$"*.{kind.Extension}"] }],
+            Title = $"Save {_kind.Title} file",
+            DefaultExtension = _kind.Extension,
+            SuggestedFileName = $"{PathUtil.CleanFileName(_sav.OT)}.{_kind.Extension}",
+            FileTypeChoices = [new FilePickerFileType(_kind.Title) { Patterns = [$"*.{_kind.Extension}"] }],
         });
         if (file?.TryGetLocalPath() is not { } path)
             return;
@@ -121,7 +116,7 @@ public sealed partial class Gen3EventFileWindow : Window
         ErrorText.IsVisible = false;
         try
         {
-            File.WriteAllBytes(path, kind.Export(sav));
+            await File.WriteAllBytesAsync(path, _kind.Export(_sav));
             Close();
         }
         catch (Exception ex)
@@ -132,11 +127,11 @@ public sealed partial class Gen3EventFileWindow : Window
 
     private void OnDrop(object? sender, DragEventArgs e)
     {
-        if (e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath() is { } path)
-        {
-            ImportFile(path);
-            e.Handled = true;
-        }
+        if (e.DataTransfer.TryGetFiles()?.FirstOrDefault()?.TryGetLocalPath() is not { } path)
+            return;
+
+        ImportFile(path);
+        e.Handled = true;
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => Close();

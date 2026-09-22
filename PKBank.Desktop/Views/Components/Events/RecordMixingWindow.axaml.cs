@@ -8,11 +8,6 @@ using PKHeX.Core;
 
 namespace PKBank.Desktop.Views.Components.Events;
 
-/// <summary>
-/// Record Mixing gift editor for RS/E, mirroring the WC3 Plugin's RM3 form:
-/// pick an item the game can hold in the PC (plus the Eon Ticket) and how many
-/// times it may still be sent to other players.
-/// </summary>
 public sealed partial class RecordMixingWindow : Window
 {
     private readonly SAV3? _sav;
@@ -39,8 +34,8 @@ public sealed partial class RecordMixingWindow : Window
         CountBox.Value = current?.Count ?? 0;
     }
 
-    private static string GetItemName(IReadOnlyList<string> names, ushort id)
-        => id < names.Count && !string.IsNullOrEmpty(names[id]) ? names[id] : $"(Item #{id:000})";
+    private static string GetItemName(IReadOnlyList<string> names, ushort id) =>
+        id < names.Count && !string.IsNullOrEmpty(names[id]) ? names[id] : $"(Item #{id:000})";
 
     private void OnItemChanged(object? sender, SelectionChangedEventArgs e)
     {
@@ -56,15 +51,15 @@ public sealed partial class RecordMixingWindow : Window
 
     private void OnSaveClicked(object? sender, RoutedEventArgs e)
     {
-        if (_sav is not { } sav)
+        if (_sav is null)
         {
             Close();
             return;
         }
 
         var item = ItemCombo.SelectedItem is ComboItem selected ? (ushort)selected.Value : (ushort)0;
-        sav.SetRecordMixing(item, (byte)(CountBox.Value ?? 0));
-        sav.State.Edited = true;
+        _sav.SetRecordMixing(item, (byte)(CountBox.Value ?? 0));
+        _sav.State.Edited = true;
         Close();
     }
 }

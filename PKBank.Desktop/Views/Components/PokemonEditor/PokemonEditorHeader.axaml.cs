@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PKBank.Desktop.ViewModels;
-using PKBank.Desktop.Views.Components.Common;
+using PKBank.Desktop.Views.Components.Common.QRCodeWindow;
 using PKBank.Desktop.Views.Components.Legality;
 
 namespace PKBank.Desktop.Views.Components.PokemonEditor;
