@@ -35,10 +35,14 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         Config = config;
         SaveSelection = new SaveSelectionViewModel(config);
+        Bank = new BankViewModel(config);
+        Bank.RefreshBanks();
         // Adding or removing a save folder (or switching language) changes what the
         // selection screen should list; only rescan while it is the visible screen.
         Config.Changed += (_, _) =>
         {
+            Bank.RefreshBanks();
+            OnPropertyChanged(nameof(CanOpenBank));
             if (SAV is null)
                 _ = SaveSelection.RefreshAsync();
         };
@@ -48,7 +52,11 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     public SaveSelectionViewModel SaveSelection { get; }
 
+    public BankViewModel Bank { get; }
+
     public bool HasSave => SAV is not null;
+
+    public bool CanOpenBank => HasSave && Config.BankPaths.Count > 0;
 
     /// <summary>
     ///     Deliberately not tied to <see cref="SaveFileState.Edited" />: writing the save is also what commits
@@ -57,9 +65,13 @@ public sealed class MainWindowViewModel : ViewModelBase
     public bool CanSave => SAV is not null && _savePath is not null;
 
     /// <summary>What would be lost by closing right now; empty when nothing is pending.</summary>
-    public string PendingChangesSummary => SAV is { State.Edited: true }
-        ? "The loaded save has unsaved changes"
-        : string.Empty;
+    public string PendingChangesSummary => (SAV is { State.Edited: true }, Bank.IsDirty) switch
+    {
+        (true, true) => "The loaded save and the bank have unsaved changes",
+        (true, false) => "The loaded save has unsaved changes",
+        (false, true) => "The bank has unsaved changes",
+        _ => string.Empty
+    };
 
     public bool IsDirty => PendingChangesSummary.Length != 0;
 
@@ -249,6 +261,7 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         TrainerInfo = string.Empty;
         StatusMessage = "Select a save file to edit.";
+        Bank.OnSaveChanged(null, Config.Language);
         NotifySaveStateChanged();
         NotifySlotActionStates();
         _ = SaveSelection.RefreshAsync();
@@ -313,7 +326,10 @@ public sealed class MainWindowViewModel : ViewModelBase
             File.WriteAllBytes(path, data.Span);
             _savePath = path;
             sav.State.Edited = false;
-            StatusMessage = $"Saved to {Path.GetFileName(path)}.";
+            // Save first, banks second: a failed bank commit leaves its pending file in place to be
+            // retried, whereas the reverse would alter a bank for a save that never made it to disk.
+            var banks = Bank.CommitPending();
+            StatusMessage = $"Saved to {Path.GetFileName(path)}.{banks}";
             OnPropertyChanged(nameof(WindowTitle));
             NotifyPendingChanges();
             return true;
@@ -352,20 +368,27 @@ public sealed class MainWindowViewModel : ViewModelBase
         return true;
     }
 
-    /// <summary>Selected slots in display order: the party bar first, then each open box panel.</summary>
+    /// <summary>
+    ///     Every slot on screen, in reading order: the party bar, then each open box panel, then the bank
+    ///     page. A selection never spans two of these scopes, so the order between them never matters.
+    /// </summary>
+    private IEnumerable<SlotViewModel> DisplayedSlots()
+    {
+        foreach (var slot in PartySlots)
+            yield return slot;
+        foreach (var panel in OpenBoxes)
+        foreach (var slot in panel.Slots)
+            yield return slot;
+        if (Bank.CurrentPage is { } page)
+            foreach (var slot in page.Slots)
+                yield return slot;
+    }
+
+    /// <summary>Selected slots in display order.</summary>
     public IReadOnlyList<SlotViewModel> GetSelectedSlotsInDisplayOrder()
     {
         var selected = new HashSet<SlotViewModel>(_selectedSlots);
-        var result = new List<SlotViewModel>(_selectedSlots.Count);
-        foreach (var slot in PartySlots)
-            if (selected.Contains(slot))
-                result.Add(slot);
-        foreach (var panel in OpenBoxes)
-        foreach (var slot in panel.Slots)
-            if (selected.Contains(slot))
-                result.Add(slot);
-
-        return result;
+        return DisplayedSlots().Where(selected.Contains).ToArray();
     }
 
     /// <summary>Imports files into the current selection in display order (see <see cref="ImportFilesToSlots" />).</summary>
@@ -513,9 +536,13 @@ public sealed class MainWindowViewModel : ViewModelBase
     ///     can select across boxes; party ranges stay within the party bar.
     /// </summary>
     private List<SlotViewModel> GetRangeArea(SlotViewModel slot)
-        => slot.Store == _partyStore
-            ? PartySlots.ToList()
-            : OpenBoxes.SelectMany(p => p.Slots).Where(s => s.Store == slot.Store).ToList();
+    {
+        if (slot.Store == _partyStore)
+            return PartySlots.ToList();
+        if (Bank.CurrentPage is { } page && page.Store == slot.Store)
+            return page.Slots.ToList();
+        return OpenBoxes.SelectMany(p => p.Slots).Where(s => s.Store == slot.Store).ToList();
+    }
 
     /// <summary>
     ///     Slots a context-menu action should apply to: the whole selection when the
@@ -549,11 +576,12 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (SAV is not { } sav)
             return;
         slot.Write(slot.Store.Blank);
-        sav.State.Edited = true;
+        MarkEdited(slot.Store);
         RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
         NotifySlotActionStates();
+        TrackBankChanges();
     }
 
     /// <summary>
@@ -612,7 +640,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             source.Write(source.Store.Blank);
         }
 
-        sav.State.Edited = true;
+        MarkEdited(source.Store, target.Store);
         RefreshMirrorSlots(source);
         RefreshMirrorSlots(target);
         if (source.IsParty || target.IsParty)
@@ -620,6 +648,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (Editor?.Origin == source || Editor?.Origin == target)
             Editor.Revert(); // the displayed entity's slot changed underneath it
         NotifySlotActionStates();
+        TrackBankChanges();
         StatusMessage = dst.Species != 0 ? "Slots swapped." : "Pokémon moved.";
     }
 
@@ -716,19 +745,48 @@ public sealed class MainWindowViewModel : ViewModelBase
             plan.Store.Write(container, index, pk);
         }
 
-        sav.State.Edited = true;
+        MarkEdited([plan.Store, .. plan.Sources.Select(static s => s.Store)]);
         RefreshAllSlots();
         Editor?.Revert(); // containers the editor is not even showing may have changed
         NotifySlotActionStates();
+        TrackBankChanges();
         StatusMessage = $"Moved {plan.Placements.Count} Pokémon.";
     }
 
     private void RefreshAllSlots()
     {
-        foreach (var panel in OpenBoxes)
-            panel.RefreshSlots();
-        RefreshParty();
+        foreach (var slot in DisplayedSlots())
+            slot.Refresh();
     }
+
+    // ----- Bank transfers ---------------------------------------------------
+
+    public bool CanSendToBank(SlotViewModel slot)
+        => !slot.IsEmpty && Bank.CurrentStore is { } bank && slot.Store != bank;
+
+    public bool CanSendToSave(SlotViewModel slot)
+        => !slot.IsEmpty && slot.IsCompatible && Bank.CurrentStore == slot.Store && _boxStore is not null;
+
+    /// <summary>Sends a slot to the first free bank slot; the entity leaves the save.</summary>
+    public void SendToBank(SlotViewModel slot)
+    {
+        if (Bank is { CurrentStore: { } bank, CurrentPage: { } page } && FindFreeSlot(bank, page.Slots) is { } target)
+            MoveOrSwapSlots(slot, target);
+        else
+            StatusMessage = "No free slot on this bank page.";
+    }
+
+    /// <summary>Sends a bank slot to the first free box slot of the loaded save.</summary>
+    public void SendToSave(SlotViewModel slot)
+    {
+        if (FindFreeSlot(_boxStore, OpenBoxes.SelectMany(p => p.Slots)) is { } target)
+            MoveOrSwapSlots(slot, target);
+        else
+            StatusMessage = "No free slot in the open boxes.";
+    }
+
+    private static SlotViewModel? FindFreeSlot(ISlotStore? store, IEnumerable<SlotViewModel> candidates)
+        => store is null ? null : candidates.FirstOrDefault(s => s.Store == store && s.IsEmpty);
 
     /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>
     public void SetSlotFromEditor(SlotViewModel slot)
@@ -740,13 +798,14 @@ public sealed class MainWindowViewModel : ViewModelBase
             pk.ResetPartyStats();
         pk.RefreshChecksum();
         slot.Write(pk);
-        sav.State.Edited = true;
+        MarkEdited(slot.Store);
         RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
         if (slot == editor.Origin)
             editor.Revert(); // origin slot now holds the freshly written data
         NotifySlotActionStates();
+        TrackBankChanges();
         StatusMessage = "Editor content written to slot.";
     }
 
@@ -778,6 +837,10 @@ public sealed class MainWindowViewModel : ViewModelBase
             for (var i = 0; i < party.SlotsPerContainer; i++)
                 PartySlots.Add(new SlotViewModel(party, 0, i));
 
+        // Pending bank changes belong to the save they were made against; a leftover diff would be
+        // replayed against the wrong one.
+        Bank.OnSaveChanged(sav, Config.Language);
+
         RefreshTrainerInfo();
         StatusMessage = "Save loaded.";
         NotifySaveStateChanged();
@@ -802,6 +865,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanAddBox));
         OnPropertyChanged(nameof(CanCloseBox));
         OnPropertyChanged(nameof(WindowTitle));
+        OnPropertyChanged(nameof(CanOpenBank));
         NotifyPendingChanges();
     }
 
@@ -809,8 +873,30 @@ public sealed class MainWindowViewModel : ViewModelBase
     private void NotifyPendingChanges()
     {
         OnPropertyChanged(nameof(CanSave));
+        OnPropertyChanged(nameof(CanOpenBank));
         OnPropertyChanged(nameof(PendingChangesSummary));
         OnPropertyChanged(nameof(IsDirty));
+    }
+
+    /// <summary>
+    ///     Marks the save as edited only when one of the touched stores belongs to it — rearranging a bank
+    ///     leaves the save file itself untouched.
+    /// </summary>
+    private void MarkEdited(params ISlotStore[] stores)
+    {
+        if (SAV is { } sav && stores.Any(static s => s.Scope == SlotScope.Save))
+            sav.State.Edited = true;
+    }
+
+    /// <summary>
+    ///     Mirrors bank changes to their pending files after every edit, so working across several banks
+    ///     before saving does not lose the ones not currently on screen.
+    /// </summary>
+    private void TrackBankChanges()
+    {
+        if (Bank.IsDirty)
+            Bank.SavePending(_savePath ?? string.Empty);
+        NotifyPendingChanges();
     }
 
     /// <summary>Rebuilds the status-bar trainer summary, e.g. after the trainer editor changed it.</summary>

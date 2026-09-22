@@ -1,0 +1,44 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:PKBank.Desktop.ViewModels"
+        x:Class="PKBank.Desktop.Views.Components.Bank.BankWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/icon.png"
+        Title="Bank"
+        SizeToContent="WidthAndHeight"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <!-- The DataContext stays the MainWindowViewModel so slots resolve it the same way they do in the
+         main window; the bank sub-view-model is reached through it. -->
+    <Panel>
+        <StackPanel Margin="10" Spacing="8" MinWidth="420">
+
+            <Grid ColumnDefinitions="*,Auto">
+                <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
+                          ItemsSource="{Binding Bank.Banks}"
+                          SelectedItem="{Binding Bank.SelectedBank, Mode=TwoWay}"
+                          PlaceholderText="Select a bank">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="vm:BankEntryViewModel">
+                            <TextBlock Text="{Binding Name}" />
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                <ProgressBar Grid.Column="1" Width="120" Margin="8,0,0,0" IsIndeterminate="True"
+                             IsVisible="{Binding Bank.IsLoading}" />
+            </Grid>
+
+            <!-- Implicit template on BoxPanelViewModelBase renders the page -->
+            <ContentControl x:Name="PageHost" Content="{Binding Bank.CurrentPage}" />
+
+        </StackPanel>
+
+        <!-- Ghost sprite following the cursor during a slot drag -->
+        <Canvas x:Name="DragGhostLayer" IsHitTestVisible="False" IsVisible="False">
+            <Image x:Name="DragGhostImage" Width="68" Height="56" Stretch="None" Opacity="0.65" />
+        </Canvas>
+    </Panel>
+
+</Window>

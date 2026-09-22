@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Concurrent;
 using System.Reflection;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using PKHeX.Core;
 using PKHeX.Drawing.PokeSprite;
 
@@ -23,21 +26,33 @@ public static class SpriteService
     /// <summary>Side of the bundled hero sprites, and the size every trainer avatar is drawn at.</summary>
     private const int HeroSize = 32;
 
+    /// <summary>Desaturation strength, matching PKHeX WinForms' mismatch grayscale.</summary>
+    private const float GrayscaleIntensity = 0.70f;
+
+    private const string GraySuffix = "#gray";
+
     private static readonly Assembly Assembly = typeof(SpriteService).Assembly;
     private static readonly ConcurrentDictionary<string, Bitmap?> Cache = new();
 
-    public static Bitmap? GetPokemonSprite(PKM pk)
+    public static Bitmap? GetPokemonSprite(PKM pk) => GetPokemonSprite(pk, false);
+
+    /// <summary>
+    ///     Desaturated variant, marking a bank entry the loaded save cannot take.
+    /// </summary>
+    public static Bitmap? GetPokemonSpriteGrayscale(PKM pk) => GetPokemonSprite(pk, true);
+
+    private static Bitmap? GetPokemonSprite(PKM pk, bool gray)
     {
         if (pk.Species == 0)
             return null;
         if (pk is { IsEgg: true })
-            return Load(PkmResourceEgg);
+            return Load(PkmResourceEgg, gray);
 
         var formArg = pk is IFormArgument fa ? fa.FormArgument : 0;
         var name = SpriteName.GetResourceStringSprite(pk.Species, pk.Form, pk.Gender, formArg, pk.Context, pk.IsShiny);
-        return Load($"{PkmResourcePrefix}{name}.png")
-               ?? Load($"{PkmResourcePrefix}_{pk.Species}.png") // fall back to base form
-               ?? Load(PkmResourceUnknown);
+        return Load($"{PkmResourcePrefix}{name}.png", gray)
+               ?? Load($"{PkmResourcePrefix}_{pk.Species}.png", gray) // fall back to base form
+               ?? Load(PkmResourceUnknown, gray);
     }
 
     public static Bitmap? GetItemSprite(int item) => item <= 0 ? null : Load($"{ItemResourcePrefix}_{item}.png");
@@ -122,6 +137,44 @@ public static class SpriteService
         using var stream = Assembly.GetManifestResourceStream(name);
         return stream is null ? null : new Bitmap(stream);
     });
+
+    private static Bitmap? Load(string logicalName, bool gray) => gray ? LoadGrayscale(logicalName) : Load(logicalName);
+
+    private static Bitmap? LoadGrayscale(string logicalName) =>
+        Cache.GetOrAdd($"{logicalName}{GraySuffix}", _ => Load(logicalName) is { } source ? ToGrayscale(source) : null);
+
+    private static Bitmap ToGrayscale(Bitmap source)
+    {
+        var size = source.PixelSize;
+        var target = new WriteableBitmap(size, source.Dpi, PixelFormat.Bgra8888, AlphaFormat.Unpremul);
+        using (var buffer = target.Lock())
+        {
+            source.CopyPixels(buffer); // transcodes into BGRA8888 for us
+            var pixels = new byte[buffer.RowBytes * size.Height];
+            Marshal.Copy(buffer.Address, pixels, 0, pixels.Length);
+            Desaturate(pixels);
+            Marshal.Copy(pixels, 0, buffer.Address, pixels.Length);
+        }
+
+        return target;
+    }
+
+    /// <summary>
+    ///     PKHeX.Drawing's <c>ImageUtil.SetAllColorToGrayScale</c>, on BGRA bytes. Fully transparent
+    ///     pixels are left alone so the sprite outline keeps its shape.
+    /// </summary>
+    private static void Desaturate(Span<byte> pixels)
+    {
+        const float keep = 1f - GrayscaleIntensity;
+        for (var i = 0; i + 3 < pixels.Length; i += 4)
+        {
+            if (pixels[i + 3] == 0)
+                continue;
+            var grey = (byte)((0.3 * pixels[i + 2]) + (0.59 * pixels[i + 1]) + (0.11 * pixels[i + 0]));
+            for (var channel = 0; channel < 3; channel++)
+                pixels[i + channel] = (byte)((pixels[i + channel] * keep) + (grey * GrayscaleIntensity));
+        }
+    }
 
     /// <summary>
     ///     Loads a sprite already resized to <paramref name="size" />, bilinear

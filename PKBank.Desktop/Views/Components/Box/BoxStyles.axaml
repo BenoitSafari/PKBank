@@ -5,7 +5,23 @@
         <SolidColorBrush x:Key="SlotSelectedBorderBrush" Color="{DynamicResource SystemAccentColor}" />
         <SolidColorBrush x:Key="SlotHoverBorderBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.45" />
         <SolidColorBrush x:Key="SlotOccupiedBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.16" />
+        <SolidColorBrush x:Key="AccentHoverBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.85" />
+        <SolidColorBrush x:Key="AccentPressedBrush" Color="{DynamicResource SystemAccentColor}" Opacity="0.70" />
     </Styles.Resources>
+
+    <!-- Accent-filled action button; Fluent overrides Background on hover, hence the template setters -->
+    <Style Selector="Button.accent">
+        <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+        <Setter Property="Foreground" Value="{DynamicResource SystemAltHighColor}" />
+    </Style>
+    <Style Selector="Button.accent:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource AccentHoverBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SystemAltHighColor}" />
+    </Style>
+    <Style Selector="Button.accent:pressed /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{StaticResource AccentPressedBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource SystemAltHighColor}" />
+    </Style>
 
     <Style Selector="Button.slot">
         <Setter Property="Padding" Value="2" />

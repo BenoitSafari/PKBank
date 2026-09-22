@@ -63,7 +63,7 @@ public sealed class SlotViewModel : ViewModelBase
         var pk = Read();
         IsEmpty = pk.Species == 0;
         IsCompatible = IsEmpty || Store.IsCompatible(pk);
-        Sprite = SpriteService.GetPokemonSprite(pk);
+        Sprite = IsCompatible ? SpriteService.GetPokemonSprite(pk) : SpriteService.GetPokemonSpriteGrayscale(pk);
         OnPropertyChanged(nameof(Preview));
     }
 }

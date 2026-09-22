@@ -52,6 +52,8 @@
                             <Button Content="Export" Click="OnExportSelectedClicked"
                                     IsEnabled="{Binding CanExportSelected}" />
                             <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}" />
+                            <Button Content="Bank" Classes="accent" Click="OnBankClicked"
+                                    IsEnabled="{Binding CanOpenBank}" />
                         </StackPanel>
 
                         <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">

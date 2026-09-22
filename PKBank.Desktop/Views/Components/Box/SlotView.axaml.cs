@@ -58,6 +58,8 @@ public sealed partial class SlotView : UserControl
                 "set" => !multi && slot.IsCompatible && vm.CanSetToSlot,
                 "import" => true,
                 "export" => anyOccupied,
+                "tobank" => !multi && vm.CanSendToBank(slot),
+                "tosave" => !multi && vm.CanSendToSave(slot),
                 "delete" => anyOccupied,
                 _ => menuItem.IsEnabled
             };
@@ -74,6 +76,18 @@ public sealed partial class SlotView : UserControl
     {
         if (Slot is { } slot)
             ViewModel?.SetSlotFromEditor(slot);
+    }
+
+    private void OnToBankClicked(object? sender, RoutedEventArgs e)
+    {
+        if (Slot is { } slot)
+            ViewModel?.SendToBank(slot);
+    }
+
+    private void OnToSaveClicked(object? sender, RoutedEventArgs e)
+    {
+        if (Slot is { } slot)
+            ViewModel?.SendToSave(slot);
     }
 
     private void OnDeleteClicked(object? sender, RoutedEventArgs e)
