@@ -241,6 +241,10 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
 
     private async void OnDrop(object? sender, DragEventArgs e)
     {
+        // The drag may have been started by another window, which only hides its own ghost; this one
+        // put a ghost up on DragEnter and has to take it down itself, whatever the drop turns out to be.
+        HideGhost();
+
         // The in-process payload may not survive the round trip between windows; what we recorded when
         // the drag started holds the same objects either way.
         if (e.DataTransfer.Contains(SlotDragFormats.Multi))
