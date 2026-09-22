@@ -16,6 +16,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 {
     public const int MaxOpenBoxes = 20;
 
+    /// <summary>Distinct reasons listed when a batch is refused; enough to act on, short enough to read.</summary>
+    private const int MaxReportedRefusals = 5;
+
     // ----- Selection -------------------------------------------------------
 
     private readonly List<SlotViewModel> _selectedSlots = [];
@@ -618,6 +621,113 @@ public sealed class MainWindowViewModel : ViewModelBase
             Editor.Revert(); // the displayed entity's slot changed underneath it
         NotifySlotActionStates();
         StatusMessage = dst.Species != 0 ? "Slots swapped." : "Pokémon moved.";
+    }
+
+    /// <summary>
+    ///     Dry-run for dropping a whole selection onto one slot: every entity is converted for the
+    ///     destination and assigned a free slot, walking forward from the drop target and wrapping around
+    ///     to the first container. Returns null with a reason when the batch does not fit or cannot be
+    ///     taken — nothing is written either way.
+    /// </summary>
+    public MultiMovePlan? TryPlanMultiMove(
+        IReadOnlyList<SlotViewModel> sources, SlotViewModel target, out string error)
+    {
+        error = string.Empty;
+        var store = target.Store;
+
+        var sourceKeys = new HashSet<SlotKey>();
+        var batch = new List<SlotViewModel>(sources.Count);
+        foreach (var source in sources)
+            if (!source.IsEmpty && sourceKeys.Add(source.Key))
+                batch.Add(source);
+        if (batch.Count == 0)
+            return null;
+
+        // Convert first: a single rejected entity cancels the whole batch, so this must run before
+        // anything is placed. Clone, because conversion mutates the entity in place.
+        var entities = new List<PKM>(batch.Count);
+        var refusals = new List<string>();
+        foreach (var source in batch)
+        {
+            var pk = source.Read();
+            if (source.Store == store)
+            {
+                entities.Add(pk);
+                continue;
+            }
+
+            if (store.TryAccept(pk.Clone(), out var refused) is { } accepted)
+                entities.Add(accepted);
+            else
+                refusals.Add($"{GameInfo.GetStrings(Config.Language).Species[pk.Species]}: {refused}");
+        }
+
+        if (refusals.Count > 0)
+        {
+            error = $"{refusals.Count} of {batch.Count} Pokémon cannot be added to the loaded save:\n\n"
+                    + string.Join('\n', refusals.Distinct().Take(MaxReportedRefusals));
+            return null;
+        }
+
+        // Slots the batch is vacating are free for it to reuse.
+        var slotsPer = store.SlotsPerContainer;
+        var total = store.ContainerCount * slotsPer;
+        var start = (target.Container * slotsPer) + target.Index;
+
+        var placements = new List<MultiMovePlacement>(entities.Count);
+        var next = 0;
+        for (var step = 0; step < total && next < entities.Count; step++)
+        {
+            var position = (start + step) % total;
+            var container = position / slotsPer;
+            var index = position % slotsPer;
+            if (!sourceKeys.Contains(new SlotKey(store, container, index)) &&
+                store.Read(container, index).Species != 0)
+                continue;
+            placements.Add(new MultiMovePlacement(container, index, entities[next++]));
+        }
+
+        if (next < entities.Count)
+        {
+            error = $"Not enough free space for these {entities.Count} Pokémon: "
+                    + $"only {placements.Count} slot(s) are free from the drop point onwards.";
+            return null;
+        }
+
+        return new MultiMovePlan(store, [.. sourceKeys], placements);
+    }
+
+    /// <summary>Carries out a plan from <see cref="TryPlanMultiMove" />.</summary>
+    public void ApplyMultiMove(MultiMovePlan plan)
+    {
+        if (SAV is not { } sav)
+            return;
+
+        // The entities were read while planning, so the sources can be emptied first even when the
+        // source and destination sets overlap.
+        foreach (var key in plan.Sources)
+            key.Store.Write(key.Container, key.Index, key.Store.Blank);
+
+        foreach (var (container, index, pk) in plan.Placements)
+        {
+            if (plan.Store.IsParty)
+                pk.ResetPartyStats();
+            pk.RefreshChecksum();
+            plan.Store.Write(container, index, pk);
+        }
+
+        sav.State.Edited = true;
+        RefreshAllSlots();
+        Editor?.Revert(); // containers the editor is not even showing may have changed
+        NotifySlotActionStates();
+        StatusMessage = $"Moved {plan.Placements.Count} Pokémon.";
+    }
+
+    private void RefreshAllSlots()
+    {
+        foreach (var panel in OpenBoxes)
+            panel.RefreshSlots();
+        RefreshParty();
     }
 
     /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>

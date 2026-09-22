@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Avalonia.Input;
 using PKBank.Desktop.ViewModels;
 
@@ -10,7 +11,7 @@ public static class SlotDragFormats
     public static readonly DataFormat<SlotViewModel> Slot =
         DataFormat.CreateInProcessFormat<SlotViewModel>("pkhex-avalonia-slot");
 
-    /// <summary>Multi-selection drag: export-only, ignored by in-app drop targets.</summary>
-    public static readonly DataFormat<string> Multi =
-        DataFormat.CreateInProcessFormat<string>("pkhex-avalonia-multi");
+    /// <summary>Multi-selection drag, in display order: fills the free slots from the drop target on.</summary>
+    public static readonly DataFormat<IReadOnlyList<SlotViewModel>> Multi =
+        DataFormat.CreateInProcessFormat<IReadOnlyList<SlotViewModel>>("pkhex-avalonia-multi");
 }

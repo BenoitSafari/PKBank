@@ -10,6 +10,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.ViewModels;
+using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Utils;
@@ -26,6 +27,7 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
     // A drag started here, kept process-wide so the other window can pick it up: only one slot drag can
     // be in flight at a time, and it is only ever set while we own it.
     private static SlotViewModel? _activeSource;
+    private static IReadOnlyList<SlotViewModel>? _activeSources;
     private static Bitmap? _activeSprite;
 
     private bool _dragInProgress;
@@ -116,7 +118,6 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
             return;
 
         _dragInProgress = true;
-        _activeSource = slot;
         _activeSprite = slot.Sprite;
         try
         {
@@ -125,15 +126,18 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
             var vm = ViewModel;
             if (vm is { IsMultiSelection: true } && vm.SelectedSlots.Contains(slot))
             {
-                // Dragging the multi-selection: no internal move semantics, just
-                // one export file per occupied selected slot.
-                transfer.Add(DataTransferItem.Create(SlotDragFormats.Multi, "selection"));
-                foreach (var member in vm.SelectedSlots)
+                // Dragging the multi-selection: dropped inside, it fills the free slots from the
+                // target on; dropped outside, it exports one file per occupied selected slot.
+                var batch = vm.GetSelectedSlotsInDisplayOrder();
+                _activeSources = batch;
+                transfer.Add(DataTransferItem.Create(SlotDragFormats.Multi, batch));
+                foreach (var member in batch)
                     if (!member.IsEmpty)
                         await AttachExportFile(transfer, member);
             }
             else
             {
+                _activeSource = slot;
                 transfer.Add(DataTransferItem.Create(SlotDragFormats.Slot, slot));
                 await AttachExportFile(transfer, slot);
             }
@@ -148,6 +152,7 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
             HideGhost();
             _dragInProgress = false;
             _activeSource = null;
+            _activeSources = null;
             _activeSprite = null;
             _pressedSlot = null;
             _pressArgs = null;
@@ -236,13 +241,20 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
 
     private async void OnDrop(object? sender, DragEventArgs e)
     {
+        // The in-process payload may not survive the round trip between windows; what we recorded when
+        // the drag started holds the same objects either way.
         if (e.DataTransfer.Contains(SlotDragFormats.Multi))
-            return; // multi-selection drags only mean something outside the app
+        {
+            var batch = e.DataTransfer.TryGetValue(SlotDragFormats.Multi) ?? _activeSources;
+            if (batch is null || HitTestSlot(e.GetPosition(window)) is not { } into)
+                return;
+            e.Handled = true;
+            await DropBatchAsync(batch, into);
+            return;
+        }
 
         if (e.DataTransfer.Contains(SlotDragFormats.Slot))
         {
-            // The in-process payload may not survive the round trip between windows; the source we
-            // recorded when the drag started is the same object either way.
             var source = e.DataTransfer.TryGetValue(SlotDragFormats.Slot) ?? _activeSource;
             if (source is null || HitTestSlot(e.GetPosition(window)) is not { } target)
                 return;
@@ -256,5 +268,23 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
             return;
         if (await handler(paths, e.GetPosition(window)))
             e.Handled = true;
+    }
+
+    /// <summary>
+    ///     A batch lands on the free slots from the drop target onwards, skipping occupied ones and
+    ///     wrapping to the first container. Nothing is written unless the whole batch fits.
+    /// </summary>
+    private async Task DropBatchAsync(IReadOnlyList<SlotViewModel> batch, SlotViewModel into)
+    {
+        if (ViewModel is not { } vm)
+            return;
+        if (vm.TryPlanMultiMove(batch, into, out var refused) is { } plan)
+        {
+            vm.ApplyMultiMove(plan);
+            return;
+        }
+
+        if (refused.Length != 0)
+            await ConfirmationWindow.ShowMessageAsync(window, "Move Pokémon", refused);
     }
 }
