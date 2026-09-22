@@ -5,17 +5,16 @@ using System.Linq;
 using Avalonia.Platform.Storage;
 using PKHeX.Core;
 
-namespace PKBank.Desktop.Services;
+namespace PKBank.Desktop.Utils;
 
 /// <summary>
-/// Reads and writes single-Pokémon files (.pk*, .ek*, .ck3, ...), converting
-/// them to the active save's format like WinForms' OpenPKM does.
+///     Reads and writes single-Pokémon files (.pk*, .ek*, .ck3, ...).
 /// </summary>
 public static class PkmFileService
 {
     /// <summary>
-    /// Loads a Pokémon file and converts it to the save's entity type
-    /// (e.g. a .pk3 dropped on a Gen 4 save becomes a PK4 via EntityConverter).
+    ///     Loads a Pokémon file and converts it to the save's entity type
+    ///     (e.g. a .pk3 dropped on a Gen 4 save becomes a PK4 via EntityConverter).
     /// </summary>
     public static PKM? TryLoadCompatible(string path, SaveFile sav, out string message)
     {
@@ -43,8 +42,6 @@ public static class PkmFileService
                 return null;
             }
 
-            // Same-format entities get adapted to the destination save (handler etc.),
-            // mirroring WinForms' OpenPKM.
             if (ReferenceEquals(pk, converted) && sav.State.Exportable)
                 sav.AdaptToSaveFile(converted);
 
@@ -60,7 +57,9 @@ public static class PkmFileService
         }
     }
 
-    /// <summary>Writes the entity in the standard decrypted party format (same as the drag-out export).</summary>
+    /// <summary>
+    ///     Writes the entity in the standard decrypted party format.
+    /// </summary>
     public static void Export(PKM pk, string path)
     {
         pk.ForcePartyData();
@@ -69,10 +68,12 @@ public static class PkmFileService
         File.WriteAllBytes(path, buffer);
     }
 
-    /// <summary>File picker filter matching the save's supported entity extensions.</summary>
+    /// <summary>
+    ///     File picker filter matching the save's supported entity extensions.
+    /// </summary>
     public static List<FilePickerFileType> GetPickerFileTypes(SaveFile sav) =>
     [
         new("Pokémon files") { Patterns = [.. sav.PKMExtensions.Select(ext => $"*.{ext}"), "*.ek*"] },
-        FilePickerFileTypes.All,
+        FilePickerFileTypes.All
     ];
 }

@@ -1,13 +1,13 @@
 using System;
 using Avalonia.Media;
-using PKBank.Desktop.Services;
+using PKBank.Desktop.Utils;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.ViewModels;
 
 /// <summary>
-/// One stat line (base stat, IV, EV, computed total) of the Pokémon editor.
-/// <see cref="PkIndex"/> uses the internal PKM stat order (0 HP, 1 Atk, 2 Def, 3 Spe, 4 SpA, 5 SpD).
+///     One stat line (base stat, IV, EV, computed total) of the Pokémon editor.
+///     <see cref="PkIndex" /> uses the internal PKM stat order (0 HP, 1 Atk, 2 Def, 3 Spe, 4 SpA, 5 SpD).
 /// </summary>
 public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, int pkIndex) : ViewModelBase
 {
@@ -41,6 +41,18 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         }
     }
 
+    public string IVTip => $"Max: {MaxIV}";
+    public string EVTip => $"Max: {MaxEV}";
+
+    /// <summary>Highlights the EV field when the stored value exceeds the per-stat cap (hacked data).</summary>
+    public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() > MaxEV ? StatColors.EVFieldMaxed : null;
+
+    public ushort Stat
+    {
+        get => _stat;
+        private set => SetField(ref _stat, value);
+    }
+
     // Out-of-range display correction happens at the control level (TextChanged);
     // this clamp is defense in depth for the stored value.
     private void ApplyText(string? text, int max, Action<int> apply)
@@ -50,14 +62,6 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
     }
 
     private static int ParseStat(string? text) => int.TryParse(text, out var value) && value > 0 ? value : 0;
-
-    public string IVTip => $"Max: {MaxIV}";
-    public string EVTip => $"Max: {MaxEV}";
-
-    /// <summary>Highlights the EV field when the stored value exceeds the per-stat cap (hacked data).</summary>
-    public IBrush? EVBrush => owner.Entity.Format >= 3 && GetEV() > MaxEV ? StatColors.EVFieldMaxed : null;
-
-    public ushort Stat { get => _stat; private set => SetField(ref _stat, value); }
 
     /// <summary>Refreshes computed values only; safe to call while the user is typing.</summary>
     public void RefreshComputed(ReadOnlySpan<ushort> stats)
@@ -90,7 +94,7 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         2 => owner.Entity.IV_DEF,
         3 => owner.Entity.IV_SPE,
         4 => owner.Entity.IV_SPA,
-        _ => owner.Entity.IV_SPD,
+        _ => owner.Entity.IV_SPD
     };
 
     private void SetIV(int value)
@@ -114,7 +118,7 @@ public sealed class StatRowViewModel(PokemonEditorViewModel owner, string name, 
         2 => owner.Entity.EV_DEF,
         3 => owner.Entity.EV_SPE,
         4 => owner.Entity.EV_SPA,
-        _ => owner.Entity.EV_SPD,
+        _ => owner.Entity.EV_SPD
     };
 
     private void SetEV(int value)

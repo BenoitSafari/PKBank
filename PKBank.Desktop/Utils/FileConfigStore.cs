@@ -2,13 +2,13 @@ using System;
 using System.IO;
 using PKBank.Core.Configuration;
 
-namespace PKBank.Desktop.Services;
+namespace PKBank.Desktop.Utils;
 
 public sealed class FileConfigStore : IConfigStore
 {
     private static string ConfigPath => Path.Combine(
         Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "PKBank.Desktop", "config.json");
+        AppInfo.Name, "config.json");
 
     public string? Read() => File.Exists(ConfigPath) ? File.ReadAllText(ConfigPath) : null;
 

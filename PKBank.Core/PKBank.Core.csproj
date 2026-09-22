@@ -1,13 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>PKBank.Core</RootNamespace>
-    <Description>Supplemental game data and logic not provided by PKHeX.Core</Description>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>PKBank.Core</RootNamespace>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\packages\PKHeX\PKHeX.Core\PKHeX.Core.csproj" />
-  </ItemGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\packages\PKHeX\PKHeX.Core\PKHeX.Core.csproj"/>
+    </ItemGroup>
 
 </Project>

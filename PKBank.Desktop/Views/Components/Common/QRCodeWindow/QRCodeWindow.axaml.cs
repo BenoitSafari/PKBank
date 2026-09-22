@@ -22,7 +22,7 @@ public sealed partial class QRCodeWindow : Window
         var lines = pk.GetQRLines();
         var display = new string[lines.Length + 1];
         lines.CopyTo(display, 0);
-        display[^1] = $"PKBank.Desktop ({pk.GetType().Name})";
+        display[^1] = $"{AppInfo.Name} ({pk.GetType().Name})";
         LinesControl.ItemsSource = display;
     }
 
@@ -32,7 +32,7 @@ public sealed partial class QRCodeWindow : Window
         SpriteImage.Source = SpriteService.GetMysteryGiftSprite(gift);
         LegalityImage.Source = null;
 
-        string[] lines = [$"({gift.Type})", .. gift.GetDescription(), "PKBank.Desktop Wonder Card"];
+        string[] lines = [$"({gift.Type})", .. gift.GetDescription(), $"{AppInfo.Name} Wonder Card"];
         LinesControl.ItemsSource = lines;
     }
 

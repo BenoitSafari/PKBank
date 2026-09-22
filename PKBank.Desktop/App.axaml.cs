@@ -2,7 +2,7 @@ using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using PKBank.Core.Configuration;
-using PKBank.Desktop.Services;
+using PKBank.Desktop.Utils;
 using PKBank.Desktop.ViewModels;
 using PKBank.Desktop.Views;
 using PKHeX.Core;

@@ -81,7 +81,7 @@
                 Header="_Settings…"
                 Click="OnSettingsClicked" />
             <MenuItem
-                Header="_About PKBank.Desktop…"
+                x:Name="AboutMenuItem"
                 Click="OnAboutClicked" />
         </MenuItem>
     </Menu>

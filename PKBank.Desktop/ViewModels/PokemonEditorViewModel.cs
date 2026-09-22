@@ -5,37 +5,40 @@ using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
 using PKBank.Core.Moves;
-using PKBank.Desktop.Services;
 using PKBank.Desktop.Sprites;
+using PKBank.Desktop.Utils;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.ViewModels;
 
 public sealed class PokemonEditorViewModel : ViewModelBase
 {
+    public static readonly IReadOnlyList<string> PokerusOptions = ["None", "Infected", "Cured"];
+    private readonly LegalMoveSource<ComboItem> _legalMoves = new(new LegalMoveComboSource());
     private readonly SaveFile _sav;
     private readonly FilteredGameDataSource _sources;
-    private readonly SlotViewModel _origin;
-    private readonly LegalMoveSource<ComboItem> _legalMoves = new(new LegalMoveComboSource());
-    private PKM _pk;
+
+    // ----- Extra bytes (raw unused offsets, as in WinForms) ----------------
+
+    private int _extraByteIndex;
     private bool _loading;
 
     public PokemonEditorViewModel(SaveFile sav, FilteredGameDataSource sources, SlotViewModel origin)
     {
         _sav = sav;
         _sources = sources;
-        _origin = origin;
-        _pk = origin.Read();
+        Origin = origin;
+        Entity = origin.Read();
         _legalMoves.ChangeMoveSource(sources.Moves);
 
         StatRows =
         [
-            new(this, "HP", 0),
-            new(this, "Attack", 1),
-            new(this, "Defense", 2),
-            new(this, "Sp. Atk", 4),
-            new(this, "Sp. Def", 5),
-            new(this, "Speed", 3),
+            new StatRowViewModel(this, "HP", 0),
+            new StatRowViewModel(this, "Attack", 1),
+            new StatRowViewModel(this, "Defense", 2),
+            new StatRowViewModel(this, "Sp. Atk", 4),
+            new StatRowViewModel(this, "Sp. Def", 5),
+            new StatRowViewModel(this, "Speed", 3)
         ];
 
         AbilityList = [];
@@ -43,21 +46,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         Load();
     }
 
-    internal PKM Entity => _pk;
+    internal PKM Entity { get; private set; }
 
     /// <summary>
     ///     Slot this editor was opened from.
     /// </summary>
-    public SlotViewModel Origin => _origin;
+    public SlotViewModel Origin { get; }
 
-    /// <summary>
-    ///     Snapshot of the entity currently being edited (with pending changes).
-    /// </summary>
-    public PKM GetEntityClone() => _pk.Clone();
-
-    public bool HasSpecies => _pk.Species != 0;
-
-    public void RefreshSprite() => OnPropertyChanged(nameof(Sprite));
+    public bool HasSpecies => Entity.Species != 0;
 
     public IReadOnlyList<ComboItem> SpeciesList => _sources.Species;
     public IReadOnlyList<ComboItem> ItemList => _sources.Items;
@@ -70,35 +66,35 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public IReadOnlyList<StatRowViewModel> StatRows { get; }
 
     // Capability flags for hiding fields not present in the save's generation
-    public bool HasNature => _pk.Format >= 3;
-    public bool HasAbility => _pk.Format >= 3;
-    public bool HasBall => _pk.Format >= 3;
+    public bool HasNature => Entity.Format >= 3;
+    public bool HasAbility => Entity.Format >= 3;
+    public bool HasBall => Entity.Format >= 3;
     public bool HasItem => ItemList.Count > 0;
-    public bool HasLanguage => _pk.Format >= 3;
+    public bool HasLanguage => Entity.Format >= 3;
     public bool HasShiny => true;
     public bool HasForms => FormList.Count > 1;
-    public bool CanCycleGender => _pk.Format >= 3 && _pk.PersonalInfo.IsDualGender && _pk.Species != 0;
+    public bool CanCycleGender => Entity.Format >= 3 && Entity.PersonalInfo.IsDualGender && Entity.Species != 0;
 
-    public Bitmap? Sprite => SpriteService.GetPokemonSprite(_pk);
+    public Bitmap? Sprite => SpriteService.GetPokemonSprite(Entity);
 
     public int Species
     {
-        get => _pk.Species;
+        get => Entity.Species;
         set
         {
-            if (_loading || value < 0 || value == _pk.Species)
+            if (_loading || value < 0 || value == Entity.Species)
                 return;
-            if (_pk.Species == 0 && value > 0)
-                EntityTemplates.TemplateFields(_pk, _sav);
+            if (Entity.Species == 0 && value > 0)
+                EntityTemplates.TemplateFields(Entity, _sav);
 
-            _pk.Species = (ushort)value;
-            var pi = _pk.PersonalInfo;
-            if (_pk.Form >= pi.FormCount)
-                _pk.Form = 0;
+            Entity.Species = (ushort)value;
+            var pi = Entity.PersonalInfo;
+            if (Entity.Form >= pi.FormCount)
+                Entity.Form = 0;
 
-            _pk.Gender = _pk.GetSaneGender();
-            if (!_pk.IsNicknamed)
-                _pk.ClearNickname();
+            Entity.Gender = Entity.GetSaneGender();
+            if (!Entity.IsNicknamed)
+                Entity.ClearNickname();
 
             RebuildSpeciesDependentLists();
             RefreshAll();
@@ -107,15 +103,15 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public string Nickname
     {
-        get => DisplayText.Sanitize(_pk.Nickname);
+        get => DisplayText.Sanitize(Entity.Nickname);
         set
         {
-            if (_loading || value == _pk.Nickname)
+            if (_loading || value == Entity.Nickname)
                 return;
             if (string.IsNullOrWhiteSpace(value))
-                _pk.ClearNickname();
+                Entity.ClearNickname();
             else
-                _pk.SetNickname(value);
+                Entity.SetNickname(value);
             OnPropertyChanged();
             OnPropertyChanged(nameof(IsNicknamed));
             RefreshDerived();
@@ -124,15 +120,15 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public bool IsNicknamed
     {
-        get => _pk.IsNicknamed;
+        get => Entity.IsNicknamed;
         set
         {
-            if (_loading || value == _pk.IsNicknamed)
+            if (_loading || value == Entity.IsNicknamed)
                 return;
             if (value)
-                _pk.IsNicknamed = true;
+                Entity.IsNicknamed = true;
             else
-                _pk.ClearNickname();
+                Entity.ClearNickname();
             OnPropertyChanged();
             OnPropertyChanged(nameof(Nickname));
             RefreshDerived();
@@ -141,13 +137,13 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int Level
     {
-        get => _pk.CurrentLevel;
+        get => Entity.CurrentLevel;
         set
         {
             var level = Math.Clamp(value, 1, 100);
-            if (_loading || level == _pk.CurrentLevel)
+            if (_loading || level == Entity.CurrentLevel)
                 return;
-            _pk.CurrentLevel = (byte)level;
+            Entity.CurrentLevel = (byte)level;
             OnPropertyChanged();
             RefreshDerived();
         }
@@ -155,12 +151,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int Form
     {
-        get => _pk.Form;
+        get => Entity.Form;
         set
         {
-            if (_loading || value < 0 || value == _pk.Form)
+            if (_loading || value < 0 || value == Entity.Form)
                 return;
-            _pk.Form = (byte)value;
+            Entity.Form = (byte)value;
             OnPropertyChanged(nameof(SelectedForm));
             RebuildAbilityList();
             RefreshAll();
@@ -169,12 +165,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int Nature
     {
-        get => (int)_pk.Nature;
+        get => (int)Entity.Nature;
         set
         {
-            if (_loading || value < 0 || value == (int)_pk.Nature)
+            if (_loading || value < 0 || value == (int)Entity.Nature)
                 return;
-            _pk.SetNature((Nature)value); // Gen 3/4: rerolls a PID matching the nature
+            Entity.SetNature((Nature)value); // Gen 3/4: rerolls a PID matching the nature
             OnPropertyChanged();
             OnPropertyChanged(nameof(PIDText));
             OnPropertyChanged(nameof(GenderSymbol));
@@ -186,12 +182,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int AbilityIndex
     {
-        get => _pk.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
+        get => Entity.AbilityNumber switch { 2 => 1, 4 => 2, _ => 0 };
         set
         {
             if (_loading || value < 0 || value == AbilityIndex)
                 return;
-            _pk.SetAbilityIndex(value);
+            Entity.SetAbilityIndex(value);
             OnPropertyChanged();
             OnPropertyChanged(nameof(SelectedAbility));
             RefreshDerived();
@@ -252,12 +248,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int HeldItem
     {
-        get => _pk.HeldItem;
+        get => Entity.HeldItem;
         set
         {
-            if (_loading || value < 0 || value == _pk.HeldItem)
+            if (_loading || value < 0 || value == Entity.HeldItem)
                 return;
-            _pk.HeldItem = value;
+            Entity.HeldItem = value;
             OnPropertyChanged();
             RefreshDerived();
         }
@@ -265,12 +261,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int Ball
     {
-        get => _pk.Ball;
+        get => Entity.Ball;
         set
         {
-            if (_loading || value < 0 || value == _pk.Ball)
+            if (_loading || value < 0 || value == Entity.Ball)
                 return;
-            _pk.Ball = (byte)value;
+            Entity.Ball = (byte)value;
             OnPropertyChanged();
             RefreshDerived();
         }
@@ -278,12 +274,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public int Language
     {
-        get => _pk.Language;
+        get => Entity.Language;
         set
         {
-            if (_loading || value < 0 || value == _pk.Language)
+            if (_loading || value < 0 || value == Entity.Language)
                 return;
-            _pk.Language = value;
+            Entity.Language = value;
             OnPropertyChanged();
             RefreshDerived();
         }
@@ -291,14 +287,14 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public bool IsShiny
     {
-        get => _pk.IsShiny;
+        get => Entity.IsShiny;
         set
         {
-            if (_loading || value == _pk.IsShiny)
+            if (_loading || value == Entity.IsShiny)
                 return;
             // CommonEdits.SetIsShiny keeps the PID valid: SetShiny rerolls the
             // PID/shiny relation, SetUnshiny rerolls via SetPIDGender.
-            _pk.SetIsShiny(value);
+            Entity.SetIsShiny(value);
             OnPropertyChanged();
             OnPropertyChanged(nameof(PIDText));
             OnPropertyChanged(nameof(GenderSymbol));
@@ -306,189 +302,56 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
     }
 
-    public string GenderSymbol => _pk.Gender switch { 0 => "♂", 1 => "♀", _ => "—" };
+    public string GenderSymbol => Entity.Gender switch { 0 => "♂", 1 => "♀", _ => "—" };
 
     // ----- PID -------------------------------------------------------------
 
-    public bool HasPID => _pk.Format >= 3;
+    public bool HasPID => Entity.Format >= 3;
 
     /// <summary>
-    /// PID as 8 hex digits. Manual edits parse leniently while typing; derived
-    /// attributes (nature/gender/ability/shiny on old formats) refresh live.
+    ///     PID as 8 hex digits. Manual edits parse leniently while typing; derived
+    ///     attributes (nature/gender/ability/shiny on old formats) refresh live.
     /// </summary>
     public string PIDText
     {
-        get => _pk.PID.ToString("X8");
+        get => Entity.PID.ToString("X8");
         set
         {
             if (_loading)
                 return;
             var text = value?.Trim() ?? string.Empty;
-            if (!uint.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var pid) || pid == _pk.PID)
+            if (!uint.TryParse(text, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var pid) ||
+                pid == Entity.PID)
                 return;
-            _pk.PID = pid;
+            Entity.PID = pid;
             NotifyPidDerived();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
-    }
-
-    /// <summary>Re-displays the normalized 8-digit value (called on focus loss).</summary>
-    public void NormalizePidText() => OnPropertyChanged(nameof(PIDText));
-
-    /// <summary>
-    /// Generates a fresh valid PID like WinForms' reroll button: keeps species,
-    /// gender, nature and form consistent, never lands on an accidental shiny.
-    /// </summary>
-    public void RerollPid()
-    {
-        if (_pk.Format < 3)
-            return;
-        _pk.SetPIDGender(_pk.Gender);
-        OnPropertyChanged(nameof(PIDText));
-        NotifyPidDerived();
-        RefreshDerived(refreshInputTexts: false);
-    }
-
-    /// <summary>
-    /// Rebuilds a PID/IV pair the matched encounter could actually have produced.
-    /// Gen 3-5 encounters derive both from one RNG seed, so a hand-edited PID or
-    /// IV set has no seed behind it and can only be fixed by regenerating both.
-    /// Keeps the current nature and IVs when the encounter allows them, otherwise
-    /// keeps the nature alone, and picks the best IV spread found across attempts.
-    /// </summary>
-    public bool TryFixPidIvs(out string message)
-    {
-        if (_pk.Species == 0)
-        {
-            message = "No Pokémon to fix.";
-            return false;
-        }
-
-        var la = new LegalityAnalysis(_pk);
-        if (la.Valid)
-        {
-            message = "This Pokémon is already legal.";
-            return false;
-        }
-        if (la.EncounterMatch is not IEncounterConvertible enc)
-        {
-            message = "No matching encounter to rebuild the PID from.";
-            return false;
-        }
-
-        var tr = new SimpleTrainerInfo(_pk.Version)
-        {
-            OT = _pk.OriginalTrainerName,
-            TID16 = _pk.TID16,
-            SID16 = _pk.SID16,
-            Gender = _pk.OriginalTrainerGender,
-            Language = _pk.Language,
-            Generation = _pk.Generation,
-        };
-
-        var nature = _pk.Nature;
-        EncounterCriteria[] tiers =
-        [
-            EncounterCriteria.Unrestricted with
-            {
-                Nature = nature,
-                IV_HP = (sbyte)_pk.IV_HP, IV_ATK = (sbyte)_pk.IV_ATK, IV_DEF = (sbyte)_pk.IV_DEF,
-                IV_SPA = (sbyte)_pk.IV_SPA, IV_SPD = (sbyte)_pk.IV_SPD, IV_SPE = (sbyte)_pk.IV_SPE,
-            },
-            EncounterCriteria.Unrestricted with { Nature = nature },
-            EncounterCriteria.Unrestricted,
-        ];
-
-        foreach (var criteria in tiers)
-        {
-            if (!TryGenerateLegal(enc, tr, criteria, out var pid, out var ivs))
-                continue;
-
-            _pk.PID = pid;
-            _pk.SetIVs(ivs);
-            _pk.RefreshChecksum();
-            Load();
-            message = _pk.Nature == nature
-                ? $"Rebuilt a valid PID/IV pair (nature kept, IVs {string.Join('/', ivs)})."
-                : $"Rebuilt a valid PID/IV pair (nature is now {_pk.Nature}, IVs {string.Join('/', ivs)}).";
-            return true;
-        }
-
-        message = "Could not rebuild a legal PID/IV pair; other fields are likely invalid too.";
-        return false;
-    }
-
-    /// <summary>
-    /// Generation draws randomly whenever the criteria leave room, so sample a
-    /// few times and keep the legal candidate with the best IV total.
-    /// </summary>
-    private bool TryGenerateLegal(IEncounterConvertible enc, ITrainerInfo tr, EncounterCriteria criteria,
-        out uint pid, out int[] ivs)
-    {
-        const int attempts = 256;
-        pid = 0;
-        ivs = [];
-        var best = -1;
-
-        var probe = _pk.Clone();
-        for (var i = 0; i < attempts; i++)
-        {
-            var template = enc.ConvertToPKM(tr, criteria);
-            int[] candidate = [template.IV_HP, template.IV_ATK, template.IV_DEF, template.IV_SPE, template.IV_SPA, template.IV_SPD];
-
-            probe.PID = template.PID;
-            probe.SetIVs(candidate);
-            probe.RefreshChecksum();
-            if (!new LegalityAnalysis(probe).Valid)
-                continue;
-
-            var total = 0;
-            foreach (var iv in candidate)
-                total += iv;
-            if (total <= best)
-                continue;
-            best = total;
-            pid = template.PID;
-            ivs = candidate;
-        }
-        return best >= 0;
-    }
-
-    private void NotifyPidDerived()
-    {
-        OnPropertyChanged(nameof(IsShiny));
-        OnPropertyChanged(nameof(GenderSymbol));
-        OnPropertyChanged(nameof(Nature));
-        OnPropertyChanged(nameof(AbilityIndex));
-        OnPropertyChanged(nameof(SelectedAbility));
-        OnPropertyChanged(nameof(SelectedForm));
     }
 
     // ----- Egg & Pokérus ---------------------------------------------------
 
-    public bool HasEgg => _pk.Format >= 2;
+    public bool HasEgg => Entity.Format >= 2;
 
     public bool IsEgg
     {
-        get => _pk.IsEgg;
+        get => Entity.IsEgg;
         set
         {
-            if (_loading || value == _pk.IsEgg)
+            if (_loading || value == Entity.IsEgg)
                 return;
-            _pk.IsEgg = value;
+            Entity.IsEgg = value;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
-    public bool HasPokerus => _pk.Format >= 2;
-
-    public static readonly IReadOnlyList<string> PokerusOptions = ["None", "Infected", "Cured"];
+    public bool HasPokerus => Entity.Format >= 2;
 
     /// <summary>0 none, 1 infected, 2 cured — mapped onto PokerusStrain/PokerusDays like WinForms.</summary>
     public int PokerusStatus
     {
-        get => _pk.IsPokerusCured ? 2 : _pk.IsPokerusInfected ? 1 : 0;
+        get => Entity.IsPokerusCured ? 2 : Entity.IsPokerusInfected ? 1 : 0;
         set
         {
             if (_loading || value < 0 || value == PokerusStatus)
@@ -496,23 +359,24 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             switch (value)
             {
                 case 0:
-                    _pk.PokerusStrain = 0;
-                    _pk.PokerusDays = 0;
+                    Entity.PokerusStrain = 0;
+                    Entity.PokerusDays = 0;
                     break;
                 case 1:
-                    if (_pk.PokerusStrain == 0)
-                        _pk.PokerusStrain = 1;
-                    if (_pk.PokerusDays == 0)
-                        _pk.PokerusDays = 1;
+                    if (Entity.PokerusStrain == 0)
+                        Entity.PokerusStrain = 1;
+                    if (Entity.PokerusDays == 0)
+                        Entity.PokerusDays = 1;
                     break;
                 default:
-                    if (_pk.PokerusStrain == 0)
-                        _pk.PokerusStrain = 1;
-                    _pk.PokerusDays = 0;
+                    if (Entity.PokerusStrain == 0)
+                        Entity.PokerusStrain = 1;
+                    Entity.PokerusDays = 0;
                     break;
             }
+
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
@@ -520,152 +384,132 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public string OTName
     {
-        get => DisplayText.Sanitize(_pk.OriginalTrainerName);
+        get => DisplayText.Sanitize(Entity.OriginalTrainerName);
         set
         {
             var name = value ?? string.Empty;
-            if (_loading || name == _pk.OriginalTrainerName)
+            if (_loading || name == Entity.OriginalTrainerName)
                 return;
-            _pk.OriginalTrainerName = name;
+            Entity.OriginalTrainerName = name;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
-    public string OTGenderSymbol => _pk.OriginalTrainerGender == 1 ? "♀" : "♂";
-
-    public void CycleOTGender()
-    {
-        _pk.OriginalTrainerGender = (byte)(_pk.OriginalTrainerGender == 0 ? 1 : 0);
-        OnPropertyChanged(nameof(OTGenderSymbol));
-        RefreshDerived(refreshInputTexts: false);
-    }
+    public string OTGenderSymbol => Entity.OriginalTrainerGender == 1 ? "♀" : "♂";
 
     /// <summary>Secret ID only exists from Gen 3 onward (WinForms hides the label below that).</summary>
-    public bool HasSID => _pk.Generation >= 3;
+    public bool HasSID => Entity.Generation >= 3;
 
     // Display values already account for the ID format: 16-bit pairs on Gen 1-6,
     // 6-digit TID / 4-digit SID on Gen 7+.
-    public int MaxTID => _pk.TrainerIDDisplayFormat == TrainerIDFormat.SixDigit ? 999_999 : ushort.MaxValue;
-    public int MaxSID => _pk.TrainerIDDisplayFormat == TrainerIDFormat.SixDigit ? 4294 : ushort.MaxValue;
+    public int MaxTID => Entity.TrainerIDDisplayFormat == TrainerIDFormat.SixDigit ? 999_999 : ushort.MaxValue;
+    public int MaxSID => Entity.TrainerIDDisplayFormat == TrainerIDFormat.SixDigit ? 4294 : ushort.MaxValue;
 
     public int? TID
     {
-        get => (int)_pk.DisplayTID;
+        get => (int)Entity.DisplayTID;
         set
         {
             var id = (uint)Math.Clamp(value ?? 0, 0, MaxTID);
-            if (_loading || id == _pk.DisplayTID)
+            if (_loading || id == Entity.DisplayTID)
                 return;
-            _pk.DisplayTID = id;
+            Entity.DisplayTID = id;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
     public int? SID
     {
-        get => (int)_pk.DisplaySID;
+        get => (int)Entity.DisplaySID;
         set
         {
             var id = (uint)Math.Clamp(value ?? 0, 0, MaxSID);
-            if (_loading || id == _pk.DisplaySID)
+            if (_loading || id == Entity.DisplaySID)
                 return;
-            _pk.DisplaySID = id;
+            Entity.DisplaySID = id;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
     public int? Friendship
     {
-        get => _pk.OriginalTrainerFriendship;
+        get => Entity.OriginalTrainerFriendship;
         set
         {
             var friendship = (byte)Math.Clamp(value ?? 0, 0, byte.MaxValue);
-            if (_loading || friendship == _pk.OriginalTrainerFriendship)
+            if (_loading || friendship == Entity.OriginalTrainerFriendship)
                 return;
-            _pk.OriginalTrainerFriendship = friendship;
+            Entity.OriginalTrainerFriendship = friendship;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false); // friendship feeds Return/Frustration power
+            RefreshDerived(false); // friendship feeds Return/Frustration power
         }
     }
 
     // ----- Origin ----------------------------------------------------------
 
-    public bool HasOriginGame => _pk.Format >= 3;
-    public bool HasMetLocation => _pk.Format >= 2;
-    public bool HasFateful => _pk.Format >= 3;
+    public bool HasOriginGame => Entity.Format >= 3;
+    public bool HasMetLocation => Entity.Format >= 2;
+    public bool HasFateful => Entity.Format >= 3;
 
     public IReadOnlyList<ComboItem> OriginGameList => _sources.Games;
     public IReadOnlyList<ComboItem> MetLocationList { get; private set; } = [];
 
     public int OriginGame
     {
-        get => (int)_pk.Version;
+        get => (int)Entity.Version;
         set
         {
-            if (_loading || value < 0 || value == (int)_pk.Version)
+            if (_loading || value < 0 || value == (int)Entity.Version)
                 return;
-            _pk.Version = (GameVersion)value;
+            Entity.Version = (GameVersion)value;
             RebuildMetLocationList(); // location names are version-specific
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
     public int MetLocation
     {
-        get => _pk.MetLocation;
+        get => Entity.MetLocation;
         set
         {
-            if (_loading || value < 0 || value == _pk.MetLocation)
+            if (_loading || value < 0 || value == Entity.MetLocation)
                 return;
-            _pk.MetLocation = (ushort)value;
+            Entity.MetLocation = (ushort)value;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
     public int? MetLevel
     {
-        get => _pk.MetLevel;
+        get => Entity.MetLevel;
         set
         {
             var level = (byte)Math.Clamp(value ?? 0, 0, 100);
-            if (_loading || level == _pk.MetLevel)
+            if (_loading || level == Entity.MetLevel)
                 return;
-            _pk.MetLevel = level;
+            Entity.MetLevel = level;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
 
     public bool FatefulEncounter
     {
-        get => _pk.FatefulEncounter;
+        get => Entity.FatefulEncounter;
         set
         {
-            if (_loading || value == _pk.FatefulEncounter)
+            if (_loading || value == Entity.FatefulEncounter)
                 return;
-            _pk.FatefulEncounter = value;
+            Entity.FatefulEncounter = value;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
     }
-
-    private void RebuildMetLocationList()
-    {
-        MetLocationList = HasMetLocation
-            ? GameInfo.GetLocationList(_pk.Version, _pk.Context, egg: false)
-            : [];
-        OnPropertyChanged(nameof(MetLocationList));
-        Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(MetLocation)));
-    }
-
-    // ----- Extra bytes (raw unused offsets, as in WinForms) ----------------
-
-    private int _extraByteIndex;
 
     public IReadOnlyList<string> ExtraByteOffsets { get; private set; } = [];
     public bool HasExtraBytes => ExtraByteOffsets.Count != 0;
@@ -687,29 +531,261 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         get
         {
-            var offsets = _pk.ExtraBytes;
+            var offsets = Entity.ExtraBytes;
             if ((uint)_extraByteIndex >= (uint)offsets.Length)
                 return null;
-            return _pk.Data[offsets[_extraByteIndex]];
+            return Entity.Data[offsets[_extraByteIndex]];
         }
         set
         {
-            var offsets = _pk.ExtraBytes;
+            var offsets = Entity.ExtraBytes;
             if (_loading || (uint)_extraByteIndex >= (uint)offsets.Length)
                 return;
             var b = (byte)Math.Clamp(value ?? 0, 0, byte.MaxValue);
             var offset = offsets[_extraByteIndex];
-            if (_pk.Data[offset] == b)
+            if (Entity.Data[offset] == b)
                 return;
-            _pk.Data[offset] = b;
+            Entity.Data[offset] = b;
             OnPropertyChanged();
-            RefreshDerived(refreshInputTexts: false);
+            RefreshDerived(false);
         }
+    }
+
+    public int Move1
+    {
+        get => Entity.GetMove(0);
+        set => SetMove(0, value);
+    }
+
+    public int Move2
+    {
+        get => Entity.GetMove(1);
+        set => SetMove(1, value);
+    }
+
+    public int Move3
+    {
+        get => Entity.GetMove(2);
+        set => SetMove(2, value);
+    }
+
+    public int Move4
+    {
+        get => Entity.GetMove(3);
+        set => SetMove(3, value);
+    }
+
+    // PP Ups (0-3) per move; the resulting max PP is displayed read-only so no
+    // illegal value can be entered. Nullable so an emptied field maps to 0.
+    public int? PPUps1
+    {
+        get => Entity.Move1_PPUps;
+        set => SetPPUps(0, value);
+    }
+
+    public int? PPUps2
+    {
+        get => Entity.Move2_PPUps;
+        set => SetPPUps(1, value);
+    }
+
+    public int? PPUps3
+    {
+        get => Entity.Move3_PPUps;
+        set => SetPPUps(2, value);
+    }
+
+    public int? PPUps4
+    {
+        get => Entity.Move4_PPUps;
+        set => SetPPUps(3, value);
+    }
+
+    public string PP1Display => GetPPDisplay(0);
+    public string PP2Display => GetPPDisplay(1);
+    public string PP3Display => GetPPDisplay(2);
+    public string PP4Display => GetPPDisplay(3);
+
+    // Hover summaries for the move selectors (null when the slot has no move)
+    public MoveTipViewModel? MoveTip1 => MoveTipViewModel.TryCreate(Entity, 0, GetPPUps(0));
+    public MoveTipViewModel? MoveTip2 => MoveTipViewModel.TryCreate(Entity, 1, GetPPUps(1));
+    public MoveTipViewModel? MoveTip3 => MoveTipViewModel.TryCreate(Entity, 2, GetPPUps(2));
+    public MoveTipViewModel? MoveTip4 => MoveTipViewModel.TryCreate(Entity, 3, GetPPUps(3));
+
+    public bool LegalityValid { get; private set; }
+    public string LegalitySummary { get; private set; } = string.Empty;
+
+    // Stats column totals
+    public bool ShowTotalsRow => Entity.Format >= 3;
+    public string BST => Entity.PersonalInfo.GetBaseStatTotal().ToString("000");
+    public IBrush BSTBrush => StatColors.BaseStatTotal(Entity.PersonalInfo.GetBaseStatTotal());
+    public int IVTotal => Entity.IVTotal;
+    public int EVTotal => Entity.EVTotal;
+    public IBrush? EVTotalBrush => StatColors.GetEVTotalBrush(Entity.EVTotal);
+    public bool EVTotalHasColor => EVTotalBrush is not null;
+    public string EVRemainingTip => $"Remaining: {EffortValues.Max510 - Entity.EVTotal}";
+
+    /// <summary>
+    ///     Snapshot of the entity currently being edited (with pending changes).
+    /// </summary>
+    public PKM GetEntityClone() => Entity.Clone();
+
+    public void RefreshSprite() => OnPropertyChanged(nameof(Sprite));
+
+    /// <summary>Re-displays the normalized 8-digit value (called on focus loss).</summary>
+    public void NormalizePidText() => OnPropertyChanged(nameof(PIDText));
+
+    /// <summary>
+    ///     Generates a fresh valid PID like WinForms' reroll button: keeps species,
+    ///     gender, nature and form consistent, never lands on an accidental shiny.
+    /// </summary>
+    public void RerollPid()
+    {
+        if (Entity.Format < 3)
+            return;
+        Entity.SetPIDGender(Entity.Gender);
+        OnPropertyChanged(nameof(PIDText));
+        NotifyPidDerived();
+        RefreshDerived(false);
+    }
+
+    /// <summary>
+    ///     Rebuilds a PID/IV pair the matched encounter could actually have produced.
+    ///     Gen 3-5 encounters derive both from one RNG seed, so a hand-edited PID or
+    ///     IV set has no seed behind it and can only be fixed by regenerating both.
+    ///     Keeps the current nature and IVs when the encounter allows them, otherwise
+    ///     keeps the nature alone, and picks the best IV spread found across attempts.
+    /// </summary>
+    public bool TryFixPidIvs(out string message)
+    {
+        if (Entity.Species == 0)
+        {
+            message = "No Pokémon to fix.";
+            return false;
+        }
+
+        var la = new LegalityAnalysis(Entity);
+        if (la.Valid)
+        {
+            message = "This Pokémon is already legal.";
+            return false;
+        }
+
+        if (la.EncounterMatch is not IEncounterConvertible enc)
+        {
+            message = "No matching encounter to rebuild the PID from.";
+            return false;
+        }
+
+        var tr = new SimpleTrainerInfo(Entity.Version)
+        {
+            OT = Entity.OriginalTrainerName,
+            TID16 = Entity.TID16,
+            SID16 = Entity.SID16,
+            Gender = Entity.OriginalTrainerGender,
+            Language = Entity.Language,
+            Generation = Entity.Generation
+        };
+
+        var nature = Entity.Nature;
+        EncounterCriteria[] tiers =
+        [
+            EncounterCriteria.Unrestricted with
+            {
+                Nature = nature,
+                IV_HP = (sbyte)Entity.IV_HP, IV_ATK = (sbyte)Entity.IV_ATK, IV_DEF = (sbyte)Entity.IV_DEF,
+                IV_SPA = (sbyte)Entity.IV_SPA, IV_SPD = (sbyte)Entity.IV_SPD, IV_SPE = (sbyte)Entity.IV_SPE
+            },
+            EncounterCriteria.Unrestricted with { Nature = nature },
+            EncounterCriteria.Unrestricted
+        ];
+
+        foreach (var criteria in tiers)
+        {
+            if (!TryGenerateLegal(enc, tr, criteria, out var pid, out var ivs))
+                continue;
+
+            Entity.PID = pid;
+            Entity.SetIVs(ivs);
+            Entity.RefreshChecksum();
+            Load();
+            message = Entity.Nature == nature
+                ? $"Rebuilt a valid PID/IV pair (nature kept, IVs {string.Join('/', ivs)})."
+                : $"Rebuilt a valid PID/IV pair (nature is now {Entity.Nature}, IVs {string.Join('/', ivs)}).";
+            return true;
+        }
+
+        message = "Could not rebuild a legal PID/IV pair; other fields are likely invalid too.";
+        return false;
+    }
+
+    /// <summary>
+    ///     Generation draws randomly whenever the criteria leave room, so sample a
+    ///     few times and keep the legal candidate with the best IV total.
+    /// </summary>
+    private bool TryGenerateLegal(IEncounterConvertible enc, ITrainerInfo tr, EncounterCriteria criteria,
+        out uint pid, out int[] ivs)
+    {
+        const int attempts = 256;
+        pid = 0;
+        ivs = [];
+        var best = -1;
+
+        var probe = Entity.Clone();
+        for (var i = 0; i < attempts; i++)
+        {
+            var template = enc.ConvertToPKM(tr, criteria);
+            int[] candidate =
+                [template.IV_HP, template.IV_ATK, template.IV_DEF, template.IV_SPE, template.IV_SPA, template.IV_SPD];
+
+            probe.PID = template.PID;
+            probe.SetIVs(candidate);
+            probe.RefreshChecksum();
+            if (!new LegalityAnalysis(probe).Valid)
+                continue;
+
+            var total = 0;
+            foreach (var iv in candidate)
+                total += iv;
+            if (total <= best)
+                continue;
+            best = total;
+            pid = template.PID;
+            ivs = candidate;
+        }
+
+        return best >= 0;
+    }
+
+    private void NotifyPidDerived()
+    {
+        OnPropertyChanged(nameof(IsShiny));
+        OnPropertyChanged(nameof(GenderSymbol));
+        OnPropertyChanged(nameof(Nature));
+        OnPropertyChanged(nameof(AbilityIndex));
+        OnPropertyChanged(nameof(SelectedAbility));
+        OnPropertyChanged(nameof(SelectedForm));
+    }
+
+    public void CycleOTGender()
+    {
+        Entity.OriginalTrainerGender = (byte)(Entity.OriginalTrainerGender == 0 ? 1 : 0);
+        OnPropertyChanged(nameof(OTGenderSymbol));
+        RefreshDerived(false);
+    }
+
+    private void RebuildMetLocationList()
+    {
+        MetLocationList = HasMetLocation
+            ? GameInfo.GetLocationList(Entity.Version, Entity.Context)
+            : [];
+        OnPropertyChanged(nameof(MetLocationList));
+        Dispatcher.UIThread.Post(() => OnPropertyChanged(nameof(MetLocation)));
     }
 
     private void RebuildExtraBytes()
     {
-        var offsets = _pk.ExtraBytes;
+        var offsets = Entity.ExtraBytes;
         var list = new string[offsets.Length];
         for (var i = 0; i < offsets.Length; i++)
             list[i] = $"0x{offsets[i]:X2}";
@@ -721,41 +797,18 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(ExtraByteValue));
     }
 
-    public int Move1 { get => _pk.GetMove(0); set => SetMove(0, value); }
-    public int Move2 { get => _pk.GetMove(1); set => SetMove(1, value); }
-    public int Move3 { get => _pk.GetMove(2); set => SetMove(2, value); }
-    public int Move4 { get => _pk.GetMove(3); set => SetMove(3, value); }
-
-    // PP Ups (0-3) per move; the resulting max PP is displayed read-only so no
-    // illegal value can be entered. Nullable so an emptied field maps to 0.
-    public int? PPUps1 { get => _pk.Move1_PPUps; set => SetPPUps(0, value); }
-    public int? PPUps2 { get => _pk.Move2_PPUps; set => SetPPUps(1, value); }
-    public int? PPUps3 { get => _pk.Move3_PPUps; set => SetPPUps(2, value); }
-    public int? PPUps4 { get => _pk.Move4_PPUps; set => SetPPUps(3, value); }
-
-    public string PP1Display => GetPPDisplay(0);
-    public string PP2Display => GetPPDisplay(1);
-    public string PP3Display => GetPPDisplay(2);
-    public string PP4Display => GetPPDisplay(3);
-
-    // Hover summaries for the move selectors (null when the slot has no move)
-    public MoveTipViewModel? MoveTip1 => MoveTipViewModel.TryCreate(_pk, 0, GetPPUps(0));
-    public MoveTipViewModel? MoveTip2 => MoveTipViewModel.TryCreate(_pk, 1, GetPPUps(1));
-    public MoveTipViewModel? MoveTip3 => MoveTipViewModel.TryCreate(_pk, 2, GetPPUps(2));
-    public MoveTipViewModel? MoveTip4 => MoveTipViewModel.TryCreate(_pk, 3, GetPPUps(3));
-
     private string GetPPDisplay(int index)
     {
-        var move = _pk.GetMove(index);
-        return move == 0 ? "—" : _pk.GetMovePP(move, GetPPUps(index)).ToString();
+        var move = Entity.GetMove(index);
+        return move == 0 ? "—" : Entity.GetMovePP(move, GetPPUps(index)).ToString();
     }
 
     private int GetPPUps(int index) => index switch
     {
-        0 => _pk.Move1_PPUps,
-        1 => _pk.Move2_PPUps,
-        2 => _pk.Move3_PPUps,
-        _ => _pk.Move4_PPUps,
+        0 => Entity.Move1_PPUps,
+        1 => Entity.Move2_PPUps,
+        2 => Entity.Move3_PPUps,
+        _ => Entity.Move4_PPUps
     };
 
     private void SetPPUps(int index, int? value)
@@ -763,24 +816,37 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         var ups = Math.Clamp(value ?? 0, 0, 3);
         if (_loading || ups == GetPPUps(index))
             return;
-        var move = _pk.GetMove(index);
-        var pp = _pk.GetMovePP(move, ups);
+        var move = Entity.GetMove(index);
+        var pp = Entity.GetMovePP(move, ups);
         switch (index)
         {
-            case 0: _pk.Move1_PPUps = ups; _pk.Move1_PP = pp; break;
-            case 1: _pk.Move2_PPUps = ups; _pk.Move2_PP = pp; break;
-            case 2: _pk.Move3_PPUps = ups; _pk.Move3_PP = pp; break;
-            default: _pk.Move4_PPUps = ups; _pk.Move4_PP = pp; break;
+            case 0:
+                Entity.Move1_PPUps = ups;
+                Entity.Move1_PP = pp;
+                break;
+            case 1:
+                Entity.Move2_PPUps = ups;
+                Entity.Move2_PP = pp;
+                break;
+            case 2:
+                Entity.Move3_PPUps = ups;
+                Entity.Move3_PP = pp;
+                break;
+            default:
+                Entity.Move4_PPUps = ups;
+                Entity.Move4_PP = pp;
+                break;
         }
+
         OnPropertyChanged($"PPUps{index + 1}");
         OnPropertyChanged($"PP{index + 1}Display");
         OnPropertyChanged($"MoveTip{index + 1}");
-        RefreshDerived(refreshInputTexts: false);
+        RefreshDerived(false);
     }
 
     /// <summary>
-    /// Reorders the move selectors (legal moves first, WinForms-style) when the
-    /// dropdown opens and the legality state changed since the last ordering.
+    ///     Reorders the move selectors (legal moves first, WinForms-style) when the
+    ///     dropdown opens and the legality state changed since the last ordering.
     /// </summary>
     public void EnsureMoveChoicesOrdered()
     {
@@ -796,9 +862,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         var source = _legalMoves.Display.DataSource;
         var info = _legalMoves.Info;
-        var judge = _pk.Species != 0; // no entity, no verdict
-        var context = _pk.Context;
-        var generation = _pk.Format;
+        var judge = Entity.Species != 0; // no entity, no verdict
+        var context = Entity.Context;
+        var generation = Entity.Format;
         var list = new MoveChoice[source.Count];
         for (var i = 0; i < source.Count; i++)
         {
@@ -809,6 +875,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             var category = MoveDetails.GetCategory(move, generation, context);
             list[i] = new MoveChoice(item.Text, item.Value, illegal, type, category);
         }
+
         MoveList = list;
         OnPropertyChanged(nameof(MoveList));
         // The ComboBoxes drop their selection while swapping ItemsSource; push the
@@ -822,44 +889,32 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         });
     }
 
-    public bool LegalityValid { get; private set; }
-    public string LegalitySummary { get; private set; } = string.Empty;
-
-    // Stats column totals
-    public bool ShowTotalsRow => _pk.Format >= 3;
-    public string BST => _pk.PersonalInfo.GetBaseStatTotal().ToString("000");
-    public IBrush BSTBrush => StatColors.BaseStatTotal(_pk.PersonalInfo.GetBaseStatTotal());
-    public int IVTotal => _pk.IVTotal;
-    public int EVTotal => _pk.EVTotal;
-    public IBrush? EVTotalBrush => StatColors.GetEVTotalBrush(_pk.EVTotal);
-    public bool EVTotalHasColor => EVTotalBrush is not null;
-    public string EVRemainingTip => $"Remaining: {EffortValues.Max510 - _pk.EVTotal}";
-
     public void RandomizeIVs(bool max, bool clear)
     {
         Span<int> ivs = stackalloc int[6];
         if (max)
         {
-            ivs.Fill(_pk.MaxIV);
-            _pk.SetIVs(ivs);
+            ivs.Fill(Entity.MaxIV);
+            Entity.SetIVs(ivs);
         }
         else if (clear)
         {
-            _pk.SetIVs(ivs);
+            Entity.SetIVs(ivs);
         }
         else
         {
-            var la = new LegalityAnalysis(_pk);
+            var la = new LegalityAnalysis(Entity);
             var enc = la.EncounterMatch;
             if (enc is IFlawlessIVCount { FlawlessIVCount: not 0 } fc)
-                _pk.SetRandomIVs(ivs, fc.FlawlessIVCount);
+                Entity.SetRandomIVs(ivs, fc.FlawlessIVCount);
             else if (enc is IFixedIVSet { IVs: { IsSpecified: true } iv })
-                _pk.SetRandomIVs(ivs, iv);
-            else if (enc is IFlawlessIVCountConditional c && c.GetFlawlessIVCount(_pk) is { Max: not 0 } x)
-                _pk.SetRandomIVs(ivs, Util.Rand.Next(x.Min, x.Max + 1));
+                Entity.SetRandomIVs(ivs, iv);
+            else if (enc is IFlawlessIVCountConditional c && c.GetFlawlessIVCount(Entity) is { Max: not 0 } x)
+                Entity.SetRandomIVs(ivs, Util.Rand.Next(x.Min, x.Max + 1));
             else
-                _pk.SetRandomIVs(ivs);
+                Entity.SetRandomIVs(ivs);
         }
+
         RefreshDerived();
     }
 
@@ -867,12 +922,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         Span<int> evs = stackalloc int[6];
         if (max)
-            EffortValues.SetMax(evs, _pk);
+            EffortValues.SetMax(evs, Entity);
         else if (clear)
             EffortValues.Clear(evs);
         else
-            EffortValues.SetRandom(evs, _pk.Format);
-        _pk.SetEVs(evs);
+            EffortValues.SetRandom(evs, Entity.Format);
+        Entity.SetEVs(evs);
         RefreshDerived();
     }
 
@@ -880,12 +935,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         if (!CanCycleGender)
             return;
-        var gender = (byte)(_pk.Gender == 0 ? 1 : 0);
+        var gender = (byte)(Entity.Gender == 0 ? 1 : 0);
         // WinForms behavior: set the gender, then reroll a valid PID for it
         // (on Gen 3-5 the PID encodes the gender; SetPIDGender also keeps the
         // nature/form consistent and avoids accidental shinies).
-        _pk.Gender = gender;
-        _pk.SetPIDGender(gender);
+        Entity.Gender = gender;
+        Entity.SetPIDGender(gender);
         OnPropertyChanged(nameof(GenderSymbol));
         OnPropertyChanged(nameof(PIDText));
         OnPropertyChanged(nameof(IsShiny));
@@ -894,20 +949,20 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public void Revert()
     {
-        _pk = _origin.Read();
+        Entity = Origin.Read();
         Load();
     }
 
     /// <summary>
-    /// Loads a Pokémon file straight into the editor (drop on the form), converted
-    /// to the save's format. The origin slot is untouched until Set is used.
+    ///     Loads a Pokémon file straight into the editor (drop on the form), converted
+    ///     to the save's format. The origin slot is untouched until Set is used.
     /// </summary>
     public bool TryLoadEntityFromFile(string path, out string message)
     {
         var pk = PkmFileService.TryLoadCompatible(path, _sav, out message);
         if (pk is null)
             return false;
-        _pk = pk;
+        Entity = pk;
         Load();
         return true;
     }
@@ -915,7 +970,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     internal void OnStatsEdited()
     {
         if (!_loading)
-            RefreshDerived(refreshInputTexts: false); // keep the field being typed in untouched
+            RefreshDerived(false); // keep the field being typed in untouched
     }
 
     public void RefreshStatInputTexts()
@@ -925,10 +980,10 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void SetMove(int index, int value)
     {
-        if (_loading || value < 0 || value == _pk.GetMove(index))
+        if (_loading || value < 0 || value == Entity.GetMove(index))
             return;
-        _pk.SetMove(index, (ushort)value);
-        _pk.HealPP();
+        Entity.SetMove(index, (ushort)value);
+        Entity.HealPP();
         OnPropertyChanged($"Move{index + 1}");
         OnPropertyChanged($"PP{index + 1}Display");
         OnPropertyChanged($"MoveTip{index + 1}");
@@ -953,7 +1008,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     private void RebuildAbilityList()
     {
-        AbilityList = _pk.Format >= 3 ? _sources.GetAbilityList(_pk.PersonalInfo) : [];
+        AbilityList = Entity.Format >= 3 ? _sources.GetAbilityList(Entity.PersonalInfo) : [];
         OnPropertyChanged(nameof(AbilityList));
         OnPropertyChanged(nameof(SelectedAbility));
     }
@@ -961,7 +1016,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private void RebuildFormList()
     {
         var strings = GameInfo.Strings;
-        FormList = FormConverter.GetFormList(_pk.Species, strings.types, strings.forms, GameInfo.GenderSymbolUnicode, _pk.Context);
+        FormList = FormConverter.GetFormList(Entity.Species, strings.types, strings.forms, GameInfo.GenderSymbolUnicode,
+            Entity.Context);
         OnPropertyChanged(nameof(FormList));
         OnPropertyChanged(nameof(HasForms));
         OnPropertyChanged(nameof(SelectedForm));
@@ -1044,15 +1100,13 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     private void RefreshStats(bool refreshInputTexts)
     {
         Span<ushort> stats = stackalloc ushort[6];
-        if (_pk.Species != 0)
-            _pk.GetStats(_pk.PersonalInfo).AsSpan().CopyTo(stats);
+        if (Entity.Species != 0)
+            Entity.GetStats(Entity.PersonalInfo).AsSpan().CopyTo(stats);
         foreach (var row in StatRows)
-        {
             if (refreshInputTexts)
                 row.RefreshAll(stats);
             else
                 row.RefreshComputed(stats);
-        }
 
         OnPropertyChanged(nameof(ShowTotalsRow));
         OnPropertyChanged(nameof(BST));
@@ -1069,18 +1123,19 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         const string validLabel = "Legal ✓";
         const string invalidLabel = "Illegal ✗";
 
-        if (_pk.Species == 0)
+        if (Entity.Species == 0)
         {
             LegalityValid = true;
             LegalitySummary = validLabel;
         }
         else
         {
-            var la = new LegalityAnalysis(_pk);
+            var la = new LegalityAnalysis(Entity);
             LegalityValid = la.Valid;
             LegalitySummary = la.Valid ? validLabel : invalidLabel;
             _legalMoves.ReloadMoves(la); // clears the ordered flags when legality changed
         }
+
         if (MoveList.Count == 0)
             EnsureMoveChoicesOrdered(); // initial population
         OnPropertyChanged(nameof(LegalityValid));

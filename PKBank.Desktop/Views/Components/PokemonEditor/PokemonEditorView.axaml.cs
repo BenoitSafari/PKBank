@@ -5,7 +5,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using PKBank.Desktop.Services;
 using PKBank.Desktop.Utils;
 using PKBank.Desktop.ViewModels;
 using PKHeX.Core;

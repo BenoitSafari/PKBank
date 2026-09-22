@@ -5,58 +5,100 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using PKBank.Core.Configuration;
-using PKBank.Desktop.Services;
+using PKBank.Desktop.Utils;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.ViewModels;
 
 public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 {
-    private SaveFile? _sav;
-    private FilteredGameDataSource? _sources;
+    public const int MaxOpenBoxes = 20;
+
+    // ----- Selection -------------------------------------------------------
+
+    private readonly List<SlotViewModel> _selectedSlots = [];
+    private IReadOnlyList<string> _boxNames = [];
+    private PokemonEditorViewModel? _editor;
     private string? _savePath;
     private SlotViewModel? _selectedSlot;
-    private PokemonEditorViewModel? _editor;
+    private FilteredGameDataSource? _sources;
     private string _statusMessage = "Open a save file to get started (File → Open…).";
-    private IReadOnlyList<string> _boxNames = [];
     private string _trainerInfo = string.Empty;
 
-    public SaveFile? SAV => _sav;
-    public bool HasSave => _sav is not null;
-    public bool CanEditTrainer => _sav is not null;
-    public bool CanEditMysteryGift => _sav is IMysteryGiftStorageProvider;
-    public bool IsGen3Save => _sav is SAV3;
-    public bool IsGen3FRLGE => _sav is SAV3FRLG or SAV3E;
-    public bool IsGen3RSE => _sav is SAV3RS or SAV3E;
-    public bool CanEditPokedex => _sav?.HasPokeDex == true;
-    public bool CanEditInventory => _sav?.Inventory.Pouches.Count > 0;
-    public bool CanEditRoamer => _sav is SAV3 or SAV4 or SAV6XY;
-    public AppConfigService Config { get; } = config;
+    public SaveFile? SAV { get; private set; }
 
-    /// <summary>At most this many box panels can be open side by side.</summary>
-    public const int MaxOpenBoxes = 20;
+    public bool HasSave => SAV is not null;
+    public bool CanEditTrainer => SAV is not null;
+    public bool CanEditMysteryGift => SAV is IMysteryGiftStorageProvider;
+    public bool IsGen3Save => SAV is SAV3;
+    public bool IsGen3FRLGE => SAV is SAV3FRLG or SAV3E;
+    public bool IsGen3RSE => SAV is SAV3RS or SAV3E;
+    public bool CanEditPokedex => SAV?.HasPokeDex == true;
+    public bool CanEditInventory => SAV?.Inventory.Pouches.Count > 0;
+    public bool CanEditRoamer => SAV is SAV3 or SAV4 or SAV6XY;
+    public AppConfigService Config { get; } = config;
 
     public ObservableCollection<BoxPanelViewModel> OpenBoxes { get; } = [];
     public ObservableCollection<SlotViewModel> PartySlots { get; } = [];
 
-    public IReadOnlyList<string> BoxNames { get => _boxNames; private set => SetField(ref _boxNames, value); }
-    public string StatusMessage { get => _statusMessage; set => SetField(ref _statusMessage, value); }
-    public string TrainerInfo { get => _trainerInfo; private set => SetField(ref _trainerInfo, value); }
+    public IReadOnlyList<string> BoxNames
+    {
+        get => _boxNames;
+        private set => SetField(ref _boxNames, value);
+    }
 
-    public string WindowTitle => _sav is null
-        ? "PKBank"
-        : $"PKBank: {GameInfo.GetVersionName(_sav.Version)} - {(_savePath is null ? "(new)" : Path.GetFileName(_savePath))}";
+    public string StatusMessage
+    {
+        get => _statusMessage;
+        set => SetField(ref _statusMessage, value);
+    }
 
-    public bool HasBox => _sav?.HasBox == true;
-    public bool HasParty => _sav?.HasParty == true;
+    public string TrainerInfo
+    {
+        get => _trainerInfo;
+        private set => SetField(ref _trainerInfo, value);
+    }
+
+    public string WindowTitle => SAV is null
+        ? AppInfo.Name
+        : $"{AppInfo.Name}: {GameInfo.GetVersionName(SAV.Version)} - {(_savePath is null ? "(new)" : Path.GetFileName(_savePath))}";
+
+    public bool HasBox => SAV?.HasBox == true;
+    public bool HasParty => SAV?.HasParty == true;
 
     public bool CanAddBox => HasBox && OpenBoxes.Count < MaxOpenBoxes;
     public bool CanCloseBox => OpenBoxes.Count > 1;
 
+    public SlotViewModel? SelectedSlot
+    {
+        get => _selectedSlot;
+        private set => SetField(ref _selectedSlot, value);
+    }
+
+    public PokemonEditorViewModel? Editor
+    {
+        get => _editor;
+        private set => SetField(ref _editor, value);
+    }
+
+    // ----- Slot interactions -----------------------------------------------
+
+    public bool CanSetToSlot => Editor is { HasSpecies: true };
+
+    // View/Set are single-slot actions; Import/Delete/Export also work on a multi-selection.
+    public bool CanViewSelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
+    public bool CanSetSelected => !IsMultiSelection && SelectedSlot is not null && CanSetToSlot;
+    public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+    public bool CanImportSelected => SelectedSlot is not null;
+    public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+
+    public IReadOnlyList<SlotViewModel> SelectedSlots => _selectedSlots;
+    public bool IsMultiSelection => _selectedSlots.Count > 1;
+
     /// <summary>Opens another box panel, defaulting to the box after the last open one (wrapping).</summary>
     public void AddBoxPanel()
     {
-        if (_sav is not { HasBox: true } sav || OpenBoxes.Count >= MaxOpenBoxes)
+        if (SAV is not { HasBox: true } sav || OpenBoxes.Count >= MaxOpenBoxes)
             return;
         var box = OpenBoxes.Count == 0 ? sav.CurrentBox : (OpenBoxes[^1].BoxIndex + 1) % sav.BoxCount;
         AddBoxPanel(box);
@@ -64,7 +106,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
     private void AddBoxPanel(int box)
     {
-        if (_sav is not { } sav)
+        if (SAV is not { } sav)
             return;
         OpenBoxes.Add(new BoxPanelViewModel(sav, box));
         OnPropertyChanged(nameof(CanAddBox));
@@ -86,6 +128,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             _selectedSlots.RemoveAt(i);
             selectionChanged = true;
         }
+
         if (SelectedSlot is { } selected && panel.Slots.Contains(selected))
             SelectedSlot = _selectedSlots.Count > 0 ? _selectedSlots[^1] : null;
         if (selectionChanged)
@@ -110,12 +153,6 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         }
     }
 
-    public SlotViewModel? SelectedSlot
-    {
-        get => _selectedSlot;
-        private set => SetField(ref _selectedSlot, value);
-    }
-
     private void NotifySlotActionStates()
     {
         OnPropertyChanged(nameof(CanViewSelected));
@@ -136,8 +173,6 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         }
     }
 
-    public PokemonEditorViewModel? Editor { get => _editor; private set => SetField(ref _editor, value); }
-
     public void LoadSaveFromPath(string path)
     {
         try
@@ -147,6 +182,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
                 StatusMessage = $"Not a recognized save file: {Path.GetFileName(path)}";
                 return;
             }
+
             LoadSaveFromPath(sav, path);
         }
         catch (Exception ex)
@@ -166,7 +202,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     {
         var version = Config.BlankSaveVersion;
         _savePath = null;
-        LoadSave(BlankSaveFile.Get(version, _sav));
+        LoadSave(BlankSaveFile.Get(version, SAV));
         StatusMessage = $"Created a blank {GameInfo.GetVersionName(version)} save.";
     }
 
@@ -176,15 +212,18 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             return;
         GameInfo.CurrentLanguage = code;
         // Actually reload the cached string tables (setting CurrentLanguage alone does not).
-        LocalizeUtil.InitializeStrings(code, _sav);
+        LocalizeUtil.InitializeStrings(code, SAV);
         ReloadCurrentSave();
         StatusMessage = "Game data language changed.";
     }
 
-    /// <summary>Rebuilds all view-models from the current save (e.g. after a language change), keeping the open boxes and selection.</summary>
+    /// <summary>
+    ///     Rebuilds all view-models from the current save (e.g. after a language change), keeping the open boxes and
+    ///     selection.
+    /// </summary>
     public void ReloadCurrentSave()
     {
-        if (_sav is not { } sav)
+        if (SAV is not { } sav)
             return;
         var openBoxes = OpenBoxes.Select(p => p.BoxIndex).ToArray();
         var previous = SelectedSlot;
@@ -195,18 +234,21 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             for (var i = 1; i < openBoxes.Length; i++)
                 AddBoxPanel(openBoxes[i]);
         }
+
         if (previous is not { } prev)
             return;
         var match = prev.IsParty
-            ? (prev.Slot < PartySlots.Count ? PartySlots[prev.Slot] : null)
-            : OpenBoxes.FirstOrDefault(p => p.BoxIndex == prev.Box) is { } panel && prev.Slot < panel.Slots.Count ? panel.Slots[prev.Slot] : null;
+            ? prev.Slot < PartySlots.Count ? PartySlots[prev.Slot] : null
+            : OpenBoxes.FirstOrDefault(p => p.BoxIndex == prev.Box) is { } panel && prev.Slot < panel.Slots.Count
+                ? panel.Slots[prev.Slot]
+                : null;
         if (match is not null)
             ViewSlot(match);
     }
 
     public bool TrySaveTo(string path)
     {
-        if (_sav is not { } sav)
+        if (SAV is not { } sav)
             return false;
         try
         {
@@ -225,28 +267,13 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         }
     }
 
-    // ----- Slot interactions -----------------------------------------------
-    // View/Set/Delete act on a target slot. The context menu targets the
-    // right-clicked slot; the top action bar targets the selected slot.
-    // Both share the same guards (CanView/CanSetToSlot/CanDelete) and actions.
-
-    /// <summary>Set requires an entity in the editor, whatever the target slot is.</summary>
-    public bool CanSetToSlot => Editor is { HasSpecies: true };
-
-    // View/Set are single-slot actions; Import/Delete/Export also work on a multi-selection.
-    public bool CanViewSelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
-    public bool CanSetSelected => !IsMultiSelection && SelectedSlot is not null && CanSetToSlot;
-    public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
-    public bool CanImportSelected => SelectedSlot is not null;
-    public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
-
     /// <summary>
-    /// Imports a Pokémon file into the given slot, converting it to the save's
-    /// format when needed (Gen 3 file onto a Gen 4 save, etc.).
+    ///     Imports a Pokémon file into the given slot, converting it to the save's
+    ///     format when needed (Gen 3 file onto a Gen 4 save, etc.).
     /// </summary>
     public bool TryImportFileToSlot(string path, SlotViewModel slot)
     {
-        if (_sav is not { } sav)
+        if (SAV is not { } sav)
             return false;
         var pk = PkmFileService.TryLoadCompatible(path, sav, out var message);
         StatusMessage = message;
@@ -273,29 +300,24 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         var selected = new HashSet<SlotViewModel>(_selectedSlots);
         var result = new List<SlotViewModel>(_selectedSlots.Count);
         foreach (var slot in PartySlots)
-        {
             if (selected.Contains(slot))
                 result.Add(slot);
-        }
         foreach (var panel in OpenBoxes)
-        {
-            foreach (var slot in panel.Slots)
-            {
-                if (selected.Contains(slot))
-                    result.Add(slot);
-            }
-        }
+        foreach (var slot in panel.Slots)
+            if (selected.Contains(slot))
+                result.Add(slot);
+
         return result;
     }
 
-    /// <summary>Imports files into the current selection in display order (see <see cref="ImportFilesToSlots"/>).</summary>
+    /// <summary>Imports files into the current selection in display order (see <see cref="ImportFilesToSlots" />).</summary>
     public void ImportFilesToSelection(IReadOnlyList<string> paths)
         => ImportFilesToSlots(paths, GetSelectedSlotsInDisplayOrder());
 
     /// <summary>
-    /// Multi-import: the first file goes into the first target slot and so on;
-    /// files beyond the target count are ignored. Two panels showing the same
-    /// box expose the same physical slot twice — it only receives one file.
+    ///     Multi-import: the first file goes into the first target slot and so on;
+    ///     files beyond the target count are ignored. Two panels showing the same
+    ///     box expose the same physical slot twice — it only receives one file.
     /// </summary>
     public void ImportFilesToSlots(IReadOnlyList<string> paths, IReadOnlyList<SlotViewModel> targets)
     {
@@ -305,22 +327,20 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         var seen = new HashSet<(bool IsParty, int Box, int Slot)>();
         var unique = new List<SlotViewModel>(targets.Count);
         foreach (var target in targets)
-        {
             if (seen.Add((target.IsParty, target.Box, target.Slot)))
                 unique.Add(target);
-        }
 
         var count = Math.Min(unique.Count, paths.Count);
         var imported = 0;
         for (var i = 0; i < count; i++)
-        {
             if (TryImportFileToSlot(paths[i], unique[i]))
                 imported++;
-        }
 
         if (paths.Count > 1 || unique.Count > 1)
         {
-            var ignored = paths.Count > unique.Count ? $" ({paths.Count - unique.Count} extra file(s) ignored)" : string.Empty;
+            var ignored = paths.Count > unique.Count
+                ? $" ({paths.Count - unique.Count} extra file(s) ignored)"
+                : string.Empty;
             StatusMessage = $"Imported {imported} of {count} file(s) into the selected slots{ignored}.";
         }
     }
@@ -342,20 +362,9 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     public void DeleteSlots(IReadOnlyList<SlotViewModel> slots)
     {
         foreach (var slot in slots)
-        {
             if (!slot.IsEmpty)
                 DeleteSlot(slot);
-        }
     }
-
-    // ----- Selection -------------------------------------------------------
-    // SelectedSlot is the primary slot (anchor for ranges, target of the
-    // editor-centric actions); _selectedSlots holds the full multi-selection.
-
-    private readonly List<SlotViewModel> _selectedSlots = [];
-
-    public IReadOnlyList<SlotViewModel> SelectedSlots => _selectedSlots;
-    public bool IsMultiSelection => _selectedSlots.Count > 1;
 
     /// <summary>Plain left click: collapses any multi-selection back to a single slot.</summary>
     public void SelectSlot(SlotViewModel slot)
@@ -377,6 +386,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             SelectSlot(slot);
             return;
         }
+
         if (_selectedSlots.Contains(slot))
         {
             if (_selectedSlots.Count == 1)
@@ -392,6 +402,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             slot.IsSelected = true;
             SelectedSlot = slot; // the anchor follows the last addition
         }
+
         NotifySlotActionStates();
     }
 
@@ -424,12 +435,13 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
             _selectedSlots.Add(member);
             member.IsSelected = true;
         }
+
         NotifySlotActionStates();
     }
 
     /// <summary>
-    /// Slots a context-menu action should apply to: the whole selection when the
-    /// clicked slot belongs to it, otherwise just the clicked slot.
+    ///     Slots a context-menu action should apply to: the whole selection when the
+    ///     clicked slot belongs to it, otherwise just the clicked slot.
     /// </summary>
     public IReadOnlyList<SlotViewModel> GetActionTargets(SlotViewModel clicked)
         => IsMultiSelection && _selectedSlots.Contains(clicked) ? _selectedSlots.ToArray() : [clicked];
@@ -443,7 +455,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
     private void LoadEditor(SlotViewModel slot)
     {
-        if (_sav is not { } sav || _sources is not { } sources)
+        if (SAV is not { } sav || _sources is not { } sources)
             return;
 
         if (Editor is { } old)
@@ -456,7 +468,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
     public void DeleteSlot(SlotViewModel slot)
     {
-        if (_sav is not { } sav)
+        if (SAV is not { } sav)
             return;
         slot.Write(sav.BlankPKM);
         sav.State.Edited = true;
@@ -467,12 +479,12 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     }
 
     /// <summary>
-    /// Drag &amp; drop between slots: moves the Pokémon to the target slot,
-    /// swapping when the target is occupied.
+    ///     Drag &amp; drop between slots: moves the Pokémon to the target slot,
+    ///     swapping when the target is occupied.
     /// </summary>
     public void MoveOrSwapSlots(SlotViewModel source, SlotViewModel target)
     {
-        if (_sav is not { } sav || source == target)
+        if (SAV is not { } sav || source == target)
             return;
         var src = source.Read();
         if (src.Species == 0)
@@ -508,7 +520,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>
     public void SetSlotFromEditor(SlotViewModel slot)
     {
-        if (_sav is not { } sav || Editor is not { } editor)
+        if (SAV is not { } sav || Editor is not { } editor)
             return;
         var pk = editor.GetEntityClone();
         if (slot.IsParty)
@@ -533,7 +545,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
 
     private void LoadSave(SaveFile sav)
     {
-        _sav = sav;
+        SAV = sav;
         _sources = new FilteredGameDataSource(sav, GameInfo.Sources);
         GameInfo.FilteredSources = _sources;
 
@@ -558,9 +570,11 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
                 {
                     name = null; // blank saves may lack the underlying blocks
                 }
+
                 name = DisplayText.Sanitize(name ?? string.Empty);
                 names[i] = string.IsNullOrWhiteSpace(name) ? BoxDetailNameExtensions.GetDefaultBoxName(i) : name;
             }
+
             BoxNames = names;
             AddBoxPanel(Math.Clamp(sav.CurrentBox, 0, sav.BoxCount - 1));
         }
@@ -570,10 +584,8 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         }
 
         if (sav.HasParty)
-        {
             for (var i = 0; i < 6; i++)
-                PartySlots.Add(new SlotViewModel(sav, isParty: true, -1, i));
-        }
+                PartySlots.Add(new SlotViewModel(sav, true, -1, i));
 
         RefreshTrainerInfo();
         StatusMessage = "Save loaded.";
@@ -598,7 +610,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     /// <summary>Rebuilds the status-bar trainer summary, e.g. after the trainer editor changed it.</summary>
     public void RefreshTrainerInfo()
     {
-        if (_sav is not { } sav)
+        if (SAV is not { } sav)
         {
             TrainerInfo = string.Empty;
             return;
@@ -613,6 +625,7 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
         {
             playTime = "–"; // blank saves may lack the underlying blocks
         }
+
         TrainerInfo = $"{sav.OT}  ·  TID {sav.DisplayTID}  ·  {GameInfo.GetVersionName(sav.Version)}  ·  {playTime}";
     }
 
@@ -620,21 +633,19 @@ public sealed class MainWindowViewModel(AppConfigService config) : ViewModelBase
     {
         var boxSlots = OpenBoxes.Count > 0 ? OpenBoxes[0].Slots : [];
         foreach (var slot in boxSlots)
-        {
             if (!slot.IsEmpty)
             {
                 ViewSlot(slot);
                 return;
             }
-        }
+
         foreach (var slot in PartySlots)
-        {
             if (!slot.IsEmpty)
             {
                 ViewSlot(slot);
                 return;
             }
-        }
+
         if (boxSlots.Count > 0)
             ViewSlot(boxSlots[0]);
         else if (PartySlots.Count > 0)

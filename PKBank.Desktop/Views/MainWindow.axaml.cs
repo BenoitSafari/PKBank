@@ -9,7 +9,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
-using PKBank.Desktop.Services;
 using PKBank.Desktop.Utils;
 using PKBank.Desktop.ViewModels;
 using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
@@ -165,7 +164,7 @@ public sealed partial class MainWindow : Window
             // Write on the same filesystem as the user's home so file managers can
             // Move the export directly (/tmp is usually a different device, tmpfs).
             var dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "PKBank.Desktop", "export");
+                AppInfo.Name, "export");
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, Path.GetFileName(FileUtil.GetPKMTempFileName(pk, false)));
             pk.ForcePartyData();

@@ -8,8 +8,9 @@ public sealed partial class AboutWindow : Window
     public AboutWindow()
     {
         InitializeComponent();
-        var version = typeof(AboutWindow).Assembly.GetName().Version;
-        VersionText.Text = $"Version {version?.ToString(3) ?? "?"}";
+        Title = $"About {AppInfo.Name}";
+        NameText.Text = AppInfo.Name;
+        VersionText.Text = $"Version {AppInfo.Version}";
     }
 
     private void OnCloseClicked(object? sender, RoutedEventArgs e) => Close();

@@ -27,6 +27,7 @@ public sealed partial class MainWindowMenu : UserControl
     public MainWindowMenu()
     {
         InitializeComponent();
+        AboutMenuItem.Header = $"_About {AppInfo.Name}…";
         DataContextChanged += (_, _) =>
         {
             if (ViewModel is { } vm)
