@@ -91,6 +91,8 @@ public sealed partial class MainWindowMenu : UserControl
             await SaveFileDialogs.OpenAsync(top, vm);
     }
 
+    private void OnSaveClicked(object? sender, RoutedEventArgs e) => ViewModel?.SaveInPlace();
+
     private async void OnSaveAsClicked(object? sender, RoutedEventArgs e)
     {
         if (ViewModel is not { SAV: not null } vm || Storage is not { } storage)
@@ -110,21 +112,35 @@ public sealed partial class MainWindowMenu : UserControl
 
     private async void OnCloseClicked(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is not { SAV: { } sav } vm || Host is not { } host)
+        if (ViewModel is not { SAV: not null } vm || Host is not { } host)
             return;
 
-        if (sav.State.Edited)
-        {
-            const string message =
-                "The currently loaded save has unsaved changes.\n\nClosing it will discard them. Continue?";
-            if (!await ConfirmationWindow.ShowAsync(host, "Close Save File", message, "Close"))
-                return;
-        }
-
-        vm.CloseSave();
+        if (await ConfirmDiscardAsync(host, vm, "Close Save File", "Close", "Closing the save will discard them."))
+            vm.CloseSave();
     }
 
     private void OnExitClicked(object? sender, RoutedEventArgs e) => Host?.Close();
+
+    /// <summary>
+    ///     Gate for anything that throws away pending changes. Offers to write them out first, so the user never
+    ///     has to cancel, save and retry.
+    /// </summary>
+    /// <returns><c>false</c> when the user cancelled, or when a requested save failed to write.</returns>
+    internal static async Task<bool> ConfirmDiscardAsync(
+        Window host, MainWindowViewModel vm, string title, string confirmText, string actionPhrase)
+    {
+        if (!vm.IsDirty)
+            return true;
+
+        var message = $"{vm.PendingChangesSummary}.\n\n{actionPhrase} Continue?";
+        var result = await ConfirmationWindow.ShowAsync(host, title, message, confirmText, vm.CanSave);
+        return result switch
+        {
+            ConfirmationResult.Confirm => true,
+            ConfirmationResult.Save => vm.SaveInPlace(), // a failed write must not discard anything
+            _ => false
+        };
+    }
 
     #endregion
 

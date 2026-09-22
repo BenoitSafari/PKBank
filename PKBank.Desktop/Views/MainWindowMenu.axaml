@@ -16,6 +16,11 @@
                 IsEnabled="{Binding HasSave}"
                 InputGesture="Ctrl+W" />
             <MenuItem
+                Header="_Save"
+                Click="OnSaveClicked"
+                IsEnabled="{Binding CanSave}"
+                InputGesture="Ctrl+S" />
+            <MenuItem
                 Header="Save _As…"
                 Click="OnSaveAsClicked"
                 IsEnabled="{Binding HasSave}"

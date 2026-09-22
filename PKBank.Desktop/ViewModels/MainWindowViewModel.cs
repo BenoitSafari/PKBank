@@ -43,6 +43,20 @@ public sealed class MainWindowViewModel : ViewModelBase
     public SaveSelectionViewModel SaveSelection { get; }
 
     public bool HasSave => SAV is not null;
+
+    /// <summary>
+    ///     Deliberately not tied to <see cref="SaveFileState.Edited" />: writing the save is also what commits
+    ///     pending bank changes, which leave the save itself untouched.
+    /// </summary>
+    public bool CanSave => SAV is not null && _savePath is not null;
+
+    /// <summary>What would be lost by closing right now; empty when nothing is pending.</summary>
+    public string PendingChangesSummary => SAV is { State.Edited: true }
+        ? "The loaded save has unsaved changes"
+        : string.Empty;
+
+    public bool IsDirty => PendingChangesSummary.Length != 0;
+
     public bool CanEditTrainer => SAV is not null;
     public bool CanEditMysteryGift => SAV is IMysteryGiftStorageProvider;
     public bool IsGen3Save => SAV is SAV3;
@@ -277,6 +291,9 @@ public sealed class MainWindowViewModel : ViewModelBase
             ViewSlot(match);
     }
 
+    /// <summary>Writes back to the file the save was loaded from.</summary>
+    public bool SaveInPlace() => _savePath is { } path && TrySaveTo(path);
+
     public bool TrySaveTo(string path)
     {
         if (SAV is not { } sav)
@@ -289,6 +306,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             sav.State.Edited = false;
             StatusMessage = $"Saved to {Path.GetFileName(path)}.";
             OnPropertyChanged(nameof(WindowTitle));
+            NotifyPendingChanges();
             return true;
         }
         catch (Exception ex)
@@ -642,6 +660,15 @@ public sealed class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanAddBox));
         OnPropertyChanged(nameof(CanCloseBox));
         OnPropertyChanged(nameof(WindowTitle));
+        NotifyPendingChanges();
+    }
+
+    /// <summary>Everything that depends on what is still waiting to be written to disk.</summary>
+    private void NotifyPendingChanges()
+    {
+        OnPropertyChanged(nameof(CanSave));
+        OnPropertyChanged(nameof(PendingChangesSummary));
+        OnPropertyChanged(nameof(IsDirty));
     }
 
     /// <summary>Rebuilds the status-bar trainer summary, e.g. after the trainer editor changed it.</summary>

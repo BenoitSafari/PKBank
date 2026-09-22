@@ -11,7 +11,6 @@ using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.Utils;
 using PKBank.Desktop.ViewModels;
-using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Views;
@@ -21,6 +20,7 @@ public sealed partial class MainWindow : Window
     private const double DragThreshold = 6;
     private KeyModifiers _clickModifiers;
     private bool _dragInProgress;
+    private bool _forceClose;
     private PointerPressedEventArgs? _pressArgs;
     private Point _pressPoint;
 
@@ -33,6 +33,24 @@ public sealed partial class MainWindow : Window
     }
 
     private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
+
+    /// <summary>Closing the window (title bar or File &gt; Exit) must not silently drop pending changes.</summary>
+    protected override async void OnClosing(WindowClosingEventArgs e)
+    {
+        if (_forceClose || ViewModel is not { IsDirty: true } vm)
+        {
+            base.OnClosing(e);
+            return;
+        }
+
+        e.Cancel = true; // cancel before awaiting: the close cannot be held open across the dialog
+        base.OnClosing(e);
+
+        if (!await MainWindowMenu.ConfirmDiscardAsync(this, vm, "Exit", "Exit", "Exiting will discard them."))
+            return;
+        _forceClose = true;
+        Close();
+    }
 
     // ----- Slot drag & drop -------------------------------------------------
     // Dragging a slot moves/swaps it onto another slot; the data object also
@@ -262,15 +280,9 @@ public sealed partial class MainWindow : Window
         if (ViewModel is not { } vm)
             return;
 
-        if (vm.SAV is { State.Edited: true })
-        {
-            var message =
-                $"The currently loaded save has unsaved changes.\n\nLoading “{Path.GetFileName(path)}” will discard them. Continue?";
-            if (!await ConfirmationWindow.ShowAsync(this, "Load Save File", message, "Load"))
-                return;
-        }
-
-        vm.LoadSaveFromPath(dropped, path);
+        var action = $"Loading “{Path.GetFileName(path)}” will discard them.";
+        if (await MainWindowMenu.ConfirmDiscardAsync(this, vm, "Load Save File", "Load", action))
+            vm.LoadSaveFromPath(dropped, path);
     }
 
     private SlotViewModel? HitTestSlot(Point position)
