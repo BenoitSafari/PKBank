@@ -101,9 +101,25 @@ public sealed partial class MainWindow : Window
 
     // ----- Selected-slot actions -------------------------------------------
 
-    private void OnViewSelectedClicked(object? sender, RoutedEventArgs e) => ViewModel?.ViewSelected();
-    private void OnSetSelectedClicked(object? sender, RoutedEventArgs e) => ViewModel?.SetSelected();
     private void OnDeleteClicked(object? sender, RoutedEventArgs e) => ViewModel?.DeleteSelected();
+
+    private async void OnEditSelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { CanEditSelected: true, SelectedSlot: { } slot } vm)
+            await SlotEditorDialogs.EditSlotAsync(this, vm, slot);
+    }
+
+    private void OnCopySelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { CanCopySelected: true, SelectedSlot: { } slot } vm)
+            vm.CopySlot(slot);
+    }
+
+    private async void OnPasteSelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { CanPasteSelected: true, SelectedSlot: { } slot } vm)
+            await SlotEditorDialogs.PasteToSlotAsync(this, vm, slot);
+    }
 
     private async void OnImportSelectedClicked(object? sender, RoutedEventArgs e)
     {

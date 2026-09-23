@@ -8,8 +8,11 @@
             Click="OnClicked" ToolTip.Tip="{Binding Preview}">
         <Button.ContextMenu>
             <ContextMenu Opening="OnMenuOpening">
-                <MenuItem Header="View" Tag="view" Click="OnViewClicked" />
-                <MenuItem Header="Set" Tag="set" Click="OnSetClicked" />
+                <!-- Header flips to "New" on an empty slot; see OnMenuOpening -->
+                <MenuItem Header="Edit" Tag="edit" Click="OnEditClicked" />
+                <Separator />
+                <MenuItem Header="Copy" Tag="copy" Click="OnCopyClicked" />
+                <MenuItem Header="Paste" Tag="paste" Click="OnPasteClicked" />
                 <Separator />
                 <MenuItem Header="Import…" Tag="import" Click="OnImportClicked" />
                 <MenuItem Header="Export…" Tag="export" Click="OnExportClicked" />

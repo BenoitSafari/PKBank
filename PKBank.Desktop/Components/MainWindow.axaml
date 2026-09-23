@@ -2,8 +2,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:PKBank.Desktop.Components"
         xmlns:v="using:PKBank.Desktop.Components"
-        xmlns:pe="using:PKBank.Desktop.Components.PokemonEditor"
-        xmlns:peVm="using:PKBank.Desktop.Components.PokemonEditor.ViewModels"
         xmlns:ss="using:PKBank.Desktop.Components.SaveSelection"
         x:Class="PKBank.Desktop.Components.MainWindow"
         x:DataType="vm:MainWindowViewModel"
@@ -18,36 +16,25 @@
 
             <v:MainWindowStatus DockPanel.Dock="Bottom" />
 
-            <Grid ColumnDefinitions="478,*" Margin="10">
+            <Grid Margin="10">
 
                 <!-- No save loaded: the selection screen takes over the content area -->
-                <ss:SaveSelectionView Grid.Column="0" Grid.ColumnSpan="2" IsVisible="{Binding !HasSave}" />
+                <ss:SaveSelectionView IsVisible="{Binding !HasSave}" />
 
-                <!-- Pokémon editor (left) -->
-                <Border Grid.Column="0"
-                        IsVisible="{Binding Editor, Converter={x:Static ObjectConverters.IsNotNull}}"
-                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                        BorderThickness="1" CornerRadius="6" Padding="10">
-                    <ContentControl Content="{Binding Editor}">
-                        <ContentControl.ContentTemplate>
-                            <DataTemplate DataType="peVm:PokemonEditorViewModel">
-                                <pe:PokemonEditorView />
-                            </DataTemplate>
-                        </ContentControl.ContentTemplate>
-                    </ContentControl>
-                </Border>
-
-                <!-- Storage (right) -->
-                <Border Grid.Column="1" Margin="10,0,0,0"
-                        IsVisible="{Binding HasSave}"
+                <!-- Storage: editing happens in PokemonEditorWindow, so the boxes get the full width -->
+                <Border IsVisible="{Binding HasSave}"
                         BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                         BorderThickness="1" CornerRadius="6" Padding="10">
                     <DockPanel>
 
-                        <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
+                        <!-- Selected-slot actions: mirrors the slot context menu -->
                         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
-                            <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}" />
-                            <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}" />
+                            <!-- Fixed width so the bar does not shift as the label flips Edit/New -->
+                            <Button Content="{Binding EditSelectedLabel}" MinWidth="64"
+                                    Click="OnEditSelectedClicked" IsEnabled="{Binding CanEditSelected}" />
+                            <Button Content="Copy" Click="OnCopySelectedClicked" IsEnabled="{Binding CanCopySelected}" />
+                            <Button Content="Paste" Click="OnPasteSelectedClicked"
+                                    IsEnabled="{Binding CanPasteSelected}" />
                             <Button Content="Import" Click="OnImportSelectedClicked"
                                     IsEnabled="{Binding CanImportSelected}" />
                             <Button Content="Export" Click="OnExportSelectedClicked"

@@ -30,7 +30,9 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         _sav = sav;
         _sources = sources;
         Origin = origin;
-        Entity = origin.Read();
+        // Detached: a bank slot hands back the instance its session holds, so editing it in place
+        // would write through and leave Cancel with nothing to restore.
+        Entity = origin.Read().Clone();
         _legalMoves.ChangeMoveSource(sources.Moves);
 
         StatRows =
@@ -593,6 +595,15 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         RefreshDerived(false);
     }
 
+    private string _message = string.Empty;
+
+    /// <summary>Feedback shown at the bottom of the editor window; the legality fix writes here.</summary>
+    public string Message
+    {
+        get => _message;
+        set => SetField(ref _message, value);
+    }
+
     /// <summary>
     ///     Rebuilds a PID/IV pair the matched encounter could actually have produced.
     ///     Gen 3-5 encounters derive both from one RNG seed, so a hand-edited PID or
@@ -893,19 +904,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         Load();
     }
 
-    /// <summary>
-    ///     Loads a Pokémon file straight into the editor (drop on the form), converted
-    ///     to the save's format. The origin slot is untouched until Set is used.
-    /// </summary>
-    public bool TryLoadEntityFromFile(string path, out string message)
-    {
-        var pk = PkmFileService.TryLoadCompatible(path, _sav, out message);
-        if (pk is null)
-            return false;
-        Entity = pk;
-        Load();
-        return true;
-    }
 
     internal void OnStatsEdited()
     {

@@ -23,11 +23,10 @@
         </Style>
     </UserControl.Styles>
 
-    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}" Margin="0,8,0,0">
+    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}">
 
-        <!-- Trainer info -->
-        <TextBlock Text="Trainer" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}"/>
-        <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto">
+        <!-- Trainer and origin: one form, the tab header names it -->
+        <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto">
 
             <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="OT"/>
             <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="*,Auto">
@@ -50,28 +49,23 @@
             <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="255" Increment="1"
                            Width="130" HorizontalAlignment="Left" Margin="0,2"
                            Value="{Binding Friendship, Mode=TwoWay}"/>
-        </Grid>
 
-        <!-- Origin -->
-        <TextBlock Text="Origin" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" Margin="0,8,0,0"/>
-        <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
-
-            <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="Game" IsVisible="{Binding HasOriginGame}"/>
-            <ComboBox Grid.Row="0" Grid.Column="1" Classes="field" IsVisible="{Binding HasOriginGame}"
+            <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Game" IsVisible="{Binding HasOriginGame}"/>
+            <ComboBox Grid.Row="3" Grid.Column="1" Classes="field" IsVisible="{Binding HasOriginGame}"
                       ItemsSource="{Binding OriginGameList}"
                       ItemTemplate="{StaticResource ComboItemTemplate}"
                       SelectedValueBinding="{ReflectionBinding Value}"
                       SelectedValue="{Binding OriginGame, Mode=TwoWay}"/>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Location" IsVisible="{Binding HasMetLocation}"/>
-            <ComboBox Grid.Row="1" Grid.Column="1" Classes="field" IsVisible="{Binding HasMetLocation}"
+            <TextBlock Grid.Row="4" Grid.Column="0" Classes="fieldLabel" Text="Location" IsVisible="{Binding HasMetLocation}"/>
+            <ComboBox Grid.Row="4" Grid.Column="1" Classes="field" IsVisible="{Binding HasMetLocation}"
                       ItemsSource="{Binding MetLocationList}"
                       ItemTemplate="{StaticResource ComboItemTemplate}"
                       SelectedValueBinding="{ReflectionBinding Value}"
                       SelectedValue="{Binding MetLocation, Mode=TwoWay}"/>
 
-            <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Met Level" IsVisible="{Binding HasMetLocation}"/>
-            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingLarge}" Margin="0,2"
+            <TextBlock Grid.Row="5" Grid.Column="0" Classes="fieldLabel" Text="Met Level" IsVisible="{Binding HasMetLocation}"/>
+            <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingLarge}" Margin="0,2"
                         IsVisible="{Binding HasMetLocation}">
                 <NumericUpDown Minimum="0" Maximum="100" Increment="1" Width="130"
                                Value="{Binding MetLevel, Mode=TwoWay}"/>
@@ -80,8 +74,8 @@
                           IsChecked="{Binding FatefulEncounter, Mode=TwoWay}"/>
             </StackPanel>
 
-            <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Extra Bytes" IsVisible="{Binding HasExtraBytes}"/>
-            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}" Margin="0,2"
+            <TextBlock Grid.Row="6" Grid.Column="0" Classes="fieldLabel" Text="Extra Bytes" IsVisible="{Binding HasExtraBytes}"/>
+            <StackPanel Grid.Row="6" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}" Margin="0,2"
                         IsVisible="{Binding HasExtraBytes}">
                 <ComboBox Width="110"
                           ItemsSource="{Binding ExtraByteOffsets}"

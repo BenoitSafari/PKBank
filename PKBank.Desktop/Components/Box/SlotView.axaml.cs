@@ -44,7 +44,7 @@ public sealed partial class SlotView : UserControl
     {
         if (sender is not ContextMenu menu || Slot is not { } slot || ViewModel is not { } vm)
             return;
-        // View/Set are single-slot actions; Import/Export/Delete follow the
+        // Edit/Copy/Paste are single-slot actions; Import/Export/Delete follow the
         // action targets (whole selection when the clicked slot is part of it).
         var multi = vm.IsMultiSelection;
         var targets = vm.GetActionTargets(slot);
@@ -55,8 +55,9 @@ public sealed partial class SlotView : UserControl
                 continue;
             menuItem.IsEnabled = menuItem.Tag switch
             {
-                "view" => !multi && !slot.IsEmpty && slot.IsCompatible,
-                "set" => !multi && slot.IsCompatible && vm.CanSetToSlot,
+                "edit" => !multi && slot.IsCompatible, // an empty slot is the "New" case
+                "copy" => !multi && !slot.IsEmpty,
+                "paste" => !multi && vm.CanPaste,
                 "import" => true,
                 "export" => anyOccupied,
                 "tobank" => !multi && vm.CanSendToBank(slot),
@@ -64,19 +65,27 @@ public sealed partial class SlotView : UserControl
                 "delete" => anyOccupied,
                 _ => menuItem.IsEnabled
             };
+            if (menuItem.Tag is "edit")
+                menuItem.Header = slot.IsEmpty ? "New" : "Edit";
         }
     }
 
-    private void OnViewClicked(object? sender, RoutedEventArgs e)
+    private async void OnEditClicked(object? sender, RoutedEventArgs e)
     {
-        if (Slot is { } slot)
-            ViewModel?.ViewSlot(slot);
+        if (Slot is { } slot && ViewModel is { } vm && Host is { } host)
+            await SlotEditorDialogs.EditSlotAsync(host, vm, slot);
     }
 
-    private void OnSetClicked(object? sender, RoutedEventArgs e)
+    private void OnCopyClicked(object? sender, RoutedEventArgs e)
     {
         if (Slot is { } slot)
-            ViewModel?.SetSlotFromEditor(slot);
+            ViewModel?.CopySlot(slot);
+    }
+
+    private async void OnPasteClicked(object? sender, RoutedEventArgs e)
+    {
+        if (Slot is { } slot && ViewModel is { } vm && Host is { } host)
+            await SlotEditorDialogs.PasteToSlotAsync(host, vm, slot);
     }
 
     private void OnToBankClicked(object? sender, RoutedEventArgs e)

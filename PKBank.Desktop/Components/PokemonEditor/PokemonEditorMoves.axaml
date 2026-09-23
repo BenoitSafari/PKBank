@@ -107,8 +107,7 @@
             <Setter Property="VerticalAlignment" Value="Stretch" />
         </Style>
     </UserControl.Styles>
-    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}" Margin="0,8,0,0">
-        <TextBlock Text="Moves" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" />
+    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}">
         <Grid ColumnDefinitions="*,86,40" ColumnSpacing="{DynamicResource SpacingRegular}">
             <TextBlock
                 Grid.Column="1"
@@ -123,9 +122,12 @@
                 Opacity="0.7"
                 FontSize="{DynamicResource FontSizeRegular}" />
         </Grid>
-        <!-- Slots read as one block, so the rows butt up against each other: no panel spacing,
-             tighter than the 4px the labelled fields above use. -->
         <ItemsControl ItemsSource="{Binding MoveRows}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate DataType="vm:MoveRowViewModel">
                     <Grid ColumnDefinitions="*,86,40" ColumnSpacing="{DynamicResource SpacingRegular}">

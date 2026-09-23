@@ -25,8 +25,7 @@ public sealed partial class PokemonEditorHeader : UserControl
         if (DataContext is not PokemonEditorViewModel vm)
             return;
         vm.TryFixPidIvs(out var message);
-        if (TopLevel.GetTopLevel(this)?.DataContext is MainWindowViewModel main)
-            main.StatusMessage = message;
+        vm.Message = message; // the editor window shows it: there is no status bar behind a modal
     }
 
     private async void OnLegalityClicked(object? sender, RoutedEventArgs e)

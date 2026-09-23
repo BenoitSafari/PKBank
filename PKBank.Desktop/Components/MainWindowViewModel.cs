@@ -26,8 +26,11 @@ public sealed class MainWindowViewModel : ViewModelBase
     // ----- Selection -------------------------------------------------------
 
     private readonly List<SlotViewModel> _selectedSlots = [];
+
+    /// <summary>Copied Pokémon, kept in-process: Paste stays available across boxes and banks.</summary>
+    private PKM? _clipboard;
+
     private SaveBoxStore? _boxStore;
-    private PokemonEditorViewModel? _editor;
     private SavePartyStore? _partyStore;
     private string? _savePath;
     private SlotViewModel? _selectedSlot;
@@ -53,6 +56,9 @@ public sealed class MainWindowViewModel : ViewModelBase
     }
 
     public SaveFile? SAV { get; private set; }
+
+    /// <summary>Localized game lists the editor window needs to build its combos.</summary>
+    internal FilteredGameDataSource? Sources => _sources;
 
     public SaveSelectionViewModel SaveSelection { get; }
 
@@ -120,19 +126,20 @@ public sealed class MainWindowViewModel : ViewModelBase
         private set => SetField(ref _selectedSlot, value);
     }
 
-    public PokemonEditorViewModel? Editor
-    {
-        get => _editor;
-        private set => SetField(ref _editor, value);
-    }
-
     // ----- Slot interactions -----------------------------------------------
 
-    public bool CanSetToSlot => Editor is { HasSpecies: true };
+    // Edit/Copy/Paste are single-slot actions; Import/Delete/Export also work on a multi-selection.
+    // An empty slot is editable too: that is the "New" case.
+    public bool CanEditSelected => !IsMultiSelection && SelectedSlot is { IsCompatible: true };
 
-    // View/Set are single-slot actions; Import/Delete/Export also work on a multi-selection.
-    public bool CanViewSelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
-    public bool CanSetSelected => !IsMultiSelection && SelectedSlot is not null && CanSetToSlot;
+    /// <summary>The edit action creates when the slot is empty, so the button says so.</summary>
+    public string EditSelectedLabel => SelectedSlot is { IsEmpty: false } ? "Edit" : "New";
+
+    public bool CanCopySelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
+    public bool CanPasteSelected => !IsMultiSelection && SelectedSlot is not null && CanPaste;
+
+    /// <summary>A copied Pokémon can go into any slot: the target store converts it on the way.</summary>
+    public bool CanPaste => _clipboard is not null && SAV is not null;
     public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
     public bool CanImportSelected => SelectedSlot is not null;
     public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
@@ -207,22 +214,15 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void NotifySlotActionStates()
     {
-        OnPropertyChanged(nameof(CanViewSelected));
-        OnPropertyChanged(nameof(CanSetToSlot));
-        OnPropertyChanged(nameof(CanSetSelected));
+        OnPropertyChanged(nameof(CanEditSelected));
+        OnPropertyChanged(nameof(EditSelectedLabel));
+        OnPropertyChanged(nameof(CanCopySelected));
+        OnPropertyChanged(nameof(CanPasteSelected));
+        OnPropertyChanged(nameof(CanPaste));
         OnPropertyChanged(nameof(CanDeleteSelected));
         OnPropertyChanged(nameof(CanImportSelected));
         OnPropertyChanged(nameof(CanExportSelected));
         OnPropertyChanged(nameof(IsMultiSelection));
-    }
-
-    private void OnEditorPropertyChanged(object? sender, PropertyChangedEventArgs e)
-    {
-        if (e.PropertyName == nameof(PokemonEditorViewModel.HasSpecies))
-        {
-            OnPropertyChanged(nameof(CanSetToSlot));
-            OnPropertyChanged(nameof(CanSetSelected));
-        }
     }
 
     public void LoadSaveFromPath(string path)
@@ -259,7 +259,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _partyStore = null;
 
         ClearSelection();
-        Editor = null;
+        _clipboard = null; // belongs to the save being closed; a language reload keeps it
         OpenBoxes.Clear();
         PartySlots.Clear();
 
@@ -314,7 +314,7 @@ public sealed class MainWindowViewModel : ViewModelBase
                 ? panel.Slots[prev.Index]
                 : null;
         if (match is not null)
-            ViewSlot(match);
+            SelectSlot(match);
     }
 
     /// <summary>Writes back to the file the save was loaded from.</summary>
@@ -366,8 +366,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
-        if (Editor?.Origin == slot)
-            Editor.Revert(); // the displayed entity's slot changed underneath it
         NotifySlotActionStates();
         return true;
     }
@@ -428,18 +426,6 @@ public sealed class MainWindowViewModel : ViewModelBase
                 : string.Empty;
             StatusMessage = $"Imported {imported} of {count} file(s) into the selected slots{ignored}.";
         }
-    }
-
-    public void ViewSelected()
-    {
-        if (SelectedSlot is { } slot)
-            ViewSlot(slot);
-    }
-
-    public void SetSelected()
-    {
-        if (SelectedSlot is { } slot)
-            SetSlotFromEditor(slot);
     }
 
     public void DeleteSelected() => DeleteSlots(_selectedSlots.ToArray());
@@ -555,26 +541,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public IReadOnlyList<SlotViewModel> GetActionTargets(SlotViewModel clicked)
         => IsMultiSelection && _selectedSlots.Contains(clicked) ? _selectedSlots.ToArray() : [clicked];
 
-    /// <summary>Selects the slot and loads its Pokémon into the editor (View action).</summary>
-    public void ViewSlot(SlotViewModel slot)
-    {
-        SelectSlot(slot);
-        LoadEditor(slot);
-    }
-
-    private void LoadEditor(SlotViewModel slot)
-    {
-        if (SAV is not { } sav || _sources is not { } sources)
-            return;
-
-        if (Editor is { } old)
-            old.PropertyChanged -= OnEditorPropertyChanged;
-        var editor = new PokemonEditorViewModel(sav, sources, slot);
-        editor.PropertyChanged += OnEditorPropertyChanged;
-        Editor = editor;
-        NotifySlotActionStates();
-    }
-
     public void DeleteSlot(SlotViewModel slot)
     {
         if (SAV is not { } sav)
@@ -649,8 +615,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshMirrorSlots(target);
         if (source.IsParty || target.IsParty)
             RefreshParty();
-        if (Editor?.Origin == source || Editor?.Origin == target)
-            Editor.Revert(); // the displayed entity's slot changed underneath it
         NotifySlotActionStates();
         TrackBankChanges();
         StatusMessage = dst.Species != 0 ? "Slots swapped." : "Pokémon moved.";
@@ -751,7 +715,6 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         MarkEdited([plan.Store, .. plan.Sources.Select(static s => s.Store)]);
         RefreshAllSlots();
-        Editor?.Revert(); // containers the editor is not even showing may have changed
         NotifySlotActionStates();
         TrackBankChanges();
         StatusMessage = $"Moved {plan.Placements.Count} Pokémon.";
@@ -792,12 +755,41 @@ public sealed class MainWindowViewModel : ViewModelBase
     private static SlotViewModel? FindFreeSlot(ISlotStore? store, IEnumerable<SlotViewModel> candidates)
         => store is null ? null : candidates.FirstOrDefault(s => s.Store == store && s.IsEmpty);
 
-    /// <summary>Writes the editor's current entity (with pending edits) into the given slot.</summary>
-    public void SetSlotFromEditor(SlotViewModel slot)
+    /// <summary>Takes a snapshot of the slot; the source may be edited or deleted afterwards.</summary>
+    public void CopySlot(SlotViewModel slot)
     {
-        if (SAV is not { } sav || Editor is not { } editor)
+        if (slot.IsEmpty)
             return;
-        var pk = editor.GetEntityClone();
+        _clipboard = slot.Read().Clone();
+        NotifySlotActionStates();
+        StatusMessage = "Pokémon copied.";
+    }
+
+    /// <summary>
+    ///     Writes the copied Pokémon into the slot. Crossing stores converts on the way, exactly as a
+    ///     drag between them would; returns false with a reason when the target refuses it.
+    /// </summary>
+    public bool PasteToSlot(SlotViewModel slot)
+    {
+        if (_clipboard is null || SAV is null)
+            return false;
+        var pk = slot.Store.TryAccept(_clipboard.Clone(), out var message);
+        if (pk is null)
+        {
+            StatusMessage = message;
+            return false;
+        }
+
+        WriteEntityToSlot(slot, pk);
+        StatusMessage = "Pokémon pasted.";
+        return true;
+    }
+
+    /// <summary>Writes an entity the editor produced into the given slot.</summary>
+    public void WriteEntityToSlot(SlotViewModel slot, PKM pk)
+    {
+        if (SAV is null)
+            return;
         if (slot.IsParty)
             pk.ResetPartyStats();
         pk.RefreshChecksum();
@@ -806,8 +798,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         RefreshMirrorSlots(slot);
         if (slot.IsParty)
             RefreshParty();
-        if (slot == editor.Origin)
-            editor.Revert(); // origin slot now holds the freshly written data
         NotifySlotActionStates();
         TrackBankChanges();
         StatusMessage = "Editor content written to slot.";
@@ -826,7 +816,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         GameInfo.FilteredSources = _sources;
 
         ClearSelection();
-        Editor = null;
 
         OpenBoxes.Clear();
         PartySlots.Clear();
@@ -931,20 +920,20 @@ public sealed class MainWindowViewModel : ViewModelBase
         foreach (var slot in boxSlots)
             if (!slot.IsEmpty)
             {
-                ViewSlot(slot);
+                SelectSlot(slot);
                 return;
             }
 
         foreach (var slot in PartySlots)
             if (!slot.IsEmpty)
             {
-                ViewSlot(slot);
+                SelectSlot(slot);
                 return;
             }
 
         if (boxSlots.Count > 0)
-            ViewSlot(boxSlots[0]);
+            SelectSlot(boxSlots[0]);
         else if (PartySlots.Count > 0)
-            ViewSlot(PartySlots[0]);
+            SelectSlot(PartySlots[0]);
     }
 }

@@ -1,0 +1,54 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:pe="using:PKBank.Desktop.Components.PokemonEditor"
+        xmlns:vm="using:PKBank.Desktop.Components.PokemonEditor.ViewModels"
+        x:Class="PKBank.Desktop.Components.PokemonEditor.PokemonEditorWindow"
+        x:DataType="vm:PokemonEditorViewModel"
+        Title="Pokémon Editor"
+        Width="520" Height="560"
+        MinWidth="470" MinHeight="560"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="{DynamicResource SpacingLarge}" Margin="14">
+
+        <!-- Identity and legality stay visible whichever tab is open -->
+        <pe:PokemonEditorHeader Grid.Row="0" />
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Species">
+                <ScrollViewer>
+                    <pe:PokemonEditorSpecies />
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Moves">
+                <ScrollViewer>
+                    <pe:PokemonEditorMoves />
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Stats">
+                <ScrollViewer>
+                    <pe:PokemonEditorStats />
+                </ScrollViewer>
+            </TabItem>
+            <TabItem Header="Origin">
+                <ScrollViewer>
+                    <pe:PokemonEditorOrigin />
+                </ScrollViewer>
+            </TabItem>
+        </TabControl>
+
+        <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="{DynamicResource SpacingRegular}">
+            <TextBlock Text="{Binding Message}" VerticalAlignment="Center" Opacity="0.8"
+                       TextTrimming="CharacterEllipsis" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal"
+                        Spacing="{DynamicResource SpacingRegular}">
+                <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked" />
+                <!-- A slot cannot hold an entity without a species -->
+                <Button Content="Save" MinWidth="96" Classes="accent"
+                        IsEnabled="{Binding HasSpecies}" Click="OnSaveClicked" />
+            </StackPanel>
+        </Grid>
+
+    </Grid>
+
+</Window>

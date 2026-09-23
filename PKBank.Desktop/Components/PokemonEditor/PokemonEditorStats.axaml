@@ -16,8 +16,7 @@
         </Style>
     </UserControl.Styles>
 
-    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}" Margin="0,8,0,0">
-        <TextBlock Text="Stats" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" />
+    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}">
         <Grid
             ColumnDefinitions="64,52,72,72,46"
             ColumnSpacing="{DynamicResource SpacingRegular}"
