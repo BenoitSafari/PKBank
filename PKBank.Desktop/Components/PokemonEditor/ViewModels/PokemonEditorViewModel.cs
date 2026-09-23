@@ -43,6 +43,8 @@ public sealed class PokemonEditorViewModel : ViewModelBase
             new StatRowViewModel(this, "Speed", 3)
         ];
 
+        MoveRows = [new(this, 0), new(this, 1), new(this, 2), new(this, 3)];
+
         AbilityList = [];
         FormList = [];
         Load();
@@ -66,6 +68,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     public IReadOnlyList<ComboItem> AbilityList { get; private set; }
     public IReadOnlyList<string> FormList { get; private set; }
     public IReadOnlyList<StatRowViewModel> StatRows { get; }
+    public IReadOnlyList<MoveRowViewModel> MoveRows { get; }
 
     // Capability flags for hiding fields not present in the save's generation
     public bool HasNature => Entity.Format >= 3;
@@ -553,67 +556,6 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         }
     }
 
-    public int Move1
-    {
-        get => Entity.GetMove(0);
-        set => SetMove(0, value);
-    }
-
-    public int Move2
-    {
-        get => Entity.GetMove(1);
-        set => SetMove(1, value);
-    }
-
-    public int Move3
-    {
-        get => Entity.GetMove(2);
-        set => SetMove(2, value);
-    }
-
-    public int Move4
-    {
-        get => Entity.GetMove(3);
-        set => SetMove(3, value);
-    }
-
-    // PP Ups (0-3) per move; the resulting max PP is displayed read-only so no
-    // illegal value can be entered. Nullable so an emptied field maps to 0.
-    public int? PPUps1
-    {
-        get => Entity.Move1_PPUps;
-        set => SetPPUps(0, value);
-    }
-
-    public int? PPUps2
-    {
-        get => Entity.Move2_PPUps;
-        set => SetPPUps(1, value);
-    }
-
-    public int? PPUps3
-    {
-        get => Entity.Move3_PPUps;
-        set => SetPPUps(2, value);
-    }
-
-    public int? PPUps4
-    {
-        get => Entity.Move4_PPUps;
-        set => SetPPUps(3, value);
-    }
-
-    public string PP1Display => GetPPDisplay(0);
-    public string PP2Display => GetPPDisplay(1);
-    public string PP3Display => GetPPDisplay(2);
-    public string PP4Display => GetPPDisplay(3);
-
-    // Hover summaries for the move selectors (null when the slot has no move)
-    public MoveTipViewModel? MoveTip1 => MoveTipViewModel.TryCreate(Entity, 0, GetPPUps(0));
-    public MoveTipViewModel? MoveTip2 => MoveTipViewModel.TryCreate(Entity, 1, GetPPUps(1));
-    public MoveTipViewModel? MoveTip3 => MoveTipViewModel.TryCreate(Entity, 2, GetPPUps(2));
-    public MoveTipViewModel? MoveTip4 => MoveTipViewModel.TryCreate(Entity, 3, GetPPUps(3));
-
     public bool LegalityValid { get; private set; }
     public string LegalitySummary { get; private set; } = string.Empty;
 
@@ -799,13 +741,13 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(ExtraByteValue));
     }
 
-    private string GetPPDisplay(int index)
+    internal string GetPPDisplay(int index)
     {
         var move = Entity.GetMove(index);
         return move == 0 ? "—" : Entity.GetMovePP(move, GetPPUps(index)).ToString();
     }
 
-    private int GetPPUps(int index) => index switch
+    internal int GetPPUps(int index) => index switch
     {
         0 => Entity.Move1_PPUps,
         1 => Entity.Move2_PPUps,
@@ -813,7 +755,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         _ => Entity.Move4_PPUps
     };
 
-    private void SetPPUps(int index, int? value)
+    internal void SetPPUps(int index, int? value)
     {
         var ups = Math.Clamp(value ?? 0, 0, 3);
         if (_loading || ups == GetPPUps(index))
@@ -840,9 +782,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
                 break;
         }
 
-        OnPropertyChanged($"PPUps{index + 1}");
-        OnPropertyChanged($"PP{index + 1}Display");
-        OnPropertyChanged($"MoveTip{index + 1}");
+        MoveRows[index].RefreshPPUps();
         RefreshDerived(false);
     }
 
@@ -880,14 +820,12 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
         MoveList = list;
         OnPropertyChanged(nameof(MoveList));
+        foreach (var row in MoveRows) row.RefreshMoveList();
         // The ComboBoxes drop their selection while swapping ItemsSource; push the
         // selected values back once they have processed the new list.
         Dispatcher.UIThread.Post(() =>
         {
-            OnPropertyChanged(nameof(Move1));
-            OnPropertyChanged(nameof(Move2));
-            OnPropertyChanged(nameof(Move3));
-            OnPropertyChanged(nameof(Move4));
+            foreach (var row in MoveRows) row.RefreshSelection();
         });
     }
 
@@ -980,15 +918,13 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         foreach (var row in StatRows) row.RefreshInputTexts();
     }
 
-    private void SetMove(int index, int value)
+    internal void SetMove(int index, int value)
     {
         if (_loading || value < 0 || value == Entity.GetMove(index))
             return;
         Entity.SetMove(index, (ushort)value);
         Entity.HealPP();
-        OnPropertyChanged($"Move{index + 1}");
-        OnPropertyChanged($"PP{index + 1}Display");
-        OnPropertyChanged($"MoveTip{index + 1}");
+        MoveRows[index].RefreshMove();
         RefreshDerived();
     }
 
@@ -1043,22 +979,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
         OnPropertyChanged(nameof(Language));
         OnPropertyChanged(nameof(IsShiny));
         OnPropertyChanged(nameof(GenderSymbol));
-        OnPropertyChanged(nameof(Move1));
-        OnPropertyChanged(nameof(Move2));
-        OnPropertyChanged(nameof(Move3));
-        OnPropertyChanged(nameof(Move4));
-        OnPropertyChanged(nameof(PPUps1));
-        OnPropertyChanged(nameof(PPUps2));
-        OnPropertyChanged(nameof(PPUps3));
-        OnPropertyChanged(nameof(PPUps4));
-        OnPropertyChanged(nameof(PP1Display));
-        OnPropertyChanged(nameof(PP2Display));
-        OnPropertyChanged(nameof(PP3Display));
-        OnPropertyChanged(nameof(PP4Display));
-        OnPropertyChanged(nameof(MoveTip1));
-        OnPropertyChanged(nameof(MoveTip2));
-        OnPropertyChanged(nameof(MoveTip3));
-        OnPropertyChanged(nameof(MoveTip4));
+        foreach (var row in MoveRows) row.RefreshAll();
         OnPropertyChanged(nameof(HasNature));
         OnPropertyChanged(nameof(HasAbility));
         OnPropertyChanged(nameof(HasBall));

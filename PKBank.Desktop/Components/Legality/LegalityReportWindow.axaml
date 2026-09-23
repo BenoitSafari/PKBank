@@ -6,11 +6,11 @@
         CanResize="False"
         WindowStartupLocation="CenterOwner">
 
-  <StackPanel Margin="16" Spacing="12">
+  <StackPanel Margin="16" Spacing="{DynamicResource SpacingLarge}">
 
-    <StackPanel Orientation="Horizontal" Spacing="10">
+    <StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}">
       <Image x:Name="SpriteImage" Width="68" Height="56" Stretch="None"/>
-      <StackPanel VerticalAlignment="Center" Spacing="2">
+      <StackPanel VerticalAlignment="Center" Spacing="{DynamicResource SpacingExtraSmall}">
         <TextBlock x:Name="TitleText" FontSize="{DynamicResource FontSizeExtraLarge}" FontWeight="SemiBold"/>
         <TextBlock x:Name="VerdictText" FontWeight="SemiBold"/>
       </StackPanel>

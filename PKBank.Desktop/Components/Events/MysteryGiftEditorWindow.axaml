@@ -16,7 +16,7 @@
                 Padding="10"
                 Margin="0,0,10,0">
                 <ScrollViewer>
-                    <StackPanel x:Name="AlbumPanel" Spacing="6" />
+                    <StackPanel x:Name="AlbumPanel" Spacing="{DynamicResource SpacingSmall}" />
                 </ScrollViewer>
             </Border>
 
@@ -27,7 +27,7 @@
                     BorderThickness="1"
                     CornerRadius="6"
                     Padding="12">
-                    <StackPanel Spacing="8">
+                    <StackPanel Spacing="{DynamicResource SpacingRegular}">
                         <Image
                             x:Name="PreviewImage"
                             Width="68"
@@ -77,14 +77,14 @@
         </Grid>
 
         <Grid Grid.Row="1" ColumnDefinitions="Auto,*,Auto" Margin="0,10,0,0">
-            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8">
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}">
                 <Button Content="Import…" MinWidth="90" Click="OnImportClicked" />
                 <Button Content="Export…" MinWidth="90" Click="OnExportClicked" />
                 <Button x:Name="QrButton" Content="QR" MinWidth="60" Click="OnQrClicked" />
                 <Button x:Name="UsedAllButton" Content="Used All" MinWidth="90" Click="OnUsedAllClicked" />
                 <Button x:Name="UnusedAllButton" Content="Unused All" MinWidth="90" Click="OnUnusedAllClicked" />
             </StackPanel>
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8">
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}">
                 <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked" />
                 <Button Content="Save" MinWidth="96" Click="OnSaveClicked" />
             </StackPanel>

@@ -23,7 +23,7 @@
             </Panel>
         </Border>
 
-        <StackPanel Margin="14,10" Spacing="2">
+        <StackPanel Margin="14,10" Spacing="{DynamicResource SpacingExtraSmall}">
             <ItemsControl x:Name="LinesControl">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="x:String">

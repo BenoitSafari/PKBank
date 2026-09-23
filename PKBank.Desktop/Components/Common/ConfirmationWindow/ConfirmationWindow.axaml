@@ -6,11 +6,11 @@
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner">
 
-    <StackPanel Margin="14" Spacing="14">
+    <StackPanel Margin="14" Spacing="{DynamicResource SpacingLarge}">
 
         <TextBlock x:Name="MessageText" TextWrapping="Wrap" />
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource SpacingRegular}">
             <Button x:Name="CancelButton" Content="Cancel" MinWidth="96" Click="OnCancelClicked" />
             <!-- Shown only when the caller can write the pending changes out first -->
             <Button x:Name="SaveButton" Content="Save" MinWidth="96" IsVisible="False" Click="OnSaveClicked" />

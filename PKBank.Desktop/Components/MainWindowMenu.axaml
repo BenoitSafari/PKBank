@@ -4,8 +4,9 @@
              x:Class="PKBank.Desktop.Components.MainWindowMenu"
              x:DataType="vm:MainWindowViewModel">
 
-    <Menu x:Name="RootMenu">
-        <MenuItem Header="_File">
+    <Menu
+        x:Name="RootMenu" Background="{DynamicResource SystemControlBackgroundListLowBrush}">
+        <MenuItem Header="_File" Padding="{DynamicResource BaseInputPadding}">
             <MenuItem
                 Header="_Open…"
                 Click="OnOpenClicked"

@@ -18,7 +18,7 @@
                 DockPanel.Dock="Top"
                 ColumnDefinitions="*,Auto,Auto"
                 Margin="10,6"
-                ColumnSpacing="6">
+                ColumnSpacing="{DynamicResource SpacingSmall}">
                 <TextBlock
                     Text="{Binding #Root.Header}"
                     VerticalAlignment="Center"

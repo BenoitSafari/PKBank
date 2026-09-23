@@ -17,8 +17,8 @@
 
         <!-- Rich hover preview shown as the slot tooltip -->
         <DataTemplate DataType="vm:SlotPreviewViewModel">
-            <StackPanel Spacing="3" MaxWidth="340">
-                <StackPanel Orientation="Horizontal" Spacing="6">
+            <StackPanel Spacing="{DynamicResource SpacingExtraSmall}" MaxWidth="340">
+                <StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
                     <Image Source="{Binding BallSprite}" Width="20" Height="20" Stretch="None"
                            IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}" />
                     <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center" />

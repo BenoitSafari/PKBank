@@ -35,7 +35,7 @@
     </UserControl.Styles>
 
     <ScrollViewer>
-        <StackPanel Spacing="10" Margin="0,0,8,0">
+        <StackPanel Spacing="{DynamicResource SpacingRegular}" Margin="0,0,8,0">
 
             <pe:PokemonEditorHeader/>
 
@@ -46,7 +46,7 @@
                 <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel"
                            Text="PID"
                            IsVisible="{Binding HasPID}" />
-                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0,2"
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}" Margin="0,2"
                             IsVisible="{Binding HasPID}">
                     <TextBox Text="{Binding PIDText, Mode=TwoWay}"
                              MaxLength="8"
@@ -109,7 +109,7 @@
                           SelectedValue="{Binding Ball, Mode=TwoWay}">
                     <ComboBox.ItemTemplate>
                         <DataTemplate DataType="core:ComboItem">
-                            <StackPanel Orientation="Horizontal" Spacing="7">
+                            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
                                 <Image Source="{Binding Value, Converter={x:Static u:Converters.BallSprite}}"
                                        Width="20" Height="20" Stretch="None"/>
                                 <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>

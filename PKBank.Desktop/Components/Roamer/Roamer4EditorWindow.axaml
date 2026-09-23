@@ -30,7 +30,7 @@
                 <DataTemplate DataType="vm:RoamerTabViewModel">
                     <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                             BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,6,0,0">
-                        <StackPanel Spacing="6">
+                        <StackPanel Spacing="{DynamicResource SpacingSmall}">
 
                             <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,2">
                                 <TextBlock Grid.Column="1" Text="{Binding LegalitySummary}"
@@ -56,7 +56,7 @@
                             </Grid>
 
                             <!-- Everything below is off limits until the game rolls the roamer. -->
-                            <StackPanel Spacing="6" IsEnabled="{Binding IsDefined}">
+                            <StackPanel Spacing="{DynamicResource SpacingSmall}" IsEnabled="{Binding IsDefined}">
 
                                 <Grid ColumnDefinitions="110,*,Auto" Margin="0,4,0,0">
                                     <TextBlock Classes="fieldLabel" Text="PID"/>
@@ -105,7 +105,7 @@
             </TabControl.ContentTemplate>
         </TabControl>
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8" Margin="0,12,0,0">
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource SpacingRegular}" Margin="0,12,0,0">
             <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked"/>
             <Button Content="Save" MinWidth="96" Click="OnSaveClicked"/>
         </StackPanel>

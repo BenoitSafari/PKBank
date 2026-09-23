@@ -14,7 +14,7 @@
     <!-- The DataContext stays the MainWindowViewModel so slots resolve it the same way they do in the
          main window; the bank sub-view-model is reached through it. -->
     <Panel>
-        <StackPanel Margin="10" Spacing="8" MinWidth="420">
+        <StackPanel Margin="10" Spacing="{DynamicResource SpacingRegular}" MinWidth="420">
 
             <Grid ColumnDefinitions="*,Auto">
                 <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"

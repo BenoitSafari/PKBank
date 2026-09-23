@@ -17,7 +17,7 @@
 
         <!-- Actions are always available, even while the list is empty or loading -->
         <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" HorizontalAlignment="Right"
-                    Spacing="8" Margin="0,12,0,0">
+                    Spacing="{DynamicResource SpacingRegular}" Margin="0,12,0,0">
             <Button Content="Open…" MinWidth="96" Click="OnOpenClicked" />
             <Button Content="Load" MinWidth="96" Classes="accent"
                     IsEnabled="{Binding SaveSelection.CanLoadSelected}"
@@ -28,7 +28,7 @@
 
             <!-- Scanning the configured folders -->
             <StackPanel IsVisible="{Binding SaveSelection.IsScanning}"
-                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10">
+                        HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="{DynamicResource SpacingRegular}">
                 <ProgressBar IsIndeterminate="True" Width="220" />
                 <TextBlock Text="Looking for save files…" HorizontalAlignment="Center" Opacity="0.8" />
             </StackPanel>
@@ -36,7 +36,7 @@
             <!-- Nothing found: point the user at the folder configuration -->
             <StackPanel IsVisible="{Binding SaveSelection.IsEmpty}"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
-                        Spacing="10" MaxWidth="420">
+                        Spacing="{DynamicResource SpacingRegular}" MaxWidth="420">
                 <TextBlock Text="No save file detected" FontSize="{DynamicResource FontSizeExtraLarge}" FontWeight="SemiBold"
                            HorizontalAlignment="Center" />
                 <TextBlock
@@ -62,7 +62,7 @@
                             <!-- Row 0 is pinned to the sprite height; row 1 only exists when the
                                  game block wraps under the identity line. -->
                             <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="32,Auto"
-                                  ColumnSpacing="12" ToolTip.Tip="{Binding Tooltip}">
+                                  ColumnSpacing="{DynamicResource SpacingLarge}" ToolTip.Tip="{Binding Tooltip}">
 
                                 <!-- Every avatar reaches this point already at 32px (SpriteService
                                      downsamples PKHeX's 40px Gen 6 art), so it draws 1:1. -->
@@ -89,7 +89,7 @@
 
                                 <!-- Identity over path; the two sub-rows add up to the 32px row height -->
                                 <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="19,13">
-                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8"
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}"
                                                 VerticalAlignment="Center">
                                         <TextBlock Text="{Binding TrainerName}" FontWeight="SemiBold"
                                                    VerticalAlignment="Center"
@@ -109,7 +109,7 @@
                                 </Grid>
 
                                 <!-- Wide enough: game and play time close the same line -->
-                                <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Spacing="8"
+                                <StackPanel Grid.Row="0" Grid.Column="2" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}"
                                             VerticalAlignment="Center" HorizontalAlignment="Right"
                                             IsVisible="{Binding !$parent[ss:SaveSelectionView].IsNarrow}">
                                     <TextBlock Text="{Binding GameName}" FontWeight="SemiBold"
@@ -121,7 +121,7 @@
 
                                 <!-- Too narrow: they drop under the identity line instead of being trimmed -->
                                 <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                                            Orientation="Horizontal" Spacing="8" Margin="0,2,0,0"
+                                            Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}" Margin="0,2,0,0"
                                             IsVisible="{Binding $parent[ss:SaveSelectionView].IsNarrow}">
                                     <TextBlock Text="{Binding GameName}" FontWeight="SemiBold"
                                                VerticalAlignment="Center" />

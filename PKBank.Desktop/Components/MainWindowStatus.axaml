@@ -4,11 +4,21 @@
              x:Class="PKBank.Desktop.Components.MainWindowStatus"
              x:DataType="vm:MainWindowViewModel">
 
-    <Border Padding="10,6"
-            Background="{DynamicResource SystemControlBackgroundListLowBrush}">
+    <Border
+        Padding="{DynamicResource BaseInputPadding}"
+        Background="{DynamicResource SystemControlBackgroundListLowBrush}">
         <DockPanel>
-            <TextBlock DockPanel.Dock="Right" Text="{Binding TrainerInfo}" Opacity="0.8" />
-            <TextBlock Text="{Binding StatusMessage}" TextTrimming="CharacterEllipsis" Margin="0,0,16,0" />
+            <TextBlock
+                DockPanel.Dock="Right"
+                Text="{Binding TrainerInfo}"
+                FontSize="{DynamicResource FontSizeRegular}"
+                FontWeight="Light"
+                Opacity="0.8" />
+            <TextBlock
+                Text="{Binding StatusMessage}"
+                FontSize="{DynamicResource FontSizeRegular}"
+                FontWeight="Light"
+                TextTrimming="CharacterEllipsis" />
         </DockPanel>
     </Border>
 

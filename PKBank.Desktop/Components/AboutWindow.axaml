@@ -5,9 +5,9 @@
         CanResize="False"
         WindowStartupLocation="CenterOwner">
 
-    <StackPanel Margin="24" Spacing="10" MaxWidth="420">
+    <StackPanel Margin="24" Spacing="{DynamicResource SpacingRegular}" MaxWidth="420">
 
-        <StackPanel Orientation="Horizontal" Spacing="14">
+        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingLarge}">
             <Image Source="/Assets/icon.png" Width="48" Height="48" />
             <StackPanel VerticalAlignment="Center">
                 <TextBlock x:Name="NameText" FontSize="{DynamicResource FontSizeExtraLarge}" FontWeight="SemiBold" />

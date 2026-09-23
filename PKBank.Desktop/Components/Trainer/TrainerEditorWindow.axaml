@@ -18,11 +18,11 @@
         </Style>
     </Window.Styles>
 
-    <StackPanel Margin="14" Spacing="12">
+    <StackPanel Margin="14" Spacing="{DynamicResource SpacingLarge}">
 
         <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="1" CornerRadius="6" Padding="12">
-            <StackPanel Spacing="6">
+            <StackPanel Spacing="{DynamicResource SpacingSmall}">
                 <TextBlock Classes="sectionHeader" Text="Trainer"/>
 
                 <Grid ColumnDefinitions="110,*">
@@ -37,7 +37,7 @@
 
                 <Grid ColumnDefinitions="110,*">
                     <TextBlock Classes="fieldLabel" Text="ID / SID"/>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}">
                         <NumericUpDown x:Name="TidBox" Minimum="0" Increment="1" Width="130"/>
                         <NumericUpDown x:Name="SidBox" Minimum="0" Increment="1" Width="130"/>
                     </StackPanel>
@@ -77,13 +77,13 @@
         <Border x:Name="BadgesGroup"
                 BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
                 BorderThickness="1" CornerRadius="6" Padding="12">
-            <StackPanel Spacing="6">
+            <StackPanel Spacing="{DynamicResource SpacingSmall}">
                 <TextBlock Classes="sectionHeader" Text="Badges"/>
                 <UniformGrid x:Name="BadgePanel" Columns="4"/>
             </StackPanel>
         </Border>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource SpacingRegular}">
             <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked"/>
             <Button Content="Save" MinWidth="96" Click="OnSaveClicked"/>
         </StackPanel>

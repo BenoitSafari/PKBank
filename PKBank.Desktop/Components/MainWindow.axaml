@@ -45,7 +45,7 @@
                     <DockPanel>
 
                         <!-- Selected-slot actions: mirrors the slot context menu (View/Set/Delete) -->
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="6">
+                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
                             <Button Content="View" Click="OnViewSelectedClicked" IsEnabled="{Binding CanViewSelected}" />
                             <Button Content="Set" Click="OnSetSelectedClicked" IsEnabled="{Binding CanSetSelected}" />
                             <Button Content="Import" Click="OnImportSelectedClicked"

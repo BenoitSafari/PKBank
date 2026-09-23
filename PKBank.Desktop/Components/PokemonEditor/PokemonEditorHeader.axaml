@@ -20,11 +20,11 @@
         <StackPanel Grid.Column="1"
                     Margin="12,0,8,0"
                     VerticalAlignment="Center"
-                    Spacing="8">
+                    Spacing="{DynamicResource SpacingRegular}">
             <TextBlock Text="{Binding Nickname}"
                        FontSize="{DynamicResource FontSizeExtraLarge}"
                        FontWeight="SemiBold" />
-            <StackPanel Orientation="Horizontal" Spacing="10">
+            <StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}">
                 <CheckBox Content="Shiny"
                           IsChecked="{Binding IsShiny, Mode=TwoWay}" />
                 <CheckBox Content="Egg"

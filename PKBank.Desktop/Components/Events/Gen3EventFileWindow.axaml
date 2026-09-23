@@ -6,14 +6,14 @@
         CanResize="False"
         WindowStartupLocation="CenterOwner">
 
-    <StackPanel Margin="14" Spacing="12">
+    <StackPanel Margin="14" Spacing="{DynamicResource SpacingLarge}">
 
         <Border
             BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
             BorderThickness="1"
             CornerRadius="6"
             Padding="12">
-            <StackPanel Spacing="8">
+            <StackPanel Spacing="{DynamicResource SpacingRegular}">
                 <TextBlock
                     x:Name="StatusText"
                     TextWrapping="Wrap" />

@@ -23,7 +23,7 @@
         </Style>
     </UserControl.Styles>
 
-    <StackPanel Spacing="4" Margin="0,8,0,0">
+    <StackPanel Spacing="{DynamicResource SpacingExtraSmall}" Margin="0,8,0,0">
 
         <!-- Trainer info -->
         <TextBlock Text="Trainer" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}"/>
@@ -38,7 +38,7 @@
             </Grid>
 
             <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="ID / SID"/>
-            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,2">
+            <StackPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}" Margin="0,2">
                 <NumericUpDown Minimum="0" Maximum="{Binding MaxTID}" Increment="1" Width="130"
                                Value="{Binding TID, Mode=TwoWay}" ToolTip.Tip="Trainer ID"/>
                 <NumericUpDown Minimum="0" Maximum="{Binding MaxSID}" Increment="1" Width="130"
@@ -71,7 +71,7 @@
                       SelectedValue="{Binding MetLocation, Mode=TwoWay}"/>
 
             <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Met Level" IsVisible="{Binding HasMetLocation}"/>
-            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="12" Margin="0,2"
+            <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingLarge}" Margin="0,2"
                         IsVisible="{Binding HasMetLocation}">
                 <NumericUpDown Minimum="0" Maximum="100" Increment="1" Width="130"
                                Value="{Binding MetLevel, Mode=TwoWay}"/>
@@ -81,7 +81,7 @@
             </StackPanel>
 
             <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Extra Bytes" IsVisible="{Binding HasExtraBytes}"/>
-            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="8" Margin="0,2"
+            <StackPanel Grid.Row="3" Grid.Column="1" Orientation="Horizontal" Spacing="{DynamicResource SpacingRegular}" Margin="0,2"
                         IsVisible="{Binding HasExtraBytes}">
                 <ComboBox Width="110"
                           ItemsSource="{Binding ExtraByteOffsets}"
