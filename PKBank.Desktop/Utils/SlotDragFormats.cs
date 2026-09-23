@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Avalonia.Input;
-using PKBank.Desktop.ViewModels;
+using PKBank.Desktop.Components.Box.ViewModels;
 
 namespace PKBank.Desktop.Utils;
 

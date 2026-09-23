@@ -1,0 +1,93 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Components.Trainer.TrainerEditorWindow"
+        Title="Trainer Editor"
+        Width="430" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="Width" Value="110"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+        <Style Selector="TextBlock.sectionHeader">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Margin" Value="2,0,0,6"/>
+        </Style>
+    </Window.Styles>
+
+    <StackPanel Margin="14" Spacing="12">
+
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6" Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock Classes="sectionHeader" Text="Trainer"/>
+
+                <Grid ColumnDefinitions="110,*">
+                    <TextBlock Classes="fieldLabel" Text="Name"/>
+                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto">
+                        <TextBox x:Name="OTNameBox" Grid.Column="0"/>
+                        <Button x:Name="GenderButton" Grid.Column="1" MinWidth="42" Margin="8,0,0,0"
+                                Click="OnGenderClicked"
+                                ToolTip.Tip="Toggle the trainer's gender"/>
+                    </Grid>
+                </Grid>
+
+                <Grid ColumnDefinitions="110,*">
+                    <TextBlock Classes="fieldLabel" Text="ID / SID"/>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                        <NumericUpDown x:Name="TidBox" Minimum="0" Increment="1" Width="130"/>
+                        <NumericUpDown x:Name="SidBox" Minimum="0" Increment="1" Width="130"/>
+                    </StackPanel>
+                </Grid>
+
+                <Grid ColumnDefinitions="110,*">
+                    <TextBlock Classes="fieldLabel" Text="Money"/>
+                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto">
+                        <NumericUpDown x:Name="MoneyBox" Grid.Column="0" Minimum="0" Increment="1"/>
+                        <Button Grid.Column="1" Content="Max" MinWidth="64" Margin="8,0,0,0"
+                                Click="OnMaxMoneyClicked"/>
+                    </Grid>
+                </Grid>
+
+                <Grid x:Name="CoinsRow" ColumnDefinitions="110,*">
+                    <TextBlock x:Name="CoinsLabel" Classes="fieldLabel" Text="Coins"/>
+                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto">
+                        <NumericUpDown x:Name="CoinsBox" Grid.Column="0" Minimum="0" Increment="1"/>
+                        <Button Grid.Column="1" Content="Max" MinWidth="64" Margin="8,0,0,0"
+                                Click="OnMaxCoinsClicked"/>
+                    </Grid>
+                </Grid>
+
+                <Grid ColumnDefinitions="110,*">
+                    <TextBlock Classes="fieldLabel" Text="Time Played"/>
+                    <Grid Grid.Column="1" ColumnDefinitions="*,Auto,*,Auto,*">
+                        <NumericUpDown x:Name="HoursBox" Grid.Column="0" Minimum="0" Maximum="65535" Increment="1" ShowButtonSpinner="False"/>
+                        <TextBlock Grid.Column="1" Text=":" VerticalAlignment="Center" Margin="6,0"/>
+                        <NumericUpDown x:Name="MinutesBox" Grid.Column="2" Minimum="0" Maximum="59" Increment="1" ShowButtonSpinner="False"/>
+                        <TextBlock Grid.Column="3" Text=":" VerticalAlignment="Center" Margin="6,0"/>
+                        <NumericUpDown x:Name="SecondsBox" Grid.Column="4" Minimum="0" Maximum="59" Increment="1" ShowButtonSpinner="False"/>
+                    </Grid>
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <Border x:Name="BadgesGroup"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6" Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock Classes="sectionHeader" Text="Badges"/>
+                <UniformGrid x:Name="BadgePanel" Columns="4"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked"/>
+            <Button Content="Save" MinWidth="96" Click="OnSaveClicked"/>
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

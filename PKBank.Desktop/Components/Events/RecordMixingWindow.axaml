@@ -1,0 +1,43 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Components.Events.RecordMixingWindow"
+        Title="Record Mixing Gift"
+        Width="420" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="14" Spacing="12">
+        <Border
+            BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock
+                    Opacity="0.7"
+                    FontSize="12"
+                    TextWrapping="Wrap"
+                    Text="The item is sent to other players you mix records with, until the counter reaches 0." />
+
+                <Grid ColumnDefinitions="90,*" Margin="0,4,0,0">
+                    <TextBlock Text="Item" VerticalAlignment="Center" Opacity="0.8" />
+                    <ComboBox
+                        x:Name="ItemCombo"
+                        Grid.Column="1"
+                        HorizontalAlignment="Stretch"
+                        SelectionChanged="OnItemChanged" />
+                </Grid>
+
+                <Grid ColumnDefinitions="90,*">
+                    <TextBlock Text="Count" VerticalAlignment="Center" Opacity="0.8" />
+                    <NumericUpDown x:Name="CountBox" Grid.Column="1" Minimum="0" Maximum="255" Increment="1" />
+                </Grid>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked" />
+            <Button Content="Save" MinWidth="96" Click="OnSaveClicked" />
+        </StackPanel>
+    </StackPanel>
+</Window>

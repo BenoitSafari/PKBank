@@ -1,0 +1,77 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:core="using:PKHeX.Core"
+        x:Class="PKBank.Desktop.Components.Roamer.Roamer3EditorWindow"
+        Title="Roamer Editor"
+        Width="430" SizeToContent="Height"
+        CanResize="False"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Resources>
+        <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
+            <TextBlock Text="{Binding Text}"/>
+        </DataTemplate>
+    </Window.Resources>
+
+    <Window.Styles>
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+    </Window.Styles>
+
+    <StackPanel Margin="14" Spacing="12">
+
+        <Border BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
+                BorderThickness="1" CornerRadius="6" Padding="12">
+            <StackPanel Spacing="6">
+                <TextBlock Text="Roamer" FontWeight="SemiBold" Margin="2,0,0,6"/>
+
+                <Grid ColumnDefinitions="110,*">
+                    <TextBlock Classes="fieldLabel" Text="Species"/>
+                    <ComboBox x:Name="SpeciesCombo" Grid.Column="1" HorizontalAlignment="Stretch"
+                              ItemTemplate="{StaticResource ComboItemTemplate}"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="110,*,Auto">
+                    <TextBlock Classes="fieldLabel" Text="PID"/>
+                    <TextBox x:Name="PidBox" Grid.Column="1" MaxLength="8" TextChanged="OnPidChanged"/>
+                    <CheckBox x:Name="ShinyCheck" Grid.Column="2" Content="Shiny" IsEnabled="False" Margin="10,0,0,0"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="110,*,110,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4,0,0">
+                    <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="HP IV"/>
+                    <NumericUpDown x:Name="IvHp" Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2"/>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Classes="fieldLabel" Text="Attack IV"/>
+                    <NumericUpDown x:Name="IvAtk" Grid.Row="0" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2"/>
+
+                    <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Defense IV"/>
+                    <NumericUpDown x:Name="IvDef" Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2"/>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Classes="fieldLabel" Text="Sp. Atk IV"/>
+                    <NumericUpDown x:Name="IvSpa" Grid.Row="1" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2"/>
+
+                    <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Sp. Def IV"/>
+                    <NumericUpDown x:Name="IvSpd" Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2"/>
+                    <TextBlock Grid.Row="2" Grid.Column="2" Classes="fieldLabel" Text="Speed IV"/>
+                    <NumericUpDown x:Name="IvSpe" Grid.Row="2" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2"/>
+                </Grid>
+
+                <Grid ColumnDefinitions="110,*,110,*" Margin="0,4,0,0">
+                    <TextBlock Classes="fieldLabel" Text="Level"/>
+                    <NumericUpDown x:Name="LevelBox" Grid.Column="1" Minimum="0" Maximum="100" Increment="1" ShowButtonSpinner="False" Margin="0,0,10,0"/>
+                    <TextBlock Grid.Column="2" Classes="fieldLabel" Text="Current HP"/>
+                    <NumericUpDown x:Name="HpBox" Grid.Column="3" Minimum="0" Maximum="65535" Increment="1" ShowButtonSpinner="False"/>
+                </Grid>
+
+                <CheckBox x:Name="ActiveCheck" Content="Roamer is active" Margin="0,4,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="8">
+            <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked"/>
+            <Button Content="Save" MinWidth="96" Click="OnSaveClicked"/>
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

@@ -9,8 +9,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
-using PKBank.Desktop.ViewModels;
-using PKBank.Desktop.Views.Components.Common.ConfirmationWindow;
+using PKBank.Desktop.Components;
+using PKBank.Desktop.Components.Box.ViewModels;
+using PKBank.Desktop.Components.Common.ConfirmationWindow;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Utils;

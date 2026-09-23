@@ -1,0 +1,147 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.Components.PokemonEditor.ViewModels"
+             xmlns:u="using:PKBank.Desktop.Utils"
+             xmlns:pe="using:PKBank.Desktop.Components.PokemonEditor"
+             xmlns:core="using:PKHeX.Core"
+             x:Class="PKBank.Desktop.Components.PokemonEditor.PokemonEditorView"
+             x:DataType="vm:PokemonEditorViewModel">
+
+    <UserControl.Resources>
+        <DataTemplate x:Key="ComboItemTemplate" DataType="core:ComboItem">
+            <TextBlock Text="{Binding Text}"/>
+        </DataTemplate>
+        <!-- Species entries carry their National Dex number, like the move list carries its category. -->
+        <DataTemplate x:Key="SpeciesChoiceTemplate" DataType="core:ComboItem">
+            <Grid ColumnDefinitions="Auto,*">
+                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1" Text="{Binding Value, Converter={x:Static u:Converters.DexNumber}}"
+                           VerticalAlignment="Center" Margin="7,0,0,0"
+                           Opacity="0.6" FontSize="12"/>
+            </Grid>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.fieldLabel">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+            <Setter Property="Opacity" Value="0.85"/>
+        </Style>
+        <Style Selector="ComboBox.field">
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="Margin" Value="0,2"/>
+        </Style>
+    </UserControl.Styles>
+
+    <ScrollViewer>
+        <StackPanel Spacing="10" Margin="0,0,8,0">
+
+            <pe:PokemonEditorHeader/>
+
+            <!-- Main fields -->
+            <Grid ColumnDefinitions="90,*"
+                  RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                  Margin="0,8,0,0">
+                <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel"
+                           Text="PID"
+                           IsVisible="{Binding HasPID}" />
+                <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal" Spacing="6" Margin="0,2"
+                            IsVisible="{Binding HasPID}">
+                    <TextBox Text="{Binding PIDText, Mode=TwoWay}"
+                             MaxLength="8"
+                             Width="120"
+                             HorizontalContentAlignment="Center"
+                             FontFamily="monospace"
+                             LostFocus="OnPidLostFocus"/>
+                    <Button Content="♻"
+                            MinWidth="34"
+                            Click="OnRerollPidClicked"
+                            ToolTip.Tip="Generate a new valid PID"/>
+                </StackPanel>
+
+                <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Species"/>
+                <ComboBox Grid.Row="1" Grid.Column="1" Classes="field"
+                          ItemsSource="{Binding SpeciesList}"
+                          ItemTemplate="{StaticResource SpeciesChoiceTemplate}"
+                          SelectedValueBinding="{ReflectionBinding Value}"
+                          SelectedValue="{Binding Species, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Form" IsVisible="{Binding HasForms}"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" Classes="field" IsVisible="{Binding HasForms}"
+                          ItemsSource="{Binding FormList}"
+                          SelectedItem="{Binding SelectedForm, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="3" Grid.Column="0" Classes="fieldLabel" Text="Nickname"/>
+                <Grid Grid.Row="3" Grid.Column="1" ColumnDefinitions="*,Auto">
+                    <TextBox Grid.Column="0" Text="{Binding Nickname, Mode=TwoWay}" Margin="0,2"/>
+                    <CheckBox Grid.Column="1" Content="Nicknamed" Margin="8,0,0,0" IsChecked="{Binding IsNicknamed, Mode=TwoWay}"/>
+                </Grid>
+
+                <TextBlock Grid.Row="4" Grid.Column="0" Classes="fieldLabel" Text="Level"/>
+                <NumericUpDown Grid.Row="4" Grid.Column="1" Minimum="1" Maximum="100" Increment="1"
+                               Value="{Binding Level, Mode=TwoWay}" Margin="0,2" Width="120" HorizontalAlignment="Left"/>
+
+                <TextBlock Grid.Row="5" Grid.Column="0" Classes="fieldLabel" Text="Nature" IsVisible="{Binding HasNature}"/>
+                <ComboBox Grid.Row="5" Grid.Column="1" Classes="field" IsVisible="{Binding HasNature}"
+                          ItemsSource="{Binding NatureList}"
+                          ItemTemplate="{StaticResource ComboItemTemplate}"
+                          SelectedValueBinding="{ReflectionBinding Value}"
+                          SelectedValue="{Binding Nature, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="6" Grid.Column="0" Classes="fieldLabel" Text="Ability" IsVisible="{Binding HasAbility}"/>
+                <ComboBox Grid.Row="6" Grid.Column="1" Classes="field" IsVisible="{Binding HasAbility}"
+                          ItemsSource="{Binding AbilityList}"
+                          ItemTemplate="{StaticResource ComboItemTemplate}"
+                          SelectedItem="{Binding SelectedAbility, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="7" Grid.Column="0" Classes="fieldLabel" Text="Held Item" IsVisible="{Binding HasItem}"/>
+                <ComboBox Grid.Row="7" Grid.Column="1" Classes="field" IsVisible="{Binding HasItem}"
+                          ItemsSource="{Binding ItemList}"
+                          ItemTemplate="{StaticResource ComboItemTemplate}"
+                          SelectedValueBinding="{ReflectionBinding Value}"
+                          SelectedValue="{Binding HeldItem, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="8" Grid.Column="0" Classes="fieldLabel" Text="Ball" IsVisible="{Binding HasBall}"/>
+                <ComboBox Grid.Row="8" Grid.Column="1" Classes="field" IsVisible="{Binding HasBall}"
+                          ItemsSource="{Binding BallList}"
+                          SelectedValueBinding="{ReflectionBinding Value}"
+                          SelectedValue="{Binding Ball, Mode=TwoWay}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate DataType="core:ComboItem">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <Image Source="{Binding Value, Converter={x:Static u:Converters.BallSprite}}"
+                                       Width="20" Height="20" Stretch="None"/>
+                                <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+
+                <TextBlock Grid.Row="9" Grid.Column="0" Classes="fieldLabel" Text="Language" IsVisible="{Binding HasLanguage}"/>
+                <ComboBox Grid.Row="9" Grid.Column="1" Classes="field" IsVisible="{Binding HasLanguage}"
+                          ItemsSource="{Binding LanguageList}"
+                          ItemTemplate="{StaticResource ComboItemTemplate}"
+                          SelectedValueBinding="{ReflectionBinding Value}"
+                          SelectedValue="{Binding Language, Mode=TwoWay}"/>
+
+                <TextBlock Grid.Row="10" Grid.Column="0" Classes="fieldLabel" Text="Pokérus" IsVisible="{Binding HasPokerus}"/>
+                <ComboBox Grid.Row="10" Grid.Column="1" Classes="field" IsVisible="{Binding HasPokerus}"
+                          ItemsSource="{x:Static vm:PokemonEditorViewModel.PokerusOptions}"
+                          SelectedIndex="{Binding PokerusStatus, Mode=TwoWay}"/>
+            </Grid>
+
+            <pe:PokemonEditorMoves/>
+
+            <pe:PokemonEditorStats/>
+
+            <pe:PokemonEditorOrigin/>
+
+            <Button Content="Export…" Margin="0,8,0,4" HorizontalAlignment="Left"
+                    IsEnabled="{Binding HasSpecies}" Click="OnExportClicked"
+                    ToolTip.Tip="Export the Pokémon currently in the editor (with pending edits) to a file"/>
+
+        </StackPanel>
+    </ScrollViewer>
+
+</UserControl>

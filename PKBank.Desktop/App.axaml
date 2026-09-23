@@ -1,8 +1,8 @@
 <Application xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:vm="using:PKBank.Desktop.ViewModels"
+             xmlns:vm="using:PKBank.Desktop.Components.Box.ViewModels"
              xmlns:u="using:PKBank.Desktop.Utils"
-             xmlns:box="using:PKBank.Desktop.Views.Components.Box"
+             xmlns:box="using:PKBank.Desktop.Components.Box"
              x:Class="PKBank.Desktop.App"
              RequestedThemeVariant="Default">
 
@@ -48,7 +48,7 @@
 
   <Application.Styles>
     <FluentTheme />
-    <StyleInclude Source="avares://PKBank.Desktop/Views/Components/Box/BoxStyles.axaml" />
+    <StyleInclude Source="avares://PKBank.Desktop/Components/Box/BoxStyles.axaml" />
 
 
     <Style Selector="ScrollViewer">

@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.Utils;
-using PKBank.Desktop.ViewModels;
+using PKBank.Desktop.Components;
+using PKBank.Desktop.Components.Box.ViewModels;
 using PKHeX.Core;
 
 namespace PKBank.Desktop.Services.Slots;
