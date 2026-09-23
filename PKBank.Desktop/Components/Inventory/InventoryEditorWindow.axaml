@@ -14,15 +14,6 @@
         </DataTemplate>
     </Window.Resources>
 
-    <Window.Styles>
-        <!-- Fluent tab headers default to 24px text; match the button text size. -->
-        <Style Selector="TabItem">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="MinHeight" Value="32"/>
-        </Style>
-    </Window.Styles>
-
     <Grid RowDefinitions="*,Auto" Margin="14">
 
         <TabControl x:Name="PouchTabs" Grid.Row="0">
@@ -37,8 +28,8 @@
                             BorderThickness="1" CornerRadius="6" Margin="0,6,0,0">
                         <Grid RowDefinitions="Auto,*">
                             <Grid ColumnDefinitions="*,120" Margin="10,8,26,4">
-                                <TextBlock Grid.Column="0" Text="Item" Opacity="0.7" FontSize="12"/>
-                                <TextBlock Grid.Column="1" Text="Count" Opacity="0.7" FontSize="12" HorizontalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Text="Item" Opacity="0.7" FontSize="{DynamicResource FontSizeRegular}"/>
+                                <TextBlock Grid.Column="1" Text="Count" Opacity="0.7" FontSize="{DynamicResource FontSizeRegular}" HorizontalAlignment="Center"/>
                             </Grid>
                             <ListBox Grid.Row="1" ItemsSource="{Binding Rows}">
                                 <ListBox.Styles>

@@ -1,0 +1,826 @@
+<Styles xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:system="clr-namespace:System;assembly=System.Runtime">
+
+    <Styles.Resources>
+        <ResourceDictionary>
+            <system:Double x:Key="FontSizeSmall">10</system:Double>
+            <system:Double x:Key="FontSizeRegular">12</system:Double>
+            <system:Double x:Key="FontSizeLarge">14</system:Double>
+            <system:Double x:Key="FontSizeExtraLarge">18</system:Double>
+            <CornerRadius x:Key="BaseRadius">4</CornerRadius>
+            <Thickness x:Key="BaseInputPadding">8,4</Thickness>
+            <system:Double x:Key="BaseInputHeight">28</system:Double>
+
+            <!-- Spinner glyphs as "+" / "-" buttons. -->
+            <ControlTheme x:Key="SpinnerRepeatButton" TargetType="RepeatButton">
+                <Setter Property="Background" Value="Transparent" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="MinHeight" Value="0" />
+                <Setter Property="Padding" Value="8,0" />
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeLarge}" />
+                <Setter Property="FontWeight" Value="Bold" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <ContentPresenter
+                            Name="PART_ContentPresenter"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Content="{TemplateBinding Content}"
+                            ContentTemplate="{TemplateBinding ContentTemplate}"
+                            Padding="{TemplateBinding Padding}"
+                            HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                            VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </ControlTemplate>
+                </Setter>
+                <Style Selector="^:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPointerOver}" />
+                </Style>
+                <Style Selector="^:pressed /template/ ContentPresenter#PART_ContentPresenter">
+                    <Setter Property="Background" Value="{DynamicResource ButtonBackgroundPressed}" />
+                </Style>
+                <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+                    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
+                </Style>
+            </ControlTheme>
+            <ControlTheme x:Key="{x:Type ButtonSpinner}" TargetType="ButtonSpinner">
+                <Setter Property="Foreground" Value="{DynamicResource TextControlForeground}" />
+                <Setter Property="Background" Value="{DynamicResource TextControlBackground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TextControlBorderBrush}" />
+                <Setter Property="BorderThickness" Value="{DynamicResource TextControlBorderThemeThickness}" />
+                <Setter Property="CornerRadius" Value="{DynamicResource BaseRadius}" />
+                <Setter Property="Height" Value="{DynamicResource BaseInputHeight}" />
+                <Setter Property="Padding" Value="{DynamicResource BaseInputPadding}" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Focusable" Value="True" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <DataValidationErrors>
+                            <Border
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}"
+                                MinHeight="{TemplateBinding MinHeight}"
+                                ClipToBounds="True">
+                                <DockPanel>
+                                    <StackPanel
+                                        Name="PART_SpinnerPanel"
+                                        TabIndex="2"
+                                        DockPanel.Dock="Right"
+                                        Orientation="Horizontal"
+                                        IsVisible="{TemplateBinding ShowButtonSpinner}">
+                                        <RepeatButton
+                                            Name="PART_DecreaseButton"
+                                            Content="-"
+                                            Theme="{StaticResource SpinnerRepeatButton}"
+                                            IsTabStop="{TemplateBinding IsTabStop}"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="1,0,0,0"
+                                            Width="28"
+                                            VerticalAlignment="Stretch" />
+                                        <RepeatButton
+                                            Name="PART_IncreaseButton"
+                                            Content="+"
+                                            Theme="{StaticResource SpinnerRepeatButton}"
+                                            IsTabStop="{TemplateBinding IsTabStop}"
+                                            Foreground="{TemplateBinding Foreground}"
+                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                            BorderThickness="1,0,0,0"
+                                            Width="28"
+                                            VerticalAlignment="Stretch" />
+                                    </StackPanel>
+                                    <ContentPresenter
+                                        Name="PART_ContentPresenter"
+                                        TabIndex="1"
+                                        ContentTemplate="{TemplateBinding ContentTemplate}"
+                                        Content="{TemplateBinding Content}"
+                                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        Padding="{TemplateBinding Padding}" />
+                                </DockPanel>
+                            </Border>
+                        </DataValidationErrors>
+                    </ControlTemplate>
+                </Setter>
+                <Style Selector="^:left">
+                    <Style Selector="^ /template/ StackPanel#PART_SpinnerPanel">
+                        <Setter Property="DockPanel.Dock" Value="Left" />
+                    </Style>
+                    <Style Selector="^ /template/ RepeatButton">
+                        <Setter Property="BorderThickness" Value="0,0,1,0" />
+                    </Style>
+                </Style>
+                <Style Selector="^:error">
+                    <Setter Property="BorderBrush" Value="{DynamicResource SystemErrorTextColor}" />
+                </Style>
+            </ControlTheme>
+
+            <!-- Folder-style tabs instead of Fluent's underlined labels: the strip overhangs the panel
+                 by one pixel, and the selected tab drops its bottom border and takes the panel's own
+                 background, so the two read as a single surface. -->
+            <ControlTheme x:Key="{x:Type TabItem}" TargetType="TabItem">
+                <Setter Property="Background" Value="{DynamicResource TabItemBackgroundUnselected}" />
+                <Setter Property="Foreground" Value="{DynamicResource TabItemForegroundUnselected}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TabBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="4,4,0,0" />
+                <Setter Property="FontSize" Value="{DynamicResource FontSizeRegular}" />
+                <Setter Property="FontWeight" Value="Normal" />
+                <Setter Property="Padding" Value="14,5" />
+                <Setter Property="MinHeight" Value="0" />
+                <!-- Unselected tabs sit two pixels lower; the negative right margin makes neighbours
+                     share a single border line. -->
+                <Setter Property="Margin" Value="0,2,-1,0" />
+                <Setter Property="HorizontalContentAlignment" Value="Center" />
+                <Setter Property="VerticalContentAlignment" Value="Center" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Border
+                            Name="PART_LayoutRoot"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Padding="{TemplateBinding Padding}">
+                            <ContentPresenter
+                                Name="PART_ContentPresenter"
+                                Content="{TemplateBinding Header}"
+                                ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                        </Border>
+                    </ControlTemplate>
+                </Setter>
+                <Style Selector="^ /template/ ContentPresenter#PART_ContentPresenter">
+                    <Setter Property="RecognizesAccessKey" Value="True" />
+                </Style>
+                <Style Selector="^:pointerover /template/ Border#PART_LayoutRoot">
+                    <Setter Property="Background" Value="{DynamicResource TabItemBackgroundPointerOver}" />
+                </Style>
+                <Style Selector="^:selected">
+                    <Setter Property="Background" Value="{DynamicResource TabPanelBackground}" />
+                    <Setter Property="Foreground" Value="{DynamicResource TabItemForeground}" />
+                    <Setter Property="FontWeight" Value="SemiBold" />
+                    <Setter Property="Margin" Value="0,0,-1,0" />
+                    <Setter Property="BorderThickness" Value="1,1,1,0" />
+                    <!-- Above its neighbours so the shared border reads as the selected tab's own -->
+                    <Setter Property="ZIndex" Value="1" />
+                </Style>
+                <Style Selector="^:selected:pointerover /template/ Border#PART_LayoutRoot">
+                    <Setter Property="Background" Value="{DynamicResource TabPanelBackground}" />
+                </Style>
+                <Style Selector="^:disabled">
+                    <Setter Property="Foreground" Value="{DynamicResource ButtonForegroundDisabled}" />
+                </Style>
+            </ControlTheme>
+
+            <ControlTheme x:Key="{x:Type TabControl}" TargetType="TabControl">
+                <Setter Property="Background" Value="{DynamicResource TabPanelBackground}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource TabBorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <!-- Square top-left corner: the first tab lands on it -->
+                <Setter Property="CornerRadius" Value="0,4,4,4" />
+                <Setter Property="Padding" Value="12" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                <Setter Property="Template">
+                    <ControlTemplate>
+                        <Grid RowDefinitions="Auto,*">
+                            <Border
+                                Grid.Row="1"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="{TemplateBinding CornerRadius}">
+                                <Panel ClipToBounds="True">
+                                    <ContentPresenter
+                                        Name="PART_SelectedContentHost2"
+                                        Margin="{TemplateBinding Padding}"
+                                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                        IsVisible="False" />
+                                    <ContentPresenter
+                                        Name="PART_SelectedContentHost"
+                                        Margin="{TemplateBinding Padding}"
+                                        HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                        VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}" />
+                                </Panel>
+                            </Border>
+                            <!-- Declared after the panel so it paints on top of it, and pulled down one
+                                 pixel so the selected tab covers the panel's top border line. -->
+                            <ItemsPresenter
+                                Name="PART_ItemsPresenter"
+                                ItemsPanel="{TemplateBinding ItemsPanel}"
+                                Margin="0,0,0,-1" />
+                        </Grid>
+                    </ControlTemplate>
+                </Setter>
+            </ControlTheme>
+
+            <ResourceDictionary.ThemeDictionaries>
+
+                <!-- ============================== Dark (from kdeglobals) ============================== -->
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="ThemeWindowColor">#222226</Color>
+                    <Color x:Key="ThemeViewColor">#1D1D20</Color>
+                    <Color x:Key="ThemeButtonColor">#3B3B40</Color>
+                    <Color x:Key="ThemeTooltipColor">#141416</Color>
+                    <Color x:Key="ThemeForegroundColor">#FFFFFF</Color>
+                    <Color x:Key="ThemeForegroundMutedColor">#8E8E91</Color>
+                    <Color x:Key="ThemeForegroundDisabledColor">#5C5C60</Color>
+                    <Color x:Key="ThemeBorderColor">#4A4A50</Color>
+                    <Color x:Key="ThemeHoverColor">#48484E</Color>
+                    <Color x:Key="ThemePressedColor">#2A2A2E</Color>
+                    <Color x:Key="ThemeAccentColor">#3584E4</Color>
+                    <Color x:Key="ThemeAccentLight1Color">#78AEED</Color>
+                    <Color x:Key="ThemeAccentLight2Color">#9AC3F1</Color>
+                    <Color x:Key="ThemeAccentDark1Color">#2F72C2</Color>
+
+                    <!-- Window chrome -->
+                    <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="{StaticResource ThemeWindowColor}" />
+                    <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{StaticResource ThemeForegroundColor}" />
+
+                    <!-- Base tokens generic Fluent chrome (TextBlock, panels) reads from -->
+                    <SolidColorBrush x:Key="SystemBaseHighColor" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="SystemBaseMediumHighColor"
+                                     Color="{StaticResource ThemeForegroundMutedColor}" />
+                    <SolidColorBrush x:Key="SystemBaseMediumColor" Color="{StaticResource ThemeForegroundMutedColor}" />
+                    <SolidColorBrush x:Key="SystemBaseMediumLowColor"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="SystemBaseLowColor" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="SystemAltHighColor" Color="{StaticResource ThemeViewColor}" />
+                    <Color x:Key="SystemAccentColor">#3584E4</Color>
+
+                    <!-- Button -->
+                    <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="{StaticResource ThemeButtonColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="{StaticResource ThemeBorderColor}"
+                                     Opacity="0.5" />
+
+                    <!-- CheckBox -->
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUnchecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUncheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUncheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUncheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUnchecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUncheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUncheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUncheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundChecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundCheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundCheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundCheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushChecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushCheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushCheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushCheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminate" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminatePointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminatePressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminateDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminate" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminatePointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminatePressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminateDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxForegroundUnchecked" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="CheckBoxForegroundChecked" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="CheckBoxForegroundIndeterminate"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUnchecked"
+                                     Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked"
+                                     Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPressed"
+                                     Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedDisabled"
+                                     Color="{StaticResource ThemeButtonColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedDisabled"
+                                     Color="{StaticResource ThemeBorderColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminate"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminate"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminatePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminatePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminateDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminateDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundUnchecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="White" />
+                    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundIndeterminate" Color="White" />
+
+                    <!-- RadioButton: same split as CheckBox -->
+                    <SolidColorBrush x:Key="RadioButtonBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBackgroundPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBackgroundPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBackgroundDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrushPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrushPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrushDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="RadioButtonForegroundPointerOver"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="RadioButtonForegroundPressed" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="RadioButtonForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFill" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStroke" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFillPointerOver"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStrokePointerOver"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFillPressed"
+                                     Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStrokePressed"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFillDisabled"
+                                     Color="{StaticResource ThemeButtonColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStrokeDisabled"
+                                     Color="{StaticResource ThemeBorderColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFill"
+                                     Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStroke"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPointerOver"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStrokePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPressed"
+                                     Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStrokePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillDisabled"
+                                     Color="{StaticResource ThemeButtonColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStrokeDisabled"
+                                     Color="{StaticResource ThemeBorderColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStroke" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStrokePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStrokePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStrokeDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+
+                    <!-- TextBox -->
+                    <SolidColorBrush x:Key="TextControlBackground" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="{StaticResource ThemeViewColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="TextControlForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TextControlForegroundPointerOver"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TextControlForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource ThemeBorderColor}"
+                                     Opacity="0.5" />
+
+                    <!-- ComboBox -->
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="{StaticResource ThemeButtonColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="{StaticResource ThemeBorderColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushUnfocused"
+                                     Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+
+                    <!-- ListBoxItem selection -->
+                    <SolidColorBrush x:Key="SystemControlHighlightListLowBrush"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListMediumBrush"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.3" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.45" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.6" />
+                    <SolidColorBrush x:Key="SystemControlHighlightAltBaseHighBrush"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="SystemControlDisabledBaseMediumLowBrush"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+
+                    <!-- ScrollBar -->
+                    <Color x:Key="ScrollBarThumbBackgroundColor">#5A5A60</Color>
+                    <SolidColorBrush x:Key="ScrollBarTrackFill" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="{StaticResource ThemeAccentColor}"
+                                     Opacity="0.6" />
+                    <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="{StaticResource ThemeAccentColor}"
+                                     Opacity="0.8" />
+                    <SolidColorBrush x:Key="ScrollBarThumbFillDisabled" Color="{StaticResource ThemeBorderColor}" />
+
+                    <!-- ToolTip -->
+                    <!-- Tabs: the selected one shares the panel's background so the two merge -->
+                    <SolidColorBrush x:Key="TabBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="TabPanelBackground" Color="{StaticResource ThemeWindowColor}" />
+                    <SolidColorBrush x:Key="TabItemBackgroundUnselected" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TabItemBackgroundPointerOver" Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="TabItemForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TabItemForegroundUnselected" Color="{StaticResource ThemeForegroundMutedColor}" />
+
+                    <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource ThemeTooltipColor}" />
+                    <SolidColorBrush x:Key="ToolTipForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                </ResourceDictionary>
+
+                <!-- ============================== Light (from BreezeLight.colors) ============================== -->
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="ThemeWindowColor">#EFF0F1</Color>
+                    <Color x:Key="ThemeViewColor">#FFFFFF</Color>
+                    <Color x:Key="ThemeButtonColor">#FCFCFC</Color>
+                    <Color x:Key="ThemeTooltipColor">#F7F7F7</Color>
+                    <Color x:Key="ThemeForegroundColor">#232629</Color>
+                    <Color x:Key="ThemeForegroundMutedColor">#707D8A</Color>
+                    <Color x:Key="ThemeForegroundDisabledColor">#A0A5A9</Color>
+                    <Color x:Key="ThemeBorderColor">#BABEC2</Color>
+                    <Color x:Key="ThemeHoverColor">#E3E5E7</Color>
+                    <Color x:Key="ThemePressedColor">#D4D6D9</Color>
+                    <Color x:Key="ThemeAccentColor">#3DAEE9</Color>
+                    <Color x:Key="ThemeAccentLight1Color">#71C6EF</Color>
+                    <Color x:Key="ThemeAccentLight2Color">#9AD5F3</Color>
+                    <Color x:Key="ThemeAccentDark1Color">#2F8CBD</Color>
+
+                    <SolidColorBrush x:Key="ThemeBackgroundBrush" Color="{StaticResource ThemeWindowColor}" />
+                    <SolidColorBrush x:Key="ThemeForegroundBrush" Color="{StaticResource ThemeForegroundColor}" />
+
+                    <SolidColorBrush x:Key="SystemBaseHighColor" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="SystemBaseMediumHighColor"
+                                     Color="{StaticResource ThemeForegroundMutedColor}" />
+                    <SolidColorBrush x:Key="SystemBaseMediumColor" Color="{StaticResource ThemeForegroundMutedColor}" />
+                    <SolidColorBrush x:Key="SystemBaseMediumLowColor"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="SystemBaseLowColor" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="SystemAltHighColor" Color="{StaticResource ThemeViewColor}" />
+                    <Color x:Key="SystemAccentColor">#3DAEE9</Color>
+
+                    <SolidColorBrush x:Key="ButtonBackground" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="ButtonBackgroundDisabled" Color="{StaticResource ThemeButtonColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="ButtonForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundPressed" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ButtonForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPointerOver" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushPressed" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ButtonBorderBrushDisabled" Color="{StaticResource ThemeBorderColor}"
+                                     Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUnchecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUncheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUncheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundUncheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUnchecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUncheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUncheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushUncheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundChecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundCheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundCheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundCheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushChecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushCheckedPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushCheckedPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushCheckedDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminate" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminatePointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminatePressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBackgroundIndeterminateDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminate" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminatePointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminatePressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxBorderBrushIndeterminateDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxForegroundUnchecked" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="CheckBoxForegroundChecked" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="CheckBoxForegroundIndeterminate"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUnchecked"
+                                     Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUnchecked"
+                                     Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPointerOver"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPointerOver"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedPressed"
+                                     Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedPressed"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillUncheckedDisabled"
+                                     Color="{StaticResource ThemeButtonColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeUncheckedDisabled"
+                                     Color="{StaticResource ThemeBorderColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillChecked"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedPressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedPressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillCheckedDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeCheckedDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminate"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminate"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminatePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminatePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminatePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundFillIndeterminateDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="CheckBoxCheckBackgroundStrokeIndeterminateDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundUnchecked" Color="Transparent" />
+                    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundChecked" Color="White" />
+                    <SolidColorBrush x:Key="CheckBoxCheckGlyphForegroundIndeterminate" Color="White" />
+
+                    <SolidColorBrush x:Key="RadioButtonBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBackgroundPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBackgroundPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBackgroundDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrushPointerOver" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrushPressed" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonBorderBrushDisabled" Color="Transparent" />
+                    <SolidColorBrush x:Key="RadioButtonForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="RadioButtonForegroundPointerOver"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="RadioButtonForegroundPressed" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="RadioButtonForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFill" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStroke" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFillPointerOver"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStrokePointerOver"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFillPressed"
+                                     Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStrokePressed"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseFillDisabled"
+                                     Color="{StaticResource ThemeButtonColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseStrokeDisabled"
+                                     Color="{StaticResource ThemeBorderColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFill"
+                                     Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStroke"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPointerOver"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStrokePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillPressed"
+                                     Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStrokePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedFillDisabled"
+                                     Color="{StaticResource ThemeButtonColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="RadioButtonOuterEllipseCheckedStrokeDisabled"
+                                     Color="{StaticResource ThemeBorderColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFill" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStroke" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStrokePointerOver"
+                                     Color="{StaticResource ThemeAccentLight1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillPressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStrokePressed"
+                                     Color="{StaticResource ThemeAccentDark1Color}" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphFillDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+                    <SolidColorBrush x:Key="RadioButtonCheckGlyphStrokeDisabled"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="TextControlBackground" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundPointerOver" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundFocused" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TextControlBackgroundDisabled" Color="{StaticResource ThemeViewColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="TextControlForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TextControlForegroundPointerOver"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TextControlForegroundFocused" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TextControlForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushPointerOver"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushFocused" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="TextControlBorderBrushDisabled" Color="{StaticResource ThemeBorderColor}"
+                                     Opacity="0.5" />
+
+                    <SolidColorBrush x:Key="ComboBoxBackground" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="{StaticResource ThemePressedColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundDisabled" Color="{StaticResource ThemeButtonColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="{StaticResource ThemeButtonColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundDisabled"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPointerOver" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushPressed" Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBorderBrushDisabled" Color="{StaticResource ThemeBorderColor}"
+                                     Opacity="0.5" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused"
+                                     Color="{StaticResource ThemeAccentColor}" />
+                    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushUnfocused"
+                                     Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+
+                    <SolidColorBrush x:Key="SystemControlHighlightListLowBrush"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListMediumBrush"
+                                     Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListAccentLowBrush"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.2" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListAccentMediumBrush"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.3" />
+                    <SolidColorBrush x:Key="SystemControlHighlightListAccentHighBrush"
+                                     Color="{StaticResource ThemeAccentColor}" Opacity="0.45" />
+                    <SolidColorBrush x:Key="SystemControlHighlightAltBaseHighBrush"
+                                     Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="SystemControlDisabledBaseMediumLowBrush"
+                                     Color="{StaticResource ThemeForegroundDisabledColor}" />
+
+                    <Color x:Key="ScrollBarThumbBackgroundColor">#B7BBBE</Color>
+                    <SolidColorBrush x:Key="ScrollBarTrackFill" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="ScrollBarThumbFillPointerOver" Color="{StaticResource ThemeAccentColor}"
+                                     Opacity="0.6" />
+                    <SolidColorBrush x:Key="ScrollBarThumbFillPressed" Color="{StaticResource ThemeAccentColor}"
+                                     Opacity="0.8" />
+                    <SolidColorBrush x:Key="ScrollBarThumbFillDisabled" Color="{StaticResource ThemeBorderColor}" />
+
+                    <!-- Tabs: the selected one shares the panel's background so the two merge -->
+                    <SolidColorBrush x:Key="TabBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                    <SolidColorBrush x:Key="TabPanelBackground" Color="{StaticResource ThemeWindowColor}" />
+                    <SolidColorBrush x:Key="TabItemBackgroundUnselected" Color="{StaticResource ThemeViewColor}" />
+                    <SolidColorBrush x:Key="TabItemBackgroundPointerOver" Color="{StaticResource ThemeHoverColor}" />
+                    <SolidColorBrush x:Key="TabItemForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="TabItemForegroundUnselected" Color="{StaticResource ThemeForegroundMutedColor}" />
+
+                    <SolidColorBrush x:Key="ToolTipBackground" Color="{StaticResource ThemeTooltipColor}" />
+                    <SolidColorBrush x:Key="ToolTipForeground" Color="{StaticResource ThemeForegroundColor}" />
+                    <SolidColorBrush x:Key="ToolTipBorderBrush" Color="{StaticResource ThemeBorderColor}" />
+                </ResourceDictionary>
+
+            </ResourceDictionary.ThemeDictionaries>
+        </ResourceDictionary>
+    </Styles.Resources>
+
+    <Style Selector="Window">
+        <Setter Property="Background" Value="{DynamicResource ThemeBackgroundBrush}" />
+    </Style>
+
+    <Style Selector="Button">
+        <Setter Property="Padding" Value="{DynamicResource BaseInputPadding}" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeRegular}" />
+        <Setter Property="FontWeight" Value="Normal" />
+        <Setter Property="MinHeight" Value="{DynamicResource BaseInputHeight}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- Each control type takes its height from a different Fluent resource (26 for TextBox, 25 for
+         ComboBox, …), so a row of mixed inputs never lines up. They all go through BaseInputHeight. -->
+    <Style Selector="TextBox">
+        <Setter Property="Padding" Value="{DynamicResource BaseInputPadding}" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeRegular}" />
+        <Setter Property="MinHeight" Value="{DynamicResource BaseInputHeight}" />
+    </Style>
+
+    <Style Selector="NumericUpDown">
+        <Setter Property="Padding" Value="{DynamicResource BaseInputPadding}" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeRegular}" />
+        <Setter Property="MinHeight" Value="{DynamicResource BaseInputHeight}" />
+    </Style>
+
+    <Style Selector="ComboBox">
+        <Setter Property="Padding" Value="{DynamicResource BaseInputPadding}" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeRegular}" />
+        <Setter Property="MinHeight" Value="{DynamicResource BaseInputHeight}" />
+    </Style>
+    <Style Selector="ComboBoxItem">
+        <Setter Property="Padding" Value="{DynamicResource BaseInputPadding}" />
+        <Setter Property="FontSize" Value="{DynamicResource FontSizeRegular}" />
+        <Setter Property="CornerRadius" Value="{DynamicResource BaseRadius}" />
+    </Style>
+
+    <Style Selector="ScrollViewer">
+        <Setter Property="AllowAutoHide" Value="False" />
+    </Style>
+    <Style Selector="ScrollBar">
+        <Setter Property="AllowAutoHide" Value="False" />
+    </Style>
+    <Style Selector="ListBox">
+        <Setter Property="ScrollViewer.AllowAutoHide" Value="False" />
+    </Style>
+
+</Styles>

@@ -6,77 +6,50 @@
              x:Class="PKBank.Desktop.App"
              RequestedThemeVariant="Default">
 
-  <!-- Implicit templates: storage view-models render the same way in every window. -->
-  <Application.DataTemplates>
-    <DataTemplate DataType="vm:SlotViewModel">
-      <box:SlotView />
-    </DataTemplate>
-    <DataTemplate DataType="vm:BoxPanelViewModelBase">
-      <box:BoxPanel />
-    </DataTemplate>
+    <!-- Implicit templates: storage view-models render the same way in every window. -->
+    <Application.DataTemplates>
+        <DataTemplate DataType="vm:SlotViewModel">
+            <box:SlotView />
+        </DataTemplate>
+        <DataTemplate DataType="vm:BoxPanelViewModelBase">
+            <box:BoxPanel />
+        </DataTemplate>
 
-    <!-- Rich hover preview shown as the slot tooltip -->
-    <DataTemplate DataType="vm:SlotPreviewViewModel">
-      <StackPanel Spacing="3" MaxWidth="340">
-        <StackPanel Orientation="Horizontal" Spacing="6">
-          <Image Source="{Binding BallSprite}" Width="20" Height="20" Stretch="None"
-                 IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}" />
-          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center" />
-        </StackPanel>
-        <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
-                   Foreground="{Binding IsValid, Converter={x:Static u:Converters.LegalityBrush}}" />
-        <ItemsControl ItemsSource="{Binding Lines}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="x:String">
-              <TextBlock Text="{Binding}" FontSize="12" />
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <TextBlock Text="{Binding LegalityLine}" FontSize="12" TextWrapping="Wrap"
-                   Foreground="IndianRed"
-                   IsVisible="{Binding HasLegalityLine}" />
-        <ItemsControl ItemsSource="{Binding DetailLines}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate DataType="x:String">
-              <TextBlock Text="{Binding}" FontSize="12" Opacity="0.85" />
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
-      </StackPanel>
-    </DataTemplate>
-  </Application.DataTemplates>
+        <!-- Rich hover preview shown as the slot tooltip -->
+        <DataTemplate DataType="vm:SlotPreviewViewModel">
+            <StackPanel Spacing="3" MaxWidth="340">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Image Source="{Binding BallSprite}" Width="20" Height="20" Stretch="None"
+                           IsVisible="{Binding BallSprite, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <TextBlock Text="{Binding Title}" FontWeight="SemiBold" VerticalAlignment="Center" />
+                </StackPanel>
+                <TextBlock Text="{Binding LegalitySummary}" FontWeight="SemiBold"
+                           Foreground="{Binding IsValid, Converter={x:Static u:Converters.LegalityBrush}}" />
+                <ItemsControl ItemsSource="{Binding Lines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="x:String">
+                            <TextBlock Text="{Binding}" FontSize="{DynamicResource FontSizeRegular}" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="{Binding LegalityLine}" FontSize="{DynamicResource FontSizeRegular}" TextWrapping="Wrap"
+                           Foreground="IndianRed"
+                           IsVisible="{Binding HasLegalityLine}" />
+                <ItemsControl ItemsSource="{Binding DetailLines}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="x:String">
+                            <TextBlock Text="{Binding}" FontSize="{DynamicResource FontSizeRegular}" Opacity="0.85" />
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </DataTemplate>
+    </Application.DataTemplates>
 
-  <Application.Styles>
-    <FluentTheme />
-    <StyleInclude Source="avares://PKBank.Desktop/Components/Box/BoxStyles.axaml" />
-
-
-    <Style Selector="ScrollViewer">
-      <Setter Property="AllowAutoHide" Value="False"/>
-    </Style>
-    <Style Selector="ScrollBar">
-      <Setter Property="AllowAutoHide" Value="False"/>
-    </Style>
-    <Style Selector="ListBox">
-      <Setter Property="ScrollViewer.AllowAutoHide" Value="False"/>
-    </Style>
-
-    <Style Selector="Button">
-      <Setter Property="MinHeight" Value="32"/>
-      <Setter Property="HorizontalContentAlignment" Value="Center"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-    <Style Selector="TextBox">
-      <Setter Property="MinHeight" Value="32"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-    <Style Selector="ComboBox">
-      <Setter Property="MinHeight" Value="32"/>
-      <Setter Property="VerticalContentAlignment" Value="Center"/>
-    </Style>
-    <Style Selector="NumericUpDown">
-      <Setter Property="MinHeight" Value="32"/>
-    </Style>
-  </Application.Styles>
+    <Application.Styles>
+        <FluentTheme DensityStyle="Compact" />
+        <StyleInclude Source="avares://PKBank.Desktop/Theme/AppTheme.axaml" />
+        <StyleInclude Source="avares://PKBank.Desktop/Components/Box/BoxStyles.axaml" />
+    </Application.Styles>
 
 </Application>

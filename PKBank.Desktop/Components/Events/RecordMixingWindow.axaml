@@ -15,7 +15,7 @@
             <StackPanel Spacing="6">
                 <TextBlock
                     Opacity="0.7"
-                    FontSize="12"
+                    FontSize="{DynamicResource FontSizeRegular}"
                     TextWrapping="Wrap"
                     Text="The item is sent to other players you mix records with, until the counter reaches 0." />
 

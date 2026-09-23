@@ -20,7 +20,7 @@
                 <TextBlock
                     x:Name="HintText"
                     Opacity="0.7"
-                    FontSize="12"
+                    FontSize="{DynamicResource FontSizeRegular}"
                     Text="Import a file, drop one onto this window, or export the current data."
                     TextWrapping="Wrap" />
                 <TextBlock

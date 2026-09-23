@@ -12,11 +12,6 @@
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Opacity" Value="0.8"/>
         </Style>
-        <Style Selector="TabItem">
-            <Setter Property="FontSize" Value="14"/>
-            <Setter Property="Padding" Value="10,6"/>
-            <Setter Property="MinHeight" Value="32"/>
-        </Style>
     </Window.Styles>
 
     <Grid RowDefinitions="Auto,Auto" Margin="14">

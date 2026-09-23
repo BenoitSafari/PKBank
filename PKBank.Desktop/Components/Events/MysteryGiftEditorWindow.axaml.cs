@@ -8,6 +8,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
+using Avalonia.Markup.Xaml.MarkupExtensions;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using PKBank.Desktop.Sprites;
@@ -95,16 +96,17 @@ public sealed partial class MysteryGiftEditorWindow : Window
     private void AddAlbumRow(string label, int start, int count)
     {
         var row = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 4 };
-        row.Children.Add(new TextBlock
+        var caption = new TextBlock
         {
             Text = label,
             Width = 78,
             VerticalAlignment = VerticalAlignment.Center,
             TextAlignment = TextAlignment.Right,
             Margin = new Thickness(0, 0, 6, 0),
-            Opacity = 0.7,
-            FontSize = 12
-        });
+            Opacity = 0.7
+        };
+        caption[!TextBlock.FontSizeProperty] = new DynamicResourceExtension("FontSizeRegular");
+        row.Children.Add(caption);
         for (var i = 0; i < count; i++)
         {
             var index = start + i;

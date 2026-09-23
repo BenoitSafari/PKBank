@@ -27,7 +27,7 @@
             <ItemsControl x:Name="LinesControl">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate DataType="x:String">
-                        <TextBlock Text="{Binding}" FontSize="12" TextWrapping="Wrap" />
+                        <TextBlock Text="{Binding}" FontSize="{DynamicResource FontSizeRegular}" TextWrapping="Wrap" />
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

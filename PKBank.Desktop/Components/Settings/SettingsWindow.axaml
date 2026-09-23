@@ -9,7 +9,7 @@
     WindowStartupLocation="CenterOwner">
 
     <Grid Margin="16" RowSpacing="14" RowDefinitions="Auto,Auto,Auto,*,*,Auto">
-        <TextBlock Grid.Row="0" Text="Program" FontWeight="SemiBold" FontSize="15" />
+        <TextBlock Grid.Row="0" Text="Program" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" />
         <Grid Grid.Row="1" ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" Margin="4,0,0,0">
             <TextBlock
                 Grid.Row="0"
@@ -24,7 +24,7 @@
                 SelectionChanged="OnLanguageChanged" />
         </Grid>
 
-        <TextBlock Grid.Row="2" Text="Folders" FontWeight="SemiBold" FontSize="15" />
+        <TextBlock Grid.Row="2" Text="Folders" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" />
         <directoryPathList:DirectoryPathList
             Grid.Row="3"
             x:Name="SavFolders"

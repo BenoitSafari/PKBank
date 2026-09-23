@@ -17,7 +17,7 @@
                 <TextBlock Text="{Binding Text}" VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="1" Text="{Binding Value, Converter={x:Static u:Converters.DexNumber}}"
                            VerticalAlignment="Center" Margin="7,0,0,0"
-                           Opacity="0.6" FontSize="12"/>
+                           Opacity="0.6" FontSize="{DynamicResource FontSizeRegular}"/>
             </Grid>
         </DataTemplate>
     </UserControl.Resources>

@@ -37,7 +37,7 @@
             <StackPanel IsVisible="{Binding SaveSelection.IsEmpty}"
                         HorizontalAlignment="Center" VerticalAlignment="Center"
                         Spacing="10" MaxWidth="420">
-                <TextBlock Text="No save file detected" FontSize="18" FontWeight="SemiBold"
+                <TextBlock Text="No save file detected" FontSize="{DynamicResource FontSizeExtraLarge}" FontWeight="SemiBold"
                            HorizontalAlignment="Center" />
                 <TextBlock
                     Text="None of the configured folders contain a recognized save file."
@@ -95,15 +95,15 @@
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis" />
                                         <TextBlock Text="·" Opacity="0.5" VerticalAlignment="Center" />
-                                        <TextBlock Text="{Binding TrainerId}" FontSize="12" Opacity="0.8"
+                                        <TextBlock Text="{Binding TrainerId}" FontSize="{DynamicResource FontSizeRegular}" Opacity="0.8"
                                                    VerticalAlignment="Center" />
                                         <TextBlock Text="·" Opacity="0.5" VerticalAlignment="Center"
                                                    IsVisible="{Binding HasGender}" />
-                                        <TextBlock Text="{Binding Gender}" FontSize="12" Opacity="0.8"
+                                        <TextBlock Text="{Binding Gender}" FontSize="{DynamicResource FontSizeRegular}" Opacity="0.8"
                                                    VerticalAlignment="Center"
                                                    IsVisible="{Binding HasGender}" />
                                     </StackPanel>
-                                    <TextBlock Grid.Row="1" Text="{Binding Path}" FontSize="10" Opacity="0.55"
+                                    <TextBlock Grid.Row="1" Text="{Binding Path}" FontSize="{DynamicResource FontSizeSmall}" Opacity="0.55"
                                                VerticalAlignment="Center"
                                                TextTrimming="CharacterEllipsis" />
                                 </Grid>
@@ -115,7 +115,7 @@
                                     <TextBlock Text="{Binding GameName}" FontWeight="SemiBold"
                                                VerticalAlignment="Center" />
                                     <TextBlock Text="·" Opacity="0.5" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding PlayTime}" FontSize="12" Opacity="0.8"
+                                    <TextBlock Text="{Binding PlayTime}" FontSize="{DynamicResource FontSizeRegular}" Opacity="0.8"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
 
@@ -126,7 +126,7 @@
                                     <TextBlock Text="{Binding GameName}" FontWeight="SemiBold"
                                                VerticalAlignment="Center" />
                                     <TextBlock Text="·" Opacity="0.5" VerticalAlignment="Center" />
-                                    <TextBlock Text="{Binding PlayTime}" FontSize="12" Opacity="0.8"
+                                    <TextBlock Text="{Binding PlayTime}" FontSize="{DynamicResource FontSizeRegular}" Opacity="0.8"
                                                VerticalAlignment="Center" />
                                 </StackPanel>
 

@@ -42,7 +42,7 @@
                         <ItemsControl x:Name="DescriptionLines" MinHeight="120">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="x:String">
-                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="12" />
+                                    <TextBlock Text="{Binding}" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeRegular}" />
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
@@ -50,7 +50,7 @@
                             x:Name="ErrorText"
                             Foreground="#C42B1C"
                             TextWrapping="Wrap"
-                            FontSize="12"
+                            FontSize="{DynamicResource FontSizeRegular}"
                             IsVisible="False" />
                     </StackPanel>
                 </Border>

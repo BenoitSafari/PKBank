@@ -22,7 +22,7 @@
                     VerticalAlignment="Center"
                     Spacing="8">
             <TextBlock Text="{Binding Nickname}"
-                       FontSize="18"
+                       FontSize="{DynamicResource FontSizeExtraLarge}"
                        FontWeight="SemiBold" />
             <StackPanel Orientation="Horizontal" Spacing="10">
                 <CheckBox Content="Shiny"

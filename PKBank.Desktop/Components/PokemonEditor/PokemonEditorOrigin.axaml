@@ -26,7 +26,7 @@
     <StackPanel Spacing="4" Margin="0,8,0,0">
 
         <!-- Trainer info -->
-        <TextBlock Text="Trainer" FontWeight="SemiBold" FontSize="16"/>
+        <TextBlock Text="Trainer" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}"/>
         <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto">
 
             <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="OT"/>
@@ -53,7 +53,7 @@
         </Grid>
 
         <!-- Origin -->
-        <TextBlock Text="Origin" FontWeight="SemiBold" FontSize="16" Margin="0,8,0,0"/>
+        <TextBlock Text="Origin" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" Margin="0,8,0,0"/>
         <Grid ColumnDefinitions="90,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto">
 
             <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="Game" IsVisible="{Binding HasOriginGame}"/>
