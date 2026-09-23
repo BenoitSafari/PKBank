@@ -23,34 +23,41 @@ public sealed partial class Roamer4EditorWindow : Window
         _sav = sav;
 
         var species = GameInfo.Strings.specieslist;
-        foreach (var (roamer, id) in GetRoamers(sav))
-            _tabs.Add(new RoamerTabViewModel(sav, roamer, species[id], id));
+        foreach (var (roamer, id, level) in GetRoamers(sav))
+            _tabs.Add(new RoamerTabViewModel(sav, roamer, species[id], id, level));
 
         RoamerTabs.ItemsSource = _tabs;
         RoamerTabs.SelectedIndex = 0;
     }
 
-    private static IEnumerable<(Roamer4 Roamer, ushort Species)> GetRoamers(SAV4 sav) => sav switch
+    /// <summary>Slots the save holds, with the level the game spawns each roamer at.</summary>
+    private static IEnumerable<(Roamer4 Roamer, ushort Species, byte Level)> GetRoamers(SAV4 sav) => sav switch
     {
         SAV4HGSS hgss =>
         [
-            (hgss.RoamerRaikou, (ushort)Species.Raikou),
-            (hgss.RoamerEntei, (ushort)Species.Entei),
-            (hgss.RoamerLatias, (ushort)Species.Latias),
-            (hgss.RoamerLatios, (ushort)Species.Latios)
+            (hgss.RoamerRaikou, (ushort)Species.Raikou, 40),
+            (hgss.RoamerEntei, (ushort)Species.Entei, 40),
+            (hgss.RoamerLatias, (ushort)Species.Latias, 35),
+            (hgss.RoamerLatios, (ushort)Species.Latios, 35)
         ],
         SAV4Pt pt =>
         [
-            (pt.RoamerMesprit, (ushort)Species.Mesprit),
-            (pt.RoamerCresselia, (ushort)Species.Cresselia)
+            (pt.RoamerMesprit, (ushort)Species.Mesprit, 50),
+            (pt.RoamerCresselia, (ushort)Species.Cresselia, 50)
         ],
         SAV4DP dp =>
         [
-            (dp.RoamerMesprit, (ushort)Species.Mesprit),
-            (dp.RoamerCresselia, (ushort)Species.Cresselia)
+            (dp.RoamerMesprit, (ushort)Species.Mesprit, 50),
+            (dp.RoamerCresselia, (ushort)Species.Cresselia, 50)
         ],
         _ => []
     };
+
+    private void OnFixClicked(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Button { DataContext: RoamerTabViewModel tab })
+            tab.Fix();
+    }
 
     private void OnCancelClicked(object? sender, RoutedEventArgs e) => Close();
 

@@ -1,6 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="using:PKBank.Desktop.Components.Roamer.ViewModels"
+        xmlns:u="using:PKBank.Desktop.Utils"
         x:Class="PKBank.Desktop.Components.Roamer.Roamer4EditorWindow"
         Title="Roamer Editor"
         Width="450" SizeToContent="Height"
@@ -11,6 +12,9 @@
         <Style Selector="TextBlock.fieldLabel">
             <Setter Property="VerticalAlignment" Value="Center"/>
             <Setter Property="Opacity" Value="0.8"/>
+        </Style>
+        <Style Selector="TextBlock.fieldValue">
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
     </Window.Styles>
 
@@ -28,46 +32,73 @@
                             BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,6,0,0">
                         <StackPanel Spacing="6">
 
-                            <Grid ColumnDefinitions="110,*,Auto">
-                                <TextBlock Classes="fieldLabel" Text="PID"/>
-                                <TextBox Grid.Column="1" MaxLength="8" Text="{Binding PidText, Mode=TwoWay}"/>
-                                <CheckBox Grid.Column="2" Content="Shiny" IsEnabled="False" Margin="10,0,0,0"
-                                          IsChecked="{Binding IsShiny, Mode=OneWay}"/>
+                            <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,2">
+                                <TextBlock Grid.Column="1" Text="{Binding LegalitySummary}"
+                                           FontWeight="SemiBold" VerticalAlignment="Center" Margin="0,0,8,0"
+                                           Foreground="{Binding LegalityValid, Converter={x:Static u:Converters.LegalityBrush}}"/>
+                                <Button Grid.Column="2" Content="Fix" MinWidth="42" Padding="8,2"
+                                        IsVisible="{Binding CanFix}"
+                                        Click="OnFixClicked"
+                                        ToolTip.Tip="Rebuild a PID/IV pair the game could have rolled"/>
                             </Grid>
 
-                            <Grid ColumnDefinitions="110,*,110,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4,0,0">
-                                <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="HP IV"/>
-                                <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2" Value="{Binding IvHp, Mode=TwoWay}"/>
-                                <TextBlock Grid.Row="0" Grid.Column="2" Classes="fieldLabel" Text="Attack IV"/>
-                                <NumericUpDown Grid.Row="0" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2" Value="{Binding IvAtk, Mode=TwoWay}"/>
+                            <TextBlock Text="{Binding LegalityDetail}" TextWrapping="Wrap" Opacity="0.8"
+                                       IsVisible="{Binding HasLegalityDetail}"
+                                       FontSize="{DynamicResource FontSizeRegular}" Margin="0,0,0,2"/>
 
-                                <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Defense IV"/>
-                                <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2" Value="{Binding IvDef, Mode=TwoWay}"/>
-                                <TextBlock Grid.Row="1" Grid.Column="2" Classes="fieldLabel" Text="Sp. Atk IV"/>
-                                <NumericUpDown Grid.Row="1" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2" Value="{Binding IvSpa, Mode=TwoWay}"/>
-
-                                <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Sp. Def IV"/>
-                                <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2" Value="{Binding IvSpd, Mode=TwoWay}"/>
-                                <TextBlock Grid.Row="2" Grid.Column="2" Classes="fieldLabel" Text="Speed IV"/>
-                                <NumericUpDown Grid.Row="2" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2" Value="{Binding IvSpe, Mode=TwoWay}"/>
-                            </Grid>
-
-                            <Grid ColumnDefinitions="110,*,110,*" Margin="0,4,0,0">
-                                <TextBlock Classes="fieldLabel" Text="Level"/>
-                                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="100" Increment="1" ShowButtonSpinner="False" Margin="0,0,10,0" Value="{Binding Level, Mode=TwoWay}"/>
-                                <TextBlock Grid.Column="2" Classes="fieldLabel" Text="Current HP"/>
-                                <NumericUpDown Grid.Column="3" Minimum="0" Maximum="65535" Increment="1" ShowButtonSpinner="False" Value="{Binding HpCurrent, Mode=TwoWay}"/>
-                            </Grid>
-
+                            <!-- Species and level are the game's call: shown, never edited. -->
                             <Grid ColumnDefinitions="110,*,110,*">
-                                <TextBlock Classes="fieldLabel" Text="Location"/>
-                                <NumericUpDown Grid.Column="1" Minimum="0" Maximum="65535" Increment="1" ShowButtonSpinner="False" Margin="0,0,10,0" Value="{Binding Location, Mode=TwoWay}"
-                                               ToolTip.Tip="Raw in-game map id the roamer currently is on"/>
-                                <TextBlock Grid.Column="2" Classes="fieldLabel" Text="Status (raw)"/>
-                                <NumericUpDown Grid.Column="3" Minimum="0" Maximum="255" Increment="1" ShowButtonSpinner="False" Value="{Binding Status, Mode=TwoWay}"/>
+                                <TextBlock Classes="fieldLabel" Text="Species"/>
+                                <TextBlock Grid.Column="1" Classes="fieldValue" FontWeight="SemiBold" Margin="0,0,10,0"
+                                           Text="{Binding SpeciesDisplay}"/>
+                                <TextBlock Grid.Column="2" Classes="fieldLabel" Text="Level"/>
+                                <TextBlock Grid.Column="3" Classes="fieldValue" Text="{Binding LevelDisplay}"/>
                             </Grid>
 
-                            <CheckBox Content="Roamer is active" Margin="0,4,0,0" IsChecked="{Binding IsActive, Mode=TwoWay}"/>
+                            <!-- Everything below is off limits until the game rolls the roamer. -->
+                            <StackPanel Spacing="6" IsEnabled="{Binding IsDefined}">
+
+                                <Grid ColumnDefinitions="110,*,Auto" Margin="0,4,0,0">
+                                    <TextBlock Classes="fieldLabel" Text="PID"/>
+                                    <TextBox Grid.Column="1" MaxLength="8" Text="{Binding PidText, Mode=TwoWay}"/>
+                                    <CheckBox Grid.Column="2" Content="Shiny" Margin="10,0,0,0"
+                                              IsChecked="{Binding IsShiny, Mode=TwoWay}"
+                                              ToolTip.Tip="Rolls a PID/IV pair with the wanted shininess (both change together)"/>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="110,*,110,*" RowDefinitions="Auto,Auto,Auto" Margin="0,4,0,0">
+                                    <TextBlock Grid.Row="0" Grid.Column="0" Classes="fieldLabel" Text="HP IV"/>
+                                    <NumericUpDown Grid.Row="0" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2" Value="{Binding IvHp, Mode=TwoWay}"/>
+                                    <TextBlock Grid.Row="0" Grid.Column="2" Classes="fieldLabel" Text="Attack IV"/>
+                                    <NumericUpDown Grid.Row="0" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2" Value="{Binding IvAtk, Mode=TwoWay}"/>
+
+                                    <TextBlock Grid.Row="1" Grid.Column="0" Classes="fieldLabel" Text="Defense IV"/>
+                                    <NumericUpDown Grid.Row="1" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2" Value="{Binding IvDef, Mode=TwoWay}"/>
+                                    <TextBlock Grid.Row="1" Grid.Column="2" Classes="fieldLabel" Text="Sp. Atk IV"/>
+                                    <NumericUpDown Grid.Row="1" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2" Value="{Binding IvSpa, Mode=TwoWay}"/>
+
+                                    <TextBlock Grid.Row="2" Grid.Column="0" Classes="fieldLabel" Text="Sp. Def IV"/>
+                                    <NumericUpDown Grid.Row="2" Grid.Column="1" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2,10,2" Value="{Binding IvSpd, Mode=TwoWay}"/>
+                                    <TextBlock Grid.Row="2" Grid.Column="2" Classes="fieldLabel" Text="Speed IV"/>
+                                    <NumericUpDown Grid.Row="2" Grid.Column="3" Minimum="0" Maximum="31" Increment="1" ShowButtonSpinner="False" Margin="0,2" Value="{Binding IvSpe, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="110,*,110,*" Margin="0,4,0,0">
+                                    <TextBlock Classes="fieldLabel" Text="Current HP"/>
+                                    <NumericUpDown Grid.Column="1" Minimum="0" Maximum="65535" Increment="1" ShowButtonSpinner="False" Margin="0,0,10,0" Value="{Binding HpCurrent, Mode=TwoWay}"/>
+                                    <TextBlock Grid.Column="2" Classes="fieldLabel" Text="Location"/>
+                                    <NumericUpDown Grid.Column="3" Minimum="0" Maximum="65535" Increment="1" ShowButtonSpinner="False" Value="{Binding Location, Mode=TwoWay}"
+                                                   ToolTip.Tip="Raw in-game map id the roamer currently is on"/>
+                                </Grid>
+
+                                <Grid ColumnDefinitions="110,*">
+                                    <TextBlock Classes="fieldLabel" Text="Status (raw)"/>
+                                    <NumericUpDown Grid.Column="1" Minimum="0" Maximum="255" Increment="1" ShowButtonSpinner="False" Value="{Binding Status, Mode=TwoWay}"/>
+                                </Grid>
+
+                                <CheckBox Content="Roamer is active" Margin="0,4,0,0" IsChecked="{Binding IsActive, Mode=TwoWay}"/>
+                            </StackPanel>
+
                         </StackPanel>
                     </Border>
                 </DataTemplate>
