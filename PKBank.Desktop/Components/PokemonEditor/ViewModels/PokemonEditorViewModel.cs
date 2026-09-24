@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using Avalonia.Threading;
@@ -29,6 +30,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
     {
         _sav = sav;
         _sources = sources;
+        SpeciesList = [.. sources.Species.OrderBy(s => s.Value)];
         Origin = origin;
         // Detached: a bank slot hands back the instance its session holds, so editing it in place
         // would write through and leave Cancel with nothing to restore.
@@ -61,7 +63,7 @@ public sealed class PokemonEditorViewModel : ViewModelBase
 
     public bool HasSpecies => Entity.Species != 0;
 
-    public IReadOnlyList<ComboItem> SpeciesList => _sources.Species;
+    public IReadOnlyList<ComboItem> SpeciesList { get; }
     public IReadOnlyList<ComboItem> ItemList => _sources.Items;
     public IReadOnlyList<MoveChoice> MoveList { get; private set; } = [];
     public IReadOnlyList<ComboItem> NatureList => _sources.Natures;
