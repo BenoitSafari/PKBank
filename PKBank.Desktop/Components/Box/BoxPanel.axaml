@@ -8,20 +8,12 @@
     <Border Classes="boxFrame" Padding="8" HorizontalAlignment="Left">
         <DockPanel>
 
-            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto">
                 <Button Grid.Column="0" Content="◀" Click="OnPrevClicked" />
                 <ComboBox Grid.Column="1" Margin="6,0" HorizontalAlignment="Stretch"
                           ItemsSource="{Binding ContainerNames}"
                           SelectedIndex="{Binding ContainerIndex, Mode=TwoWay}" />
                 <Button Grid.Column="2" Content="▶" Click="OnNextClicked" />
-                <Button Grid.Column="3" Content="+" MinWidth="34" Margin="8,0,0,0"
-                        Click="OnAddClicked"
-                        IsVisible="{Binding ShowAdd}" IsEnabled="{Binding CanAdd}"
-                        ToolTip.Tip="Open another box view" />
-                <Button Grid.Column="4" Content="✕" MinWidth="34" Margin="6,0,0,0"
-                        Click="OnCloseClicked"
-                        IsVisible="{Binding ShowClose}" IsEnabled="{Binding CanClose}"
-                        ToolTip.Tip="Close this box view" />
             </Grid>
 
             <!-- Slot cells are fixed size, so wrapping at an exact width yields exactly Columns per row.

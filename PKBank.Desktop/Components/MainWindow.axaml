@@ -8,8 +8,7 @@
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.png"
         Title="{Binding WindowTitle}"
-        Width="1200" Height="800"
-        MinWidth="1000"
+        Width="600" Height="800"
         WindowStartupLocation="CenterScreen">
 
     <Panel>
@@ -41,10 +40,12 @@
                         <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}" />
                     </StackPanel>
 
-                    <!-- Party, save boxes and bank stack up and scroll vertically; only the boxes scroll sideways -->
-                    <ScrollViewer Margin="0,10,0,0" HorizontalScrollBarVisibility="Disabled">
-                        <!-- Right margin keeps the full-width Boxes frame clear of the vertical scrollbar -->
-                        <StackPanel Spacing="{DynamicResource SpacingLarge}" Margin="0,0,16,0">
+                    <!-- Party, save box and bank stack up in one column of equal-width frames; the window is
+                         sized to it once a save is shown (see MainWindow.FitToContent) -->
+                    <!-- No horizontal scrolling: the minimum width always fits the column (UpdateMinWidth) -->
+                    <ScrollViewer x:Name="StorageScroller" Margin="0,10,0,0" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel x:Name="StorageColumn" Spacing="{DynamicResource SpacingLarge}"
+                                    HorizontalAlignment="Left">
 
                             <StackPanel IsVisible="{Binding HasParty}">
                                 <TextBlock Classes="sectionTitle" Text="Party" />
@@ -59,29 +60,11 @@
                                 </Border>
                             </StackPanel>
 
-                            <!-- Open box panels side by side across the full width, with their own scrollbar.
-                                 The ScrollViewer's own bar would overlay the slots, so a separate one sits
-                                 under them and only takes room when the boxes overflow. -->
                             <StackPanel IsVisible="{Binding HasBox}">
                                 <TextBlock Classes="sectionTitle" Text="Boxes" />
-                                <Border Classes="section" HorizontalAlignment="Stretch">
-                                    <DockPanel>
-                                        <ScrollBar x:Name="BoxesScrollBar" DockPanel.Dock="Bottom"
-                                                   Orientation="Horizontal" AllowAutoHide="False"
-                                                   Margin="8,0,8,8" IsVisible="False" />
-                                        <ScrollViewer x:Name="BoxesScroller"
-                                                      HorizontalScrollBarVisibility="Hidden"
-                                                      VerticalScrollBarVisibility="Disabled">
-                                            <ItemsControl x:Name="BoxPanelsItems" Classes="boxPanels"
-                                                          ItemsSource="{Binding OpenBoxes}">
-                                                <ItemsControl.ItemsPanel>
-                                                    <ItemsPanelTemplate>
-                                                        <StackPanel Orientation="Horizontal" />
-                                                    </ItemsPanelTemplate>
-                                                </ItemsControl.ItemsPanel>
-                                            </ItemsControl>
-                                        </ScrollViewer>
-                                    </DockPanel>
+                                <Border Classes="section">
+                                    <!-- Implicit template on BoxPanelViewModelBase renders the box -->
+                                    <ContentControl x:Name="SaveBoxHost" Content="{Binding SaveBox}" />
                                 </Border>
                             </StackPanel>
 

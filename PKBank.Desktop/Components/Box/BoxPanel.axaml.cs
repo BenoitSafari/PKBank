@@ -16,6 +16,4 @@ public sealed partial class BoxPanel : UserControl
 
     private void OnPrevClicked(object? sender, RoutedEventArgs e) => ViewModel?.Prev();
     private void OnNextClicked(object? sender, RoutedEventArgs e) => ViewModel?.Next();
-    private void OnAddClicked(object? sender, RoutedEventArgs e) => ViewModel?.Add();
-    private void OnCloseClicked(object? sender, RoutedEventArgs e) => ViewModel?.Close();
 }

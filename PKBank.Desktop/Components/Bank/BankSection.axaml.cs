@@ -42,7 +42,10 @@ public sealed partial class BankSection : UserControl
     {
         if (ViewModel is not { Bank: { CanDelete: true, SelectedBank: { } bank } } vm || Owner is not { } owner)
             return;
-        var message = $"Delete bank “{bank.Name}” and all the Pokémon files in it? This cannot be undone.";
+        var message = bank.IsNew
+            ? $"Discard bank “{bank.Name}”? It has not been saved yet, so nothing on disk changes."
+            : $"Delete bank “{bank.Name}” and all the Pokémon files in it? It is deleted when the save is " +
+              "written; after that it cannot be undone.";
         if (await ConfirmationWindow.ShowAsync(owner, "Delete Bank", message, "Delete") == ConfirmationResult.Confirm)
             vm.Bank.DeleteSelected();
     }

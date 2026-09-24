@@ -8,15 +8,13 @@ namespace PKBank.Desktop.Components.Box.ViewModels;
 
 /// <summary>
 /// One container of a <see cref="ISlotStore"/> shown as a grid: a box of the loaded save, or a box of a
-/// bank. Everything the view needs is on the view-model, so the same control serves both windows.
+/// bank. Everything the view needs is on the view-model, so the same control serves both sections.
 /// </summary>
 public abstract class BoxPanelViewModelBase : ViewModelBase
 {
     /// <summary>Slot button footprint: the 68x56 sprite plus padding, border and margin.</summary>
     private const double SlotCellWidth = 76;
 
-    private bool _canAdd;
-    private bool _canClose;
     private int _containerIndex;
     private IReadOnlyList<string> _containerNames;
 
@@ -41,24 +39,6 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
     {
         get => _containerNames;
         protected set => SetField(ref _containerNames, value);
-    }
-
-    /// <summary>Whether the "+" and "x" buttons exist at all; a bank box has no use for either.</summary>
-    public virtual bool ShowAdd => true;
-
-    public virtual bool ShowClose => true;
-
-    /// <summary>Pushed by the owner, which is the only thing that knows how many panels are open.</summary>
-    public bool CanAdd
-    {
-        get => _canAdd;
-        set => SetField(ref _canAdd, value);
-    }
-
-    public bool CanClose
-    {
-        get => _canClose;
-        set => SetField(ref _canClose, value);
     }
 
     public int ContainerIndex
@@ -87,14 +67,6 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
 
     public virtual void Prev() =>
         ContainerIndex = _containerIndex <= 0 ? Store.ContainerCount - 1 : _containerIndex - 1;
-
-    public virtual void Add()
-    {
-    }
-
-    public virtual void Close()
-    {
-    }
 
     protected virtual void OnContainerChanged(int container)
     {

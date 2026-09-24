@@ -12,7 +12,7 @@ namespace PKBank.Desktop.Services.Banks;
 /// </summary>
 public sealed class BankSlotStore(BankSession session, SaveFile sav, string language) : ISlotStore
 {
-    private const int BoxColumns = 12;
+    private const int BoxColumns = 6; // same grid as a save box
 
     public BankSession Session { get; } = session;
 

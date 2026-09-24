@@ -16,7 +16,10 @@ public static class BankStorage
 {
     public const string ManifestFileName = "bank.json";
     public const string PendingFileName = "bank.pending.json";
-    public const int SlotsPerBox = 60;
+    public const int SlotsPerBox = 30;
+
+    /// <summary>Box size of version 1 manifests, migrated to <see cref="SlotsPerBox" /> on read.</summary>
+    private const int LegacySlotsPerBox = 60;
 
     /// <summary>Entity files, top level only: sub-folders are other banks' business.</summary>
     public static IReadOnlyList<string> ScanEntityFiles(string folder)
@@ -47,7 +50,7 @@ public static class BankStorage
     public static BankManifest LoadOrRebuild(string folder, out bool changed)
     {
         var files = ScanEntityFiles(folder);
-        var manifest = TryReadManifest(folder);
+        var manifest = TryReadManifest(folder, out var migrated);
 
         if (manifest is null || !IsStructurallyValid(manifest))
         {
@@ -55,7 +58,7 @@ public static class BankStorage
             return Rebuild(files);
         }
 
-        changed = Repair(manifest, files);
+        changed = Repair(manifest, files) | migrated;
         return manifest;
     }
 
@@ -107,20 +110,48 @@ public static class BankStorage
     public static string DefaultName(string folder) =>
         Path.GetFileName(folder.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
 
-    private static BankManifest? TryReadManifest(string folder)
+    private static BankManifest? TryReadManifest(string folder, out bool migrated)
     {
+        migrated = false;
         try
         {
             var path = Path.Combine(folder, ManifestFileName);
             if (!File.Exists(path))
                 return null;
             var manifest = JsonSerializer.Deserialize(File.ReadAllText(path), BankJsonContext.Default.BankManifest);
+            if (manifest?.Version == 1)
+            {
+                MigrateFromV1(manifest);
+                migrated = true;
+            }
+
             return manifest?.Version == BankManifest.CurrentVersion ? manifest : null;
         }
         catch
         {
             return null;
         }
+    }
+
+    /// <summary>
+    ///     Version 1 boxes held 60 slots. Each entry keeps its place in reading order, so the arrangement
+    ///     survives: old box 0 becomes boxes 0 and 1, and so on.
+    /// </summary>
+    private static void MigrateFromV1(BankManifest manifest)
+    {
+        var last = -1;
+        foreach (var entry in manifest.Slots)
+        {
+            if (entry.Index is < 0 or >= LegacySlotsPerBox || entry.Box < 0)
+                return; // broken anyway: left as version 1, so it gets rebuilt
+            var position = (entry.Box * LegacySlotsPerBox) + entry.Index;
+            entry.Box = position / SlotsPerBox;
+            entry.Index = position % SlotsPerBox;
+            last = Math.Max(last, entry.Box);
+        }
+
+        manifest.BoxCount = Math.Max(1, last + 1);
+        manifest.Version = BankManifest.CurrentVersion;
     }
 
     private static bool IsStructurallyValid(BankManifest manifest)

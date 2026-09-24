@@ -46,6 +46,9 @@ public sealed class BankSession
 
     public bool IsDirty => _changed;
 
+    /// <summary>A bank that exists only in the app so far; its folder is created when the save is written.</summary>
+    public static BankSession CreateNew(string plannedFolder) => new(plannedFolder, new BankManifest(), []);
+
     /// <summary>Opens a bank, rebuilding or repairing its manifest to match the folder.</summary>
     public static BankSession Open(string folder)
     {

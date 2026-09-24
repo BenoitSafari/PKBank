@@ -9,7 +9,8 @@ namespace PKBank.Desktop.Services.Banks.Types;
 /// </summary>
 public sealed class BankManifest
 {
-    public const int CurrentVersion = 1;
+    /// <summary>2: boxes of 30 slots (version 1 had 60).</summary>
+    public const int CurrentVersion = 2;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -32,7 +33,7 @@ public sealed class BankSlotEntry
 /// </summary>
 public sealed class BankPending
 {
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -57,7 +58,35 @@ public sealed class BankPendingFile
     public string Data { get; set; } = string.Empty;
 }
 
+/// <summary>
+///     Bank creations, renames and deletions made in the app, waiting on a successful save. Written in the
+///     banks folder and deleted whenever a save is opened, like <see cref="BankPending" />.
+/// </summary>
+public sealed class BankLibraryPending
+{
+    public const int CurrentVersion = 1;
+
+    public int Version { get; set; } = CurrentVersion;
+
+    /// <summary>Names of banks to create.</summary>
+    public List<string> Created { get; set; } = [];
+
+    public List<BankLibraryRename> Renamed { get; set; } = [];
+
+    /// <summary>Folder names of banks to delete.</summary>
+    public List<string> Deleted { get; set; } = [];
+}
+
+public sealed class BankLibraryRename
+{
+    /// <summary>Folder name on disk.</summary>
+    public string Folder { get; set; } = string.Empty;
+
+    public string Name { get; set; } = string.Empty;
+}
+
 [JsonSourceGenerationOptions(WriteIndented = true)]
 [JsonSerializable(typeof(BankManifest))]
 [JsonSerializable(typeof(BankPending))]
+[JsonSerializable(typeof(BankLibraryPending))]
 internal sealed partial class BankJsonContext : JsonSerializerContext;

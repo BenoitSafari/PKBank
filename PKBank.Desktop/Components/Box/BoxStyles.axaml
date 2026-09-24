@@ -24,20 +24,18 @@
     </Style>
 
     <!-- Frame shared by storage sections (Party, Boxes, Bank). No padding of its own: the content keeps
-         the same 8px inset everywhere, including either side of the rule between two box panels. -->
+         the same 8px inset everywhere. Frames stretch to the widest one, so all three line up. -->
     <Style Selector="Border.section">
         <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="CornerRadius" Value="6" />
-        <Setter Property="HorizontalAlignment" Value="Left" />
     </Style>
     <Style Selector="TextBlock.sectionTitle">
         <Setter Property="FontWeight" Value="SemiBold" />
         <Setter Property="Margin" Value="2,0,0,4" />
     </Style>
 
-    <!-- A box panel on its own draws its frame; inside a section it is frameless, and side-by-side
-         panels are split by a vertical rule instead -->
+    <!-- A box panel on its own draws its frame; inside a section the section frames it -->
     <Style Selector="Border.boxFrame">
         <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
         <Setter Property="BorderThickness" Value="1" />
@@ -48,9 +46,6 @@
         <Setter Property="BorderThickness" Value="0" />
         <Setter Property="CornerRadius" Value="0" />
         <Setter Property="Margin" Value="0" />
-    </Style>
-    <Style Selector="Border.section ItemsControl.boxPanels > ContentPresenter:nth-child(n+2) Border.boxFrame">
-        <Setter Property="BorderThickness" Value="1,0,0,0" />
     </Style>
 
     <Style Selector="Button.slot">

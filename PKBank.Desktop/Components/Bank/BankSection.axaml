@@ -7,7 +7,7 @@
 
     <!-- The DataContext stays the MainWindowViewModel so slots resolve it the same way they do in the
          save boxes; the bank sub-view-model is reached through it. -->
-    <StackPanel MinWidth="420">
+    <StackPanel>
 
         <!-- Bank picker and management; the box navigation right below comes with the box panel -->
         <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="8,8,8,0">
@@ -15,8 +15,13 @@
                       ItemsSource="{Binding Bank.Banks}"
                       SelectedItem="{Binding Bank.SelectedBank, Mode=TwoWay}">
                 <ComboBox.ItemTemplate>
+                    <!-- A bank created or renamed in the app is tagged until the save is written -->
                     <DataTemplate DataType="bankVm:BankEntryViewModel">
-                        <TextBlock Text="{Binding Name}" />
+                        <StackPanel Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text="{Binding PendingLabel}" IsVisible="{Binding HasPendingLabel}"
+                                       FontStyle="Italic" Opacity="0.6" />
+                        </StackPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>

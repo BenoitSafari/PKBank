@@ -1,27 +1,32 @@
 using System;
 using System.Collections.Generic;
-using System.Collections.Specialized;
+using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using PKBank.Desktop.Services.Slots;
+using PKBank.Desktop.Components.Bank.ViewModels;
 using PKBank.Desktop.Utils;
 
 namespace PKBank.Desktop.Components;
 
 public sealed partial class MainWindow : Window
 {
-    /// <summary>One slot column: what the scrollbar arrows move the boxes by.</summary>
-    private const double BoxesSmallChange = 76;
+    /// <summary>Used until the theme's scrollbar has been laid out once.</summary>
+    private const double FallbackScrollBarWidth = 16;
 
     private readonly SlotDragDropHost _drag;
+    private double _baseMinWidth;
     private MainWindowViewModel? _boundViewModel;
+    private bool _fitted;
     private bool _forceClose;
-    private bool _syncingBoxesScroll;
 
     public MainWindow()
     {
@@ -30,14 +35,13 @@ public sealed partial class MainWindow : Window
         {
             FileDropHandler = OnFilesDropped
         };
-        _drag.AttachArea(BoxPanelsItems);
+        _drag.AttachArea(SaveBoxHost);
         _drag.AttachArea(PartyItems);
         _drag.AttachArea(BankSection.BoxArea);
         _drag.AttachWindow();
 
-        BoxesScroller.ScrollChanged += (_, _) => SyncBoxesScrollBar();
-        BoxesScrollBar.ValueChanged += OnBoxesScrollBarChanged;
         DataContextChanged += (_, _) => BindViewModel();
+        StorageScroller.ScrollChanged += (_, _) => UpdateMinWidth();
     }
 
     private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
@@ -91,47 +95,83 @@ public sealed partial class MainWindow : Window
         return true;
     }
 
-    // ----- Boxes scrolling ----------------------------------------------------
-
-    /// <summary>Mirrors the boxes' horizontal scroll state onto the scrollbar under them.</summary>
-    private void SyncBoxesScrollBar()
-    {
-        var viewport = BoxesScroller.Viewport.Width;
-        var maximum = Math.Max(0, BoxesScroller.Extent.Width - viewport);
-
-        _syncingBoxesScroll = true;
-        BoxesScrollBar.Maximum = maximum;
-        BoxesScrollBar.ViewportSize = viewport;
-        BoxesScrollBar.LargeChange = viewport;
-        BoxesScrollBar.SmallChange = BoxesSmallChange;
-        BoxesScrollBar.Value = BoxesScroller.Offset.X;
-        BoxesScrollBar.IsVisible = maximum > 0.5;
-        _syncingBoxesScroll = false;
-    }
-
-    private void OnBoxesScrollBarChanged(object? sender, RangeBaseValueChangedEventArgs e)
-    {
-        if (!_syncingBoxesScroll)
-            BoxesScroller.Offset = BoxesScroller.Offset.WithX(e.NewValue);
-    }
+    // ----- Window size ----------------------------------------------------------
 
     private void BindViewModel()
     {
         if (_boundViewModel is { } previous)
-            previous.OpenBoxes.CollectionChanged -= OnOpenBoxesChanged;
+        {
+            previous.PropertyChanged -= OnViewModelPropertyChanged;
+            previous.Bank.PropertyChanged -= OnViewModelPropertyChanged;
+        }
+
         _boundViewModel = ViewModel;
         if (_boundViewModel is { } current)
-            current.OpenBoxes.CollectionChanged += OnOpenBoxesChanged;
+        {
+            current.PropertyChanged += OnViewModelPropertyChanged;
+            current.Bank.PropertyChanged += OnViewModelPropertyChanged;
+        }
     }
 
-    /// <summary>A box opened with "+" lands at the far end: bring it into view once it is laid out.</summary>
-    private void OnOpenBoxesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    /// <summary>The save and its bank box both arrive asynchronously; fit once each has been laid out.</summary>
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
-        if (e.Action != NotifyCollectionChangedAction.Add || e.NewStartingIndex <= 0)
+        if (!_fitted && e.PropertyName is nameof(MainWindowViewModel.HasSave) or nameof(BankViewModel.CurrentBox))
+            Dispatcher.UIThread.Post(FitToContent, DispatcherPriority.Loaded);
+    }
+
+    /// <summary>
+    ///     The first time a save is shown, sizes the window to the storage column (party, box and bank frames)
+    ///     and makes that width the minimum. The height is capped to the screen; the window stays resizable.
+    ///     A fit made before the bank box is loaded is provisional: it is redone once the box is there.
+    /// </summary>
+    private void FitToContent()
+    {
+        if (_fitted || ViewModel is not { HasSave: true } vm)
             return;
-        var index = e.NewStartingIndex;
-        Dispatcher.UIThread.Post(() => BoxPanelsItems.ContainerFromIndex(index)?.BringIntoView(),
-            DispatcherPriority.Background);
+        _fitted = vm.Bank.CurrentBox is not null;
+
+        // Everything around the scroll area (menu, toolbar, status bar, margins) stays; the area takes the
+        // column. Bounds rather than the viewport: a scrollbar shown right now must not count.
+        var content = StorageColumn.Bounds.Size;
+        var width = Math.Ceiling(content.Width + ClientSize.Width - StorageScroller.Bounds.Width);
+        var height = Math.Ceiling(content.Height + ClientSize.Height - StorageScroller.Bounds.Height);
+
+        if ((Screens.ScreenFromVisual(this) ?? Screens.Primary) is { } screen)
+        {
+            var area = screen.WorkingArea.Size.ToSize(screen.Scaling);
+            var decorations = FrameSize is { } frame ? frame - ClientSize : default;
+            height = Math.Min(height, area.Height - decorations.Height);
+        }
+
+        // The scrollbar state follows once laid out at this size (see UpdateMinWidth).
+        _baseMinWidth = width;
+        MinWidth = width;
+        Height = height;
+        Width = width;
+    }
+
+    /// <summary>
+    ///     The vertical scrollbar takes room from the column while it is shown, so the minimum width grows by
+    ///     its width meanwhile (widening the window if needed) and the frames are never clipped.
+    /// </summary>
+    private void UpdateMinWidth()
+    {
+        if (_baseMinWidth <= 0)
+            return;
+
+        var scrolls = StorageScroller.Extent.Height > StorageScroller.Viewport.Height + 0.5;
+        MinWidth = _baseMinWidth + (scrolls ? VerticalScrollBarWidth() : 0);
+        if (ClientSize.Width < MinWidth)
+            Width = MinWidth; // not every platform grows the window to a raised minimum by itself
+    }
+
+    /// <summary>Width of the storage column's vertical scrollbar, as the theme draws it.</summary>
+    private double VerticalScrollBarWidth()
+    {
+        var bar = StorageScroller.GetVisualDescendants().OfType<ScrollBar>()
+            .FirstOrDefault(static b => b.Orientation == Orientation.Vertical);
+        return bar is { Bounds.Width: > 0 } ? bar.Bounds.Width : FallbackScrollBarWidth;
     }
 
     // ----- Selected-slot actions -------------------------------------------

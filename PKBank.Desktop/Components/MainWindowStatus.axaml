@@ -16,6 +16,7 @@
                 Opacity="0.8" />
             <TextBlock
                 Text="{Binding StatusMessage}"
+                ToolTip.Tip="{Binding StatusMessage}"
                 FontSize="{DynamicResource FontSizeRegular}"
                 FontWeight="Light"
                 TextTrimming="CharacterEllipsis" />

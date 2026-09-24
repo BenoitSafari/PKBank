@@ -3,19 +3,26 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using PKBank.Desktop.Services.Banks.Types;
 using PKBank.Desktop.Utils;
 
 namespace PKBank.Desktop.Services.Banks;
 
 /// <summary>
 ///     The folder holding every bank, one sub-folder each. The folder name <em>is</em> the bank name, so
-///     everything that names a bank goes through here: creating, renaming, deleting, and repairing a name
-///     that was changed by hand into something the app does not allow.
+///     everything that names a bank on disk goes through here: creating, renaming, deleting, and repairing a
+///     name that was changed by hand into something the app does not allow. Changes made in the app are
+///     only applied here when the save is written; until then they are mirrored in
+///     <see cref="PendingFileName" />.
 /// </summary>
 public sealed class BankLibrary(string root)
 {
     public const string DefaultBankName = "Default Bank";
     public const int MaxNameLength = 32;
+
+    /// <summary>Bank creations, renames and deletions waiting on a successful save.</summary>
+    public const string PendingFileName = "banks.pending.json";
 
     private const string DefaultRootFolderName = "banks";
 
@@ -73,8 +80,8 @@ public sealed class BankLibrary(string root)
         && name.All(IsNameCharacter)
         && name[0] != ' ' && name[^1] != ' ';
 
-    /// <summary>Why a name cannot be used for a new bank, or for renaming <paramref name="currentFolder" />; null when it can.</summary>
-    public string? ValidateName(string name, string? currentFolder = null)
+    /// <summary>Why a name is not allowed, or null when it is. Uniqueness is the caller's business.</summary>
+    public static string? ValidateFormat(string name)
     {
         if (name.Length == 0)
             return "A name is required.";
@@ -84,11 +91,7 @@ public sealed class BankLibrary(string root)
             return "Only letters, digits, spaces, \"-\", \"+\" and \"_\" are allowed.";
         if (name[0] == ' ' || name[^1] == ' ')
             return "The name cannot start or end with a space.";
-
-        var current = currentFolder is null ? null : NameOf(currentFolder);
-        if (current is not null && NameComparer.Equals(current, name))
-            return null; // same bank, possibly a change of case
-        return ListNames().Contains(name, NameComparer) ? "A bank with this name already exists." : null;
+        return null;
     }
 
     /// <summary>
@@ -124,9 +127,9 @@ public sealed class BankLibrary(string root)
     public static string NameOf(string folder) => BankStorage.DefaultName(folder);
 
     /// <summary>
-    ///     Makes the library consistent and lists it: creates the root, renames folders whose name is not
-    ///     allowed, and creates the default bank when there is none. Returns the bank folders sorted by name;
-    ///     <paramref name="repaired" /> lists the folders renamed on the way (old path, new path).
+    ///     Makes the library consistent and lists it: creates the root and renames folders whose name is not
+    ///     allowed. Returns the bank folders sorted by name; <paramref name="repaired" /> lists the folders
+    ///     renamed on the way (old path, new path).
     /// </summary>
     public IReadOnlyList<string> Scan(out IReadOnlyList<(string From, string To)> repaired)
     {
@@ -168,47 +171,95 @@ public sealed class BankLibrary(string root)
                 names.RemoveAt(i);
             }
 
-        if (folders.Count == 0)
-            folders.Add(Create(DefaultBankName));
-
         folders.Sort((a, b) => NameComparer.Compare(NameOf(a), NameOf(b)));
         return folders;
     }
 
-    /// <summary>Creates an empty bank; the name must have passed <see cref="ValidateName" />.</summary>
+    /// <summary>Creates an empty bank, suffixing the name if a folder took it meanwhile; returns its path.</summary>
     public string Create(string name)
     {
-        var folder = Path.Combine(Root, name);
+        Directory.CreateDirectory(Root);
+        var folder = Path.Combine(Root, Sanitize(name, ListNames()));
         Directory.CreateDirectory(folder);
         return folder;
     }
 
-    /// <summary>Renames a bank folder; returns its new path.</summary>
-    public string Rename(string folder, string newName)
+    /// <summary>
+    ///     Renames bank folders in two steps (each out of the way under a hidden name, then into place), so
+    ///     swapped names and case-only changes work. A name taken meanwhile gets a suffix. Returns the
+    ///     renames that went through (old path, new path); failures are added to <paramref name="errors" />.
+    /// </summary>
+    public IReadOnlyList<(string From, string To)> RenameAll(IReadOnlyList<(string Folder, string Name)> renames,
+        ICollection<string> errors)
     {
-        var target = Path.Combine(Root, newName);
-        if (string.Equals(NameOf(folder), newName, StringComparison.Ordinal))
-            return folder;
+        var parked = new List<(string From, string Temp, string Name)>();
+        foreach (var (folder, name) in renames)
+            try
+            {
+                var temp = Path.Combine(Root, $".rename-{Guid.NewGuid():N}");
+                Directory.Move(folder, temp);
+                parked.Add((folder, temp, name));
+            }
+            catch (Exception ex)
+            {
+                errors.Add($"Bank “{NameOf(folder)}” could not be renamed: {ex.Message}");
+            }
 
-        if (NameComparer.Equals(NameOf(folder), newName))
+        var taken = ListNames().ToList();
+        var done = new List<(string From, string To)>();
+        foreach (var (from, temp, name) in parked)
         {
-            // Case-only change: a direct move is a no-op (or fails) on case-insensitive file systems.
-            var temp = Path.Combine(Root, $".rename-{Guid.NewGuid():N}");
-            Directory.Move(folder, temp);
-            Directory.Move(temp, target);
-            return target;
+            var final = Sanitize(name, taken);
+            var target = Path.Combine(Root, final);
+            try
+            {
+                Directory.Move(temp, target);
+                taken.Add(final);
+                done.Add((from, target));
+            }
+            catch (Exception ex)
+            {
+                TryMove(temp, from); // put it back under its old name
+                errors.Add($"Bank “{NameOf(from)}” could not be renamed: {ex.Message}");
+            }
         }
 
-        Directory.Move(folder, target);
-        return target;
+        return done;
     }
 
-    /// <summary>Deletes a bank and every file in it. The last bank cannot go.</summary>
-    public void Delete(string folder)
+    /// <summary>Deletes a bank and every file in it.</summary>
+    public static void Delete(string folder)
     {
-        if (ListFolders().Count <= 1)
-            throw new InvalidOperationException("At least one bank must remain.");
-        Directory.Delete(folder, true);
+        if (Directory.Exists(folder))
+            Directory.Delete(folder, true);
+    }
+
+    public void SavePending(BankLibraryPending pending)
+    {
+        try
+        {
+            Directory.CreateDirectory(Root);
+            var path = Path.Combine(Root, PendingFileName);
+            var temp = path + ".tmp";
+            File.WriteAllText(temp, JsonSerializer.Serialize(pending, BankJsonContext.Default.BankLibraryPending));
+            File.Move(temp, path, true);
+        }
+        catch
+        {
+            // Pending changes live in memory as well; failing to mirror them is not fatal.
+        }
+    }
+
+    public void DiscardPending()
+    {
+        try
+        {
+            File.Delete(Path.Combine(Root, PendingFileName));
+        }
+        catch
+        {
+            // Nothing to discard, or the folder is read-only.
+        }
     }
 
     /// <summary>
@@ -271,6 +322,18 @@ public sealed class BankLibrary(string root)
     }
 
     private IEnumerable<string> ListNames() => ListFolders().Select(NameOf);
+
+    private static void TryMove(string from, string to)
+    {
+        try
+        {
+            Directory.Move(from, to);
+        }
+        catch
+        {
+            // Left under the hidden name; the user can still find it in the banks folder.
+        }
+    }
 
     private static void CopyDirectory(string source, string target)
     {
