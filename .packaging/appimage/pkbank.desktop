@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=PKBank
+GenericName=Save Editor
+Comment=Save editor for Pokémon core-series games
+Exec=PKBank %f
+Icon=pkbank
+Categories=Utility;
+Terminal=false
+StartupWMClass=PKBank.Desktop

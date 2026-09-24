@@ -232,3 +232,6 @@ pingme.txt
 #################
 
 *.userprefs
+
+# AppImage build output (packaging/appimage/build-appimage.sh)
+artifacts/

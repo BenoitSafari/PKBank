@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,6 +14,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using PKBank.Desktop.Services.Slots;
 using PKBank.Desktop.Components.Bank.ViewModels;
+using PKBank.Desktop.Components.Common.ConfirmationWindow;
 using PKBank.Desktop.Utils;
 
 namespace PKBank.Desktop.Components;
@@ -62,6 +64,33 @@ public sealed partial class MainWindow : Window
             return;
         _forceClose = true;
         Close();
+    }
+
+    /// <summary>
+    ///     Closes the window, offering to write pending changes out first, and starts <paramref name="executable" />
+    ///     in its place. Cancelling that prompt cancels the restart, and nothing is started.
+    /// </summary>
+    /// <returns><c>false</c> when the restart was called off, so the caller knows the window is still up.</returns>
+    internal async Task<bool> TryRestartIntoAsync(string executable)
+    {
+        if (ViewModel is { IsDirty: true } vm &&
+            !await MainWindowMenu.ConfirmDiscardAsync(this, vm, "Restart", "Restart", "Restarting will discard them."))
+            return false;
+
+        try
+        {
+            Process.Start(new ProcessStartInfo(executable) { UseShellExecute = false });
+        }
+        catch (Exception e)
+        {
+            await ConfirmationWindow.ShowMessageAsync(this, "Restart",
+                $"Could not start {AppInfo.Name}.\n\n{e.Message}");
+            return false;
+        }
+
+        _forceClose = true; // the pending changes have just been dealt with
+        Close();
+        return true;
     }
 
     /// <summary>Files dropped anywhere in the window: a save replaces the loaded one, entities go into slots.</summary>

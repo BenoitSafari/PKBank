@@ -1,0 +1,40 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Components.Update.UpdateWindow"
+        Width="460" SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="16" Spacing="{DynamicResource SpacingLarge}">
+
+        <StackPanel Spacing="{DynamicResource SpacingExtraSmall}">
+            <TextBlock x:Name="HeadlineText" TextWrapping="Wrap"
+                       FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" />
+            <TextBlock x:Name="DetailText" TextWrapping="Wrap" Opacity="0.85" />
+        </StackPanel>
+
+        <!-- Release notes, as GitHub published them -->
+        <Border x:Name="NotesBox" IsVisible="False" MaxHeight="200" CornerRadius="4" Padding="8"
+                BorderThickness="1" BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}">
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                <TextBlock x:Name="NotesText" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeRegular}" />
+            </ScrollViewer>
+        </Border>
+
+        <StackPanel x:Name="ProgressArea" IsVisible="False" Spacing="{DynamicResource SpacingExtraSmall}">
+            <ProgressBar x:Name="DownloadProgress" Minimum="0" Maximum="1" />
+            <TextBlock x:Name="ProgressText" Opacity="0.85" FontSize="{DynamicResource FontSizeRegular}" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right"
+                    Spacing="{DynamicResource SpacingRegular}">
+            <Button x:Name="ReleasePageButton" Content="Release Page…" IsVisible="False"
+                    Click="OnReleasePageClicked" />
+            <Button x:Name="DismissButton" MinWidth="96" Click="OnDismissClicked" />
+            <Button x:Name="ActionButton" MinWidth="96" IsDefault="True" Click="OnActionClicked" />
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

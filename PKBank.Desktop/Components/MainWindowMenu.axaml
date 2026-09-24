@@ -87,6 +87,10 @@
                 Header="_Settings…"
                 Click="OnSettingsClicked" />
             <MenuItem
+                x:Name="UpdateMenuItem"
+                Header="Check for _Updates…"
+                Click="OnCheckUpdatesClicked" />
+            <MenuItem
                 x:Name="AboutMenuItem"
                 Click="OnAboutClicked" />
         </MenuItem>

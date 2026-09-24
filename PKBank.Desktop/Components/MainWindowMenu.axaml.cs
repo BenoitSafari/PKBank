@@ -8,6 +8,7 @@ using Avalonia.Platform.Storage;
 using PKBank.Core.Configuration;
 using PKBank.Core.Events.Files;
 using PKBank.Desktop.Services.SaveFiles;
+using PKBank.Desktop.Services.Updates;
 
 using PKBank.Desktop.Components.Common.ConfirmationWindow;
 using PKBank.Desktop.Components.Events;
@@ -22,6 +23,7 @@ namespace PKBank.Desktop.Components;
 
 public sealed partial class MainWindowMenu : UserControl
 {
+    private bool _checkingForUpdates;
     private TopLevel? _gestureHost;
 
     public MainWindowMenu()
@@ -247,6 +249,29 @@ public sealed partial class MainWindowMenu : UserControl
 
         await new SettingsWindow(vm).ShowDialog(host);
         BuildLanguageMenu(vm); // language may have changed from the settings screen
+    }
+
+    /// <summary>
+    ///     Manual counterpart to the check made at startup: it reports even when nothing is new, and the header
+    ///     says so while GitHub is being asked.
+    /// </summary>
+    private async void OnCheckUpdatesClicked(object? sender, RoutedEventArgs e)
+    {
+        if (_checkingForUpdates || Host is not MainWindow host)
+            return;
+
+        _checkingForUpdates = true;
+        var header = UpdateMenuItem.Header;
+        UpdateMenuItem.Header = "Checking for Updates…";
+        try
+        {
+            await UpdateDialogs.CheckManuallyAsync(host);
+        }
+        finally
+        {
+            UpdateMenuItem.Header = header;
+            _checkingForUpdates = false;
+        }
     }
 
     private async void OnAboutClicked(object? sender, RoutedEventArgs e)
