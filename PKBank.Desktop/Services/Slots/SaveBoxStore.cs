@@ -29,7 +29,8 @@ public sealed class SaveBoxStore : ISlotStore
 
     public PKM Read(int container, int index) => _sav.GetBoxSlotAtIndex(container, index);
 
-    public void Write(int container, int index, PKM pk) => _sav.SetBoxSlotAtIndex(pk, container, index);
+    public void Write(int container, int index, PKM pk)
+        => _sav.SetBoxSlotAtIndex(pk, container, index, SaveEntityAccess.ImportSettings);
 
     public PKM? TryAccept(PKM pk, out string message) => SaveEntityAccess.TryAccept(_sav, pk, out message);
 

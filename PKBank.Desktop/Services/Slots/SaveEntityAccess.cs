@@ -7,6 +7,9 @@ namespace PKBank.Desktop.Services.Slots;
 /// </summary>
 internal static class SaveEntityAccess
 {
+    public static EntityImportSettings ImportSettings { get; } = new(
+        EntityImportOption.UseDefault, EntityImportOption.Enable, EntityImportOption.UseDefault);
+
     public static PKM? TryAccept(SaveFile sav, PKM pk, out string message)
     {
         var destType = sav.PKMType;

@@ -20,7 +20,8 @@ public sealed class SavePartyStore(SaveFile sav) : ISlotStore
 
     public PKM Read(int container, int index) => sav.GetPartySlotAtIndex(index);
 
-    public void Write(int container, int index, PKM pk) => sav.SetPartySlotAtIndex(pk, index);
+    public void Write(int container, int index, PKM pk)
+        => sav.SetPartySlotAtIndex(pk, index, SaveEntityAccess.ImportSettings);
 
     public PKM? TryAccept(PKM pk, out string message) => SaveEntityAccess.TryAccept(sav, pk, out message);
 }
