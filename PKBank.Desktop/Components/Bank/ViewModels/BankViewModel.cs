@@ -348,6 +348,7 @@ public sealed class BankViewModel : ViewModelBase
         // Content last, into folders that now exist under their final names.
         foreach (var entry in _entries.Where(static e => !e.IsNew && e.Session is { IsDirty: true }))
             messages.Add(entry.Session!.Commit().Trim());
+        CurrentBox?.RefreshContainerNames(); // empty trailing boxes were dropped
 
         RefreshList();
         OnPendingChanged();

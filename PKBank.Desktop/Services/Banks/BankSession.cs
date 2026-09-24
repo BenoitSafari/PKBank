@@ -150,6 +150,9 @@ public sealed class BankSession
                     // Already gone: the commit is meant to be repeatable.
                 }
 
+            // Empty boxes at the end go; an empty box before a used one stays, keeping the layout.
+            BoxCount = _placement.Count == 0 ? 1 : (_placement.Keys.Max() / BankStorage.SlotsPerBox) + 1;
+
             BankStorage.SaveManifest(Folder, new BankManifest
             {
                 BoxCount = BoxCount,

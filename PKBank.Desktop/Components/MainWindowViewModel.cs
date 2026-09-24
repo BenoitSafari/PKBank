@@ -23,7 +23,14 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     // ----- Selection -------------------------------------------------------
 
-    private readonly List<SlotViewModel> _selectedSlots = [];
+    /// <summary>
+    ///     Selected slots by location (store, box, slot), in the order they were added. A location, not the
+    ///     on-screen slot: the slots on screen are reused when the box changes, the selection stays put.
+    /// </summary>
+    private readonly List<SlotKey> _selectedKeys = [];
+
+    /// <summary>The slot actions like Edit and Paste apply to, and Shift+click ranges start from.</summary>
+    private SlotKey? _anchor;
 
     /// <summary>
     ///     Copied or cut Pokémon, in display order, kept in-process: Paste stays available across boxes and
@@ -146,7 +153,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// <summary>The edit action creates when the slot is empty, so the button says so.</summary>
     public string EditSelectedLabel => SelectedSlot is { IsEmpty: false } ? "Edit" : "New";
 
-    public bool CanCopySelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+    public bool CanCopySelected => SelectedSlots.Any(static s => !s.IsEmpty);
     public bool CanCutSelected => CanCopySelected;
     public bool CanPasteSelected => !IsMultiSelection && SelectedSlot is not null && CanPaste;
 
@@ -158,12 +165,16 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     /// <summary>Whether the clipboard holds a cut, which a paste moves rather than duplicates.</summary>
     public bool IsCut => _cutSources is not null;
-    public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+    public bool CanDeleteSelected => CanCopySelected;
     public bool CanImportSelected => SelectedSlot is not null;
-    public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+    public bool CanExportSelected => CanCopySelected;
 
-    public IReadOnlyList<SlotViewModel> SelectedSlots => _selectedSlots;
-    public bool IsMultiSelection => _selectedSlots.Count > 1;
+    /// <summary>Every selected slot, on screen or not (see <see cref="SlotFor" />).</summary>
+    public IReadOnlyList<SlotViewModel> SelectedSlots => [.. _selectedKeys.Select(SlotFor)];
+
+    public bool IsMultiSelection => _selectedKeys.Count > 1;
+
+    public bool IsSlotSelected(SlotViewModel slot) => _selectedKeys.Contains(slot.Key);
 
     private void NotifySlotActionStates()
     {
@@ -249,22 +260,17 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (SAV is not { } sav)
             return;
         var box = SaveBox?.ContainerIndex;
-        var previous = SelectedSlot;
+        var previous = _anchor;
         LoadSave(sav);
         if (SaveBox is { } panel && box is { } index)
             panel.ContainerIndex = index;
 
-        // The stores were rebuilt, so the old slot instances are gone: find the same coordinates again.
-        if (previous is not { } prev)
+        // The stores were rebuilt, so the old keys point nowhere: find the same coordinates again.
+        if (previous is not { } prev || prev.Store.Scope != SlotScope.Save)
             return;
-        var match = prev.IsParty
-            ? prev.Index < PartySlots.Count ? PartySlots[prev.Index] : null
-            : SaveBox is { } saveBox && saveBox.ContainerIndex == prev.Container &&
-              prev.Index < saveBox.Slots.Count
-                ? saveBox.Slots[prev.Index]
-                : null;
-        if (match is not null)
-            SelectSlot(match);
+        ISlotStore? store = prev.Store.IsParty ? _partyStore : _boxStore;
+        if (store is not null)
+            SelectSlot(SlotFor(new SlotKey(store, prev.Container, prev.Index)));
     }
 
     /// <summary>Writes back to the file the save was loaded from.</summary>
@@ -283,6 +289,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             // Save first, banks second: a failed bank commit leaves its pending file in place to be
             // retried, whereas the reverse would alter a bank for a save that never made it to disk.
             var banks = Bank.CommitPending();
+            DropSelectionBeyondLastBox();
             StatusMessage = $"Saved to {Path.GetFileName(path)}.{banks}";
             OnPropertyChanged(nameof(WindowTitle));
             NotifyPendingChanges();
@@ -334,11 +341,49 @@ public sealed class MainWindowViewModel : ViewModelBase
                 yield return slot;
     }
 
-    /// <summary>Selected slots in display order.</summary>
-    public IReadOnlyList<SlotViewModel> GetSelectedSlotsInDisplayOrder()
+    /// <summary>
+    ///     Selected slots in reading order: party, then save boxes, then bank boxes; box by box, slot by slot.
+    /// </summary>
+    public IReadOnlyList<SlotViewModel> GetSelectedSlotsInDisplayOrder() =>
+    [
+        .. _selectedKeys
+            .OrderBy(static k => k.Store.IsParty ? 0 : k.Store.Scope == SlotScope.Save ? 1 : 2)
+            .ThenBy(static k => k.Container)
+            .ThenBy(static k => k.Index)
+            .Select(SlotFor)
+    ];
+
+    /// <summary>
+    ///     The slot at a location: the one on screen when its box is shown, otherwise a stand-alone one. Both
+    ///     read and write the store the same way, so actions work on selected slots in other boxes too.
+    /// </summary>
+    private SlotViewModel SlotFor(SlotKey key) =>
+        DisplayedSlots().FirstOrDefault(s => s.Key == key) ?? new SlotViewModel(key.Store, key.Container, key.Index);
+
+    /// <summary>Saving drops a bank's empty trailing boxes; selected slots in them no longer exist.</summary>
+    private void DropSelectionBeyondLastBox()
     {
-        var selected = new HashSet<SlotViewModel>(_selectedSlots);
-        return DisplayedSlots().Where(selected.Contains).ToArray();
+        if (_selectedKeys.RemoveAll(static k => k.Container >= k.Store.ContainerCount) == 0)
+            return;
+        if (_anchor is { } anchor && !_selectedKeys.Contains(anchor))
+            _anchor = _selectedKeys.Count > 0 ? _selectedKeys[^1] : null;
+        SyncSelectionHighlight();
+        NotifySlotActionStates();
+    }
+
+    /// <summary>Highlights the selected slots among those on screen, e.g. after the box changed.</summary>
+    private void SyncSelectionHighlight()
+    {
+        foreach (var slot in DisplayedSlots())
+            slot.IsSelected = _selectedKeys.Contains(slot.Key);
+        SelectedSlot = _anchor is { } anchor ? SlotFor(anchor) : null;
+    }
+
+    /// <summary>A box panel moved to another box: the highlight follows the selection, not the position.</summary>
+    private void OnPanelContainerChanged(object? sender, EventArgs e)
+    {
+        SyncSelectionHighlight();
+        NotifySlotActionStates();
     }
 
     /// <summary>Imports files into the current selection in display order (see <see cref="ImportFilesToSlots" />).</summary>
@@ -376,7 +421,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
     }
 
-    public void DeleteSelected() => DeleteSlots(_selectedSlots.ToArray());
+    public void DeleteSelected() => DeleteSlots(SelectedSlots);
 
     public void DeleteSlots(IReadOnlyList<SlotViewModel> slots)
     {
@@ -388,10 +433,10 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// <summary>Plain left click: collapses any multi-selection back to a single slot.</summary>
     public void SelectSlot(SlotViewModel slot)
     {
-        ClearSelection();
-        _selectedSlots.Add(slot);
-        slot.IsSelected = true;
-        SelectedSlot = slot;
+        _selectedKeys.Clear();
+        _selectedKeys.Add(slot.Key);
+        _anchor = slot.Key;
+        SyncSelectionHighlight();
         NotifySlotActionStates();
     }
 
@@ -404,10 +449,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void ClearSelection()
     {
-        foreach (var previous in _selectedSlots)
-            previous.IsSelected = false;
-        _selectedSlots.Clear();
-        SelectedSlot = null;
+        _selectedKeys.Clear();
+        _anchor = null;
+        SyncSelectionHighlight();
     }
 
     /// <summary>
@@ -415,77 +459,62 @@ public sealed class MainWindowViewModel : ViewModelBase
     ///     fresh single selection instead.
     /// </summary>
     private bool LeavesSelectionScope(SlotViewModel slot)
-        => SelectedSlot is { } anchor && anchor.Store.Scope != slot.Store.Scope;
+        => _anchor is { } anchor && anchor.Store.Scope != slot.Store.Scope;
 
     /// <summary>Ctrl+click: adds the slot to the selection (or removes it when already selected).</summary>
     public void ToggleSelectSlot(SlotViewModel slot)
     {
-        if (_selectedSlots.Count == 0 || LeavesSelectionScope(slot))
+        if (_selectedKeys.Count == 0 || LeavesSelectionScope(slot))
         {
             SelectSlot(slot);
             return;
         }
 
-        if (_selectedSlots.Contains(slot))
+        var key = slot.Key;
+        if (_selectedKeys.Contains(key))
         {
-            if (_selectedSlots.Count == 1)
+            if (_selectedKeys.Count == 1)
                 return; // never empty the selection entirely
-            _selectedSlots.Remove(slot);
-            slot.IsSelected = false;
-            if (SelectedSlot == slot)
-                SelectedSlot = _selectedSlots[^1];
+            _selectedKeys.Remove(key);
+            if (_anchor == key)
+                _anchor = _selectedKeys[^1];
         }
         else
         {
-            _selectedSlots.Add(slot);
-            slot.IsSelected = true;
-            SelectedSlot = slot; // the anchor follows the last addition
+            _selectedKeys.Add(key);
+            _anchor = key; // the anchor follows the last addition
         }
 
-        NotifySlotActionStates();
-    }
-
-    /// <summary>Shift+click: adds every slot between the anchor and the clicked slot (inclusive).</summary>
-    public void RangeSelectSlot(SlotViewModel slot)
-    {
-        if (SelectedSlot is not { } anchor || anchor.Store != slot.Store)
-        {
-            SelectSlot(slot); // no same-area anchor: behave like a plain click
-            return;
-        }
-
-        var list = GetRangeArea(slot);
-        var from = list.IndexOf(anchor);
-        var to = list.IndexOf(slot);
-        if (from < 0 || to < 0)
-        {
-            SelectSlot(slot);
-            return;
-        }
-
-        var (start, end) = from <= to ? (from, to) : (to, from);
-        for (var i = start; i <= end; i++)
-        {
-            var member = list[i];
-            if (_selectedSlots.Contains(member))
-                continue;
-            _selectedSlots.Add(member);
-            member.IsSelected = true;
-        }
-
+        SyncSelectionHighlight();
         NotifySlotActionStates();
     }
 
     /// <summary>
-    ///     Slots a Shift+click range may cover: the party bar, the save box or the bank box the slot is in.
+    ///     Shift+click: adds every slot between the anchor and the clicked slot (inclusive), in reading order
+    ///     through the store, so a range may run across boxes.
     /// </summary>
-    private List<SlotViewModel> GetRangeArea(SlotViewModel slot)
+    public void RangeSelectSlot(SlotViewModel slot)
     {
-        if (slot.Store == _partyStore)
-            return PartySlots.ToList();
-        if (Bank.CurrentBox is { } bankBox && bankBox.Store == slot.Store)
-            return bankBox.Slots.ToList();
-        return SaveBoxSlots.Where(s => s.Store == slot.Store).ToList();
+        if (_anchor is not { } anchor || anchor.Store != slot.Store)
+        {
+            SelectSlot(slot); // no anchor in the same store: behave like a plain click
+            return;
+        }
+
+        var store = slot.Store;
+        var per = store.SlotsPerContainer;
+        var from = (anchor.Container * per) + anchor.Index;
+        var to = (slot.Container * per) + slot.Index;
+        var (start, end) = from <= to ? (from, to) : (to, from);
+        for (var position = start; position <= end; position++)
+        {
+            var key = new SlotKey(store, position / per, position % per);
+            if (!_selectedKeys.Contains(key))
+                _selectedKeys.Add(key);
+        }
+
+        SyncSelectionHighlight();
+        NotifySlotActionStates();
     }
 
     /// <summary>
@@ -493,7 +522,7 @@ public sealed class MainWindowViewModel : ViewModelBase
     ///     clicked slot belongs to it, otherwise just the clicked slot.
     /// </summary>
     public IReadOnlyList<SlotViewModel> GetActionTargets(SlotViewModel clicked)
-        => IsMultiSelection && _selectedSlots.Contains(clicked) ? _selectedSlots.ToArray() : [clicked];
+        => IsMultiSelection && IsSlotSelected(clicked) ? SelectedSlots : [clicked];
 
     public void DeleteSlot(SlotViewModel slot)
     {
@@ -869,6 +898,8 @@ public sealed class MainWindowViewModel : ViewModelBase
         SaveBox = _boxStore is { } boxes
             ? new SaveBoxPanelViewModel(boxes, Math.Clamp(sav.CurrentBox, 0, sav.BoxCount - 1))
             : null;
+        if (SaveBox is { } saveBox)
+            saveBox.ContainerChanged += OnPanelContainerChanged;
 
         if (_partyStore is { } party)
             for (var i = 0; i < party.SlotsPerContainer; i++)
@@ -931,12 +962,15 @@ public sealed class MainWindowViewModel : ViewModelBase
         switch (e.PropertyName)
         {
             case nameof(BankViewModel.CurrentBox):
-                if (_selectedSlots.Exists(static s => s.Store.Scope == SlotScope.Bank))
+                if (_selectedKeys.Exists(static k => k.Store.Scope == SlotScope.Bank))
                 {
                     ClearSelection();
                     NotifySlotActionStates();
                 }
 
+                // Its box navigation moves the highlight like the save box's does.
+                if (Bank.CurrentBox is { } bankBox)
+                    bankBox.ContainerChanged += OnPanelContainerChanged;
                 break;
             case nameof(BankViewModel.IsDirty):
                 NotifyPendingChanges();

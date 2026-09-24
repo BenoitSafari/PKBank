@@ -125,7 +125,7 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
             ShowGhost(slot.Sprite);
             var transfer = new DataTransfer();
             var vm = ViewModel;
-            if (vm is { IsMultiSelection: true } && vm.SelectedSlots.Contains(slot))
+            if (vm is { IsMultiSelection: true } && vm.IsSlotSelected(slot))
             {
                 // Dragging the multi-selection: dropped inside, it fills the free slots from the
                 // target on; dropped outside, it exports one file per occupied selected slot.

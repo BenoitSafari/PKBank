@@ -27,6 +27,9 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
             Slots.Add(new SlotViewModel(store, _containerIndex, i));
     }
 
+    /// <summary>Raised after the panel moved to another container; its slots already show it.</summary>
+    public event EventHandler? ContainerChanged;
+
     public ISlotStore Store { get; }
     public ObservableCollection<SlotViewModel> Slots { get; } = [];
 
@@ -60,6 +63,7 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
                 foreach (var slot in Slots)
                     slot.ChangeContainer(clamped);
                 OnContainerChanged(clamped);
+                ContainerChanged?.Invoke(this, EventArgs.Empty);
             }
             else if (value != clamped)
             {
@@ -81,14 +85,18 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
 
     /// <summary>
     ///     Re-reads the container names when their count changed (a bank gains a box when its spare trailing
-    ///     one is used), keeping the container on screen.
+    ///     one is used, and loses its empty trailing boxes when saved). The container on screen stays, or
+    ///     becomes the last one when it is gone.
     /// </summary>
     public void RefreshContainerNames()
     {
         if (ContainerNames.Count == Store.ContainerCount)
             return;
         ContainerNames = Store.ContainerNames;
-        OnPropertyChanged(nameof(ContainerIndex));
+        if (_containerIndex > Store.ContainerCount - 1)
+            ContainerIndex = Store.ContainerCount - 1;
+        else
+            OnPropertyChanged(nameof(ContainerIndex));
     }
 
     public void RefreshSlots()
