@@ -15,9 +15,6 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
     /// <summary>Slot button footprint: the 68x56 sprite plus padding, border and margin.</summary>
     private const double SlotCellWidth = 76;
 
-    /// <summary>Border, padding and the slack the grid needs beside the slots.</summary>
-    private const double PanelChrome = 22;
-
     private bool _canAdd;
     private bool _canClose;
     private int _containerIndex;
@@ -39,9 +36,6 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
 
     /// <summary>Exact width of the slot area, so the wrapping panel breaks after <see cref="Columns" />.</summary>
     public double SlotAreaWidth => Columns * SlotCellWidth;
-
-    /// <summary>Fixed panel width, so several panels line up when they wrap.</summary>
-    public double PanelWidth => SlotAreaWidth + PanelChrome;
 
     public IReadOnlyList<string> ContainerNames
     {

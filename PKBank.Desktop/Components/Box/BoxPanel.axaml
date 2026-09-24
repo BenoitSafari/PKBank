@@ -4,8 +4,8 @@
              x:Class="PKBank.Desktop.Components.Box.BoxPanel"
              x:DataType="vm:BoxPanelViewModelBase">
 
-    <!-- Framing comes from BoxStyles: the host section decides whether the panel draws its own frame -->
-    <Border Classes="boxFrame" Width="{Binding PanelWidth}" Padding="8">
+    <!-- Sized by its slot grid, so the padding is the same on every side; framing comes from BoxStyles -->
+    <Border Classes="boxFrame" Padding="8" HorizontalAlignment="Left">
         <DockPanel>
 
             <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto">

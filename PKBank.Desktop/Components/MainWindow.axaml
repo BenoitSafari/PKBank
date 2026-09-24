@@ -9,6 +9,7 @@
         Icon="/Assets/icon.png"
         Title="{Binding WindowTitle}"
         Width="1200" Height="800"
+        MinWidth="1000"
         WindowStartupLocation="CenterScreen">
 
     <Panel>
@@ -40,14 +41,15 @@
                         <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}" />
                     </StackPanel>
 
-                    <!-- Party, save boxes and bank stack up; the whole column scrolls when it outgrows the window -->
-                    <ScrollViewer Margin="0,10,0,0" HorizontalScrollBarVisibility="Auto">
-                        <StackPanel Spacing="{DynamicResource SpacingLarge}" HorizontalAlignment="Left">
+                    <!-- Party, save boxes and bank stack up and scroll vertically; only the boxes scroll sideways -->
+                    <ScrollViewer Margin="0,10,0,0" HorizontalScrollBarVisibility="Disabled">
+                        <!-- Right margin keeps the full-width Boxes frame clear of the vertical scrollbar -->
+                        <StackPanel Spacing="{DynamicResource SpacingLarge}" Margin="0,0,16,0">
 
                             <StackPanel IsVisible="{Binding HasParty}">
                                 <TextBlock Classes="sectionTitle" Text="Party" />
                                 <Border Classes="section">
-                                    <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}">
+                                    <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}" Margin="8">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <StackPanel Orientation="Horizontal" />
@@ -57,19 +59,29 @@
                                 </Border>
                             </StackPanel>
 
-                            <!-- Open box panels: fixed-size boxes flowing left to right, wrapping to the next line -->
+                            <!-- Open box panels side by side across the full width, with their own scrollbar.
+                                 The ScrollViewer's own bar would overlay the slots, so a separate one sits
+                                 under them and only takes room when the boxes overflow. -->
                             <StackPanel IsVisible="{Binding HasBox}">
                                 <TextBlock Classes="sectionTitle" Text="Boxes" />
-                                <Border Classes="section">
-                                    <ItemsControl x:Name="BoxPanelsItems" Classes="boxPanels"
-                                                  ItemsSource="{Binding OpenBoxes}"
-                                                  HorizontalAlignment="Left" VerticalAlignment="Top">
-                                        <ItemsControl.ItemsPanel>
-                                            <ItemsPanelTemplate>
-                                                <WrapPanel Orientation="Horizontal" />
-                                            </ItemsPanelTemplate>
-                                        </ItemsControl.ItemsPanel>
-                                    </ItemsControl>
+                                <Border Classes="section" HorizontalAlignment="Stretch">
+                                    <DockPanel>
+                                        <ScrollBar x:Name="BoxesScrollBar" DockPanel.Dock="Bottom"
+                                                   Orientation="Horizontal" AllowAutoHide="False"
+                                                   Margin="8,0,8,8" IsVisible="False" />
+                                        <ScrollViewer x:Name="BoxesScroller"
+                                                      HorizontalScrollBarVisibility="Hidden"
+                                                      VerticalScrollBarVisibility="Disabled">
+                                            <ItemsControl x:Name="BoxPanelsItems" Classes="boxPanels"
+                                                          ItemsSource="{Binding OpenBoxes}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <StackPanel Orientation="Horizontal" />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                            </ItemsControl>
+                                        </ScrollViewer>
+                                    </DockPanel>
                                 </Border>
                             </StackPanel>
 

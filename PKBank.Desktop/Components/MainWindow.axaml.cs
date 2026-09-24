@@ -1,9 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.IO;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using PKBank.Desktop.Services.Slots;
 using PKBank.Desktop.Utils;
 
@@ -11,8 +15,13 @@ namespace PKBank.Desktop.Components;
 
 public sealed partial class MainWindow : Window
 {
+    /// <summary>One slot column: what the scrollbar arrows move the boxes by.</summary>
+    private const double BoxesSmallChange = 76;
+
     private readonly SlotDragDropHost _drag;
+    private MainWindowViewModel? _boundViewModel;
     private bool _forceClose;
+    private bool _syncingBoxesScroll;
 
     public MainWindow()
     {
@@ -25,6 +34,10 @@ public sealed partial class MainWindow : Window
         _drag.AttachArea(PartyItems);
         _drag.AttachArea(BankSection.BoxArea);
         _drag.AttachWindow();
+
+        BoxesScroller.ScrollChanged += (_, _) => SyncBoxesScrollBar();
+        BoxesScrollBar.ValueChanged += OnBoxesScrollBarChanged;
+        DataContextChanged += (_, _) => BindViewModel();
     }
 
     private MainWindowViewModel? ViewModel => DataContext as MainWindowViewModel;
@@ -76,6 +89,49 @@ public sealed partial class MainWindow : Window
             return false;
         vm.TryImportFileToSlot(path, slot);
         return true;
+    }
+
+    // ----- Boxes scrolling ----------------------------------------------------
+
+    /// <summary>Mirrors the boxes' horizontal scroll state onto the scrollbar under them.</summary>
+    private void SyncBoxesScrollBar()
+    {
+        var viewport = BoxesScroller.Viewport.Width;
+        var maximum = Math.Max(0, BoxesScroller.Extent.Width - viewport);
+
+        _syncingBoxesScroll = true;
+        BoxesScrollBar.Maximum = maximum;
+        BoxesScrollBar.ViewportSize = viewport;
+        BoxesScrollBar.LargeChange = viewport;
+        BoxesScrollBar.SmallChange = BoxesSmallChange;
+        BoxesScrollBar.Value = BoxesScroller.Offset.X;
+        BoxesScrollBar.IsVisible = maximum > 0.5;
+        _syncingBoxesScroll = false;
+    }
+
+    private void OnBoxesScrollBarChanged(object? sender, RangeBaseValueChangedEventArgs e)
+    {
+        if (!_syncingBoxesScroll)
+            BoxesScroller.Offset = BoxesScroller.Offset.WithX(e.NewValue);
+    }
+
+    private void BindViewModel()
+    {
+        if (_boundViewModel is { } previous)
+            previous.OpenBoxes.CollectionChanged -= OnOpenBoxesChanged;
+        _boundViewModel = ViewModel;
+        if (_boundViewModel is { } current)
+            current.OpenBoxes.CollectionChanged += OnOpenBoxesChanged;
+    }
+
+    /// <summary>A box opened with "+" lands at the far end: bring it into view once it is laid out.</summary>
+    private void OnOpenBoxesChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.Action != NotifyCollectionChangedAction.Add || e.NewStartingIndex <= 0)
+            return;
+        var index = e.NewStartingIndex;
+        Dispatcher.UIThread.Post(() => BoxPanelsItems.ContainerFromIndex(index)?.BringIntoView(),
+            DispatcherPriority.Background);
     }
 
     // ----- Selected-slot actions -------------------------------------------
