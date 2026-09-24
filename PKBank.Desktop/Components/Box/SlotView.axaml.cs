@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Avalonia.Controls;
@@ -44,7 +45,7 @@ public sealed partial class SlotView : UserControl
     {
         if (sender is not ContextMenu menu || Slot is not { } slot || ViewModel is not { } vm)
             return;
-        // Edit/Copy/Paste are single-slot actions; Import/Export/Delete follow the
+        // Edit/Paste are single-slot actions; Cut/Copy/Import/Export/Delete follow the
         // action targets (whole selection when the clicked slot is part of it).
         var multi = vm.IsMultiSelection;
         var targets = vm.GetActionTargets(slot);
@@ -56,7 +57,7 @@ public sealed partial class SlotView : UserControl
             menuItem.IsEnabled = menuItem.Tag switch
             {
                 "edit" => !multi && slot.IsCompatible, // an empty slot is the "New" case
-                "copy" => !multi && !slot.IsEmpty,
+                "cut" or "copy" => anyOccupied,
                 "paste" => !multi && vm.CanPaste,
                 "import" => true,
                 "export" => anyOccupied,
@@ -76,11 +77,21 @@ public sealed partial class SlotView : UserControl
             await SlotEditorDialogs.EditSlotAsync(host, vm, slot);
     }
 
+    private void OnCutClicked(object? sender, RoutedEventArgs e)
+    {
+        if (Slot is { } slot && ViewModel is { } vm)
+            vm.CutSlots(TargetsInDisplayOrder(vm, slot));
+    }
+
     private void OnCopyClicked(object? sender, RoutedEventArgs e)
     {
-        if (Slot is { } slot)
-            ViewModel?.CopySlot(slot);
+        if (Slot is { } slot && ViewModel is { } vm)
+            vm.CopySlots(TargetsInDisplayOrder(vm, slot));
     }
+
+    /// <summary>The whole selection in reading order when the clicked slot is part of it, else just that slot.</summary>
+    private static IReadOnlyList<SlotViewModel> TargetsInDisplayOrder(MainWindowViewModel vm, SlotViewModel slot) =>
+        vm.GetActionTargets(slot).Count > 1 ? vm.GetSelectedSlotsInDisplayOrder() : [slot];
 
     private async void OnPasteClicked(object? sender, RoutedEventArgs e)
     {
@@ -110,9 +121,7 @@ public sealed partial class SlotView : UserControl
     {
         if (Slot is not { } slot || ViewModel is not { } vm || Host is not { } host)
             return;
-        // Whole selection when the clicked slot is part of it, else just that slot.
-        var targets = vm.GetActionTargets(slot).Count > 1 ? vm.GetSelectedSlotsInDisplayOrder() : [slot];
-        await SlotFileDialogs.ImportIntoSlotsAsync(host, vm, targets);
+        await SlotFileDialogs.ImportIntoSlotsAsync(host, vm, TargetsInDisplayOrder(vm, slot));
     }
 
     private async void OnExportClicked(object? sender, RoutedEventArgs e)

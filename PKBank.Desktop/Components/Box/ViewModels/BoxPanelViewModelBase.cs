@@ -46,6 +46,14 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
         get => _containerIndex;
         set
         {
+            if (value < 0)
+            {
+                // The picker had its items replaced and lost its selection: keep the box on screen and let
+                // it read the index back.
+                OnPropertyChanged();
+                return;
+            }
+
             var clamped = Math.Clamp(value, 0, Math.Max(0, Store.ContainerCount - 1));
             if (SetField(ref _containerIndex, clamped))
             {
@@ -55,8 +63,7 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
             }
             else if (value != clamped)
             {
-                // The view pushed an out-of-range value (e.g. -1 while the ComboBox
-                // ItemsSource resets); notify so it re-reads the clamped value.
+                // Past the last container: notify so the view re-reads the clamped value.
                 OnPropertyChanged();
             }
         }
@@ -70,6 +77,18 @@ public abstract class BoxPanelViewModelBase : ViewModelBase
 
     protected virtual void OnContainerChanged(int container)
     {
+    }
+
+    /// <summary>
+    ///     Re-reads the container names when their count changed (a bank gains a box when its spare trailing
+    ///     one is used), keeping the container on screen.
+    /// </summary>
+    public void RefreshContainerNames()
+    {
+        if (ContainerNames.Count == Store.ContainerCount)
+            return;
+        ContainerNames = Store.ContainerNames;
+        OnPropertyChanged(nameof(ContainerIndex));
     }
 
     public void RefreshSlots()

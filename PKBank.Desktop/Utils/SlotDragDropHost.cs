@@ -138,6 +138,9 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
             }
             else
             {
+                // The click that would select the slot never comes when the press turns into a drag: select
+                // it now, so the selection shows what is being moved rather than a stale slot.
+                vm?.SelectSlot(slot);
                 _activeSource = slot;
                 transfer.Add(DataTransferItem.Create(SlotDragFormats.Slot, slot));
                 await AttachExportFile(transfer, slot);
@@ -151,6 +154,8 @@ public sealed class SlotDragDropHost(Window window, Canvas ghostLayer, Image gho
         finally
         {
             HideGhost();
+            // Dropped, refused or cancelled: the selected slots are stale either way (emptied by the move).
+            ViewModel?.DeselectAll();
             _dragInProgress = false;
             _activeSource = null;
             _activeSources = null;

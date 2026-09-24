@@ -28,6 +28,9 @@ public interface ISlotStore
     PKM Blank { get; }
 
     PKM Read(int container, int index);
+
+    /// <summary>Whether a slot holds an entity, even one not read yet (a bank decodes boxes lazily).</summary>
+    bool IsOccupied(int container, int index) => Read(container, index).Species != 0;
     void Write(int container, int index, PKM pk);
 
     /// <summary>

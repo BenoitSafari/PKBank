@@ -28,11 +28,24 @@ public static class SlotEditorDialogs
             vm.WriteEntityToSlot(slot, pk);
     }
 
-    /// <summary>Pastes the copied Pokémon, confirming first when it would overwrite a slot.</summary>
+    /// <summary>
+    ///     Pastes the clipboard at the slot: one Pokémon replaces what is there (after confirming), several
+    ///     fill the free slots from there on.
+    /// </summary>
     public static async Task PasteToSlotAsync(TopLevel top, MainWindowViewModel vm, SlotViewModel slot)
     {
         if (top is not Window owner)
             return;
+
+        // Several Pokémon take the free slots from here on, like a dropped selection: nothing is overwritten.
+        if (vm.ClipboardCount > 1)
+        {
+            if (vm.TryPlanPaste(slot, out var error) is { } plan)
+                vm.ApplyPaste(plan);
+            else if (error.Length != 0)
+                await ConfirmationWindow.ShowMessageAsync(owner, "Paste", error);
+            return;
+        }
 
         if (!slot.IsEmpty)
         {

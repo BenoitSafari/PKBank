@@ -7,8 +7,5 @@ namespace PKBank.Desktop.Components.Bank.ViewModels;
 public sealed class BankBoxPanelViewModel(BankViewModel owner, BankSlotStore store, int box)
     : BoxPanelViewModelBase(store, box)
 {
-    /// <summary>Re-reads the box count, which grows when an entity lands on the spare box.</summary>
-    public void RefreshBoxes() => ContainerNames = Store.ContainerNames;
-
     protected override void OnContainerChanged(int container) => owner.OnBoxChanged(container);
 }

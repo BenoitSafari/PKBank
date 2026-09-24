@@ -11,6 +11,7 @@
                 <!-- Header flips to "New" on an empty slot; see OnMenuOpening -->
                 <MenuItem Header="Edit" Tag="edit" Click="OnEditClicked" />
                 <Separator />
+                <MenuItem Header="Cut" Tag="cut" Click="OnCutClicked" />
                 <MenuItem Header="Copy" Tag="copy" Click="OnCopyClicked" />
                 <MenuItem Header="Paste" Tag="paste" Click="OnPasteClicked" />
                 <Separator />

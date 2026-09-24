@@ -25,8 +25,17 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private readonly List<SlotViewModel> _selectedSlots = [];
 
-    /// <summary>Copied Pokémon, kept in-process: Paste stays available across boxes and banks.</summary>
-    private PKM? _clipboard;
+    /// <summary>
+    ///     Copied or cut Pokémon, in display order, kept in-process: Paste stays available across boxes and
+    ///     banks. Snapshots, so later edits to the slots do not leak in.
+    /// </summary>
+    private List<PKM> _clipboard = [];
+
+    /// <summary>
+    ///     For a cut: where each clipboard entry came from and what that slot held then. Pasting moves them,
+    ///     so the slots are emptied, but only if they still hold the same thing. Null for a copy.
+    /// </summary>
+    private List<(SlotKey Key, byte[] Data)>? _cutSources;
 
     private SaveBoxPanelViewModel? _saveBox;
     private SaveBoxStore? _boxStore;
@@ -130,18 +139,25 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     // ----- Slot interactions -----------------------------------------------
 
-    // Edit/Copy/Paste are single-slot actions; Import/Delete/Export also work on a multi-selection.
-    // An empty slot is editable too: that is the "New" case.
+    // Edit and Paste are single-slot actions (Paste fills from that slot on); the others also work on a
+    // multi-selection. An empty slot is editable too: that is the "New" case.
     public bool CanEditSelected => !IsMultiSelection && SelectedSlot is { IsCompatible: true };
 
     /// <summary>The edit action creates when the slot is empty, so the button says so.</summary>
     public string EditSelectedLabel => SelectedSlot is { IsEmpty: false } ? "Edit" : "New";
 
-    public bool CanCopySelected => !IsMultiSelection && SelectedSlot is { IsEmpty: false };
+    public bool CanCopySelected => _selectedSlots.Exists(static s => !s.IsEmpty);
+    public bool CanCutSelected => CanCopySelected;
     public bool CanPasteSelected => !IsMultiSelection && SelectedSlot is not null && CanPaste;
 
     /// <summary>A copied Pokémon can go into any slot: the target store converts it on the way.</summary>
-    public bool CanPaste => _clipboard is not null && SAV is not null;
+    public bool CanPaste => _clipboard.Count > 0 && SAV is not null;
+
+    /// <summary>How many Pokémon a paste would place.</summary>
+    public int ClipboardCount => _clipboard.Count;
+
+    /// <summary>Whether the clipboard holds a cut, which a paste moves rather than duplicates.</summary>
+    public bool IsCut => _cutSources is not null;
     public bool CanDeleteSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
     public bool CanImportSelected => SelectedSlot is not null;
     public bool CanExportSelected => _selectedSlots.Exists(static s => !s.IsEmpty);
@@ -154,6 +170,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanEditSelected));
         OnPropertyChanged(nameof(EditSelectedLabel));
         OnPropertyChanged(nameof(CanCopySelected));
+        OnPropertyChanged(nameof(CanCutSelected));
         OnPropertyChanged(nameof(CanPasteSelected));
         OnPropertyChanged(nameof(CanPaste));
         OnPropertyChanged(nameof(CanDeleteSelected));
@@ -196,7 +213,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         _partyStore = null;
 
         ClearSelection();
-        _clipboard = null; // belongs to the save being closed; a language reload keeps it
+        ClearClipboard(); // belongs to the save being closed; a language reload keeps it
         SaveBox = null;
         PartySlots.Clear();
 
@@ -378,6 +395,13 @@ public sealed class MainWindowViewModel : ViewModelBase
         NotifySlotActionStates();
     }
 
+    /// <summary>Clears the selection, e.g. once a drag is over.</summary>
+    public void DeselectAll()
+    {
+        ClearSelection();
+        NotifySlotActionStates();
+    }
+
     private void ClearSelection()
     {
         foreach (var previous in _selectedSlots)
@@ -556,25 +580,38 @@ public sealed class MainWindowViewModel : ViewModelBase
     public MultiMovePlan? TryPlanMultiMove(
         IReadOnlyList<SlotViewModel> sources, SlotViewModel target, out string error)
     {
+        var keys = new HashSet<SlotKey>();
+        var items = sources.Where(s => !s.IsEmpty && keys.Add(s.Key))
+            .Select(static s => ((SlotKey?)s.Key, s.Read()))
+            .ToList();
+        if (items.Count == 0)
+        {
+            error = string.Empty;
+            return null;
+        }
+
+        return TryPlanPlacement(items, target, out error);
+    }
+
+    /// <summary>
+    ///     Converts every entity for the target store and assigns it a free slot, walking forward from the
+    ///     target and wrapping around. Slots the batch comes from (<c>Source</c>, null for a copy) are
+    ///     vacated, so they count as free and are emptied when the plan is applied.
+    /// </summary>
+    private MultiMovePlan? TryPlanPlacement(
+        IReadOnlyList<(SlotKey? Source, PKM Entity)> items, SlotViewModel target, out string error)
+    {
         error = string.Empty;
         var store = target.Store;
-
-        var sourceKeys = new HashSet<SlotKey>();
-        var batch = new List<SlotViewModel>(sources.Count);
-        foreach (var source in sources)
-            if (!source.IsEmpty && sourceKeys.Add(source.Key))
-                batch.Add(source);
-        if (batch.Count == 0)
-            return null;
+        var sourceKeys = new HashSet<SlotKey>(items.Select(static i => i.Source).OfType<SlotKey>());
 
         // Convert first: a single rejected entity cancels the whole batch, so this must run before
         // anything is placed. Clone, because conversion mutates the entity in place.
-        var entities = new List<PKM>(batch.Count);
+        var entities = new List<PKM>(items.Count);
         var refusals = new List<string>();
-        foreach (var source in batch)
+        foreach (var (source, pk) in items)
         {
-            var pk = source.Read();
-            if (source.Store == store)
+            if (source?.Store == store)
             {
                 entities.Add(pk);
                 continue;
@@ -588,12 +625,12 @@ public sealed class MainWindowViewModel : ViewModelBase
 
         if (refusals.Count > 0)
         {
-            error = $"{refusals.Count} of {batch.Count} Pokémon cannot be added to the loaded save:\n\n"
+            error = $"{refusals.Count} of {items.Count} Pokémon cannot be added to the loaded save:\n\n"
                     + string.Join('\n', refusals.Distinct().Take(MaxReportedRefusals));
             return null;
         }
 
-        // Slots the batch is vacating are free for it to reuse.
+        // Occupancy from the store, not the slots on screen: a bank box never shown is not empty.
         var slotsPer = store.SlotsPerContainer;
         var total = store.ContainerCount * slotsPer;
         var start = (target.Container * slotsPer) + target.Index;
@@ -605,8 +642,7 @@ public sealed class MainWindowViewModel : ViewModelBase
             var position = (start + step) % total;
             var container = position / slotsPer;
             var index = position % slotsPer;
-            if (!sourceKeys.Contains(new SlotKey(store, container, index)) &&
-                store.Read(container, index).Species != 0)
+            if (!sourceKeys.Contains(new SlotKey(store, container, index)) && store.IsOccupied(container, index))
                 continue;
             placements.Add(new MultiMovePlacement(container, index, entities[next++]));
         }
@@ -614,7 +650,7 @@ public sealed class MainWindowViewModel : ViewModelBase
         if (next < entities.Count)
         {
             error = $"Not enough free space for these {entities.Count} Pokémon: "
-                    + $"only {placements.Count} slot(s) are free from the drop point onwards.";
+                    + $"only {placements.Count} slot(s) are free from the target slot onwards.";
             return null;
         }
 
@@ -682,25 +718,67 @@ public sealed class MainWindowViewModel : ViewModelBase
     private static SlotViewModel? FindFreeSlot(ISlotStore? store, IEnumerable<SlotViewModel> candidates)
         => store is null ? null : candidates.FirstOrDefault(s => s.Store == store && s.IsEmpty);
 
-    /// <summary>Takes a snapshot of the slot; the source may be edited or deleted afterwards.</summary>
-    public void CopySlot(SlotViewModel slot)
+    /// <summary>Snapshots the occupied slots; they may be edited or deleted afterwards.</summary>
+    public void CopySlots(IReadOnlyList<SlotViewModel> slots) => FillClipboard(slots, false);
+
+    /// <summary>
+    ///     Like <see cref="CopySlots" />, but the paste moves the Pokémon instead of duplicating them. Nothing
+    ///     leaves its slot until then.
+    /// </summary>
+    public void CutSlots(IReadOnlyList<SlotViewModel> slots) => FillClipboard(slots, true);
+
+    private void FillClipboard(IReadOnlyList<SlotViewModel> slots, bool cut)
     {
-        if (slot.IsEmpty)
+        var keys = new HashSet<SlotKey>();
+        var taken = slots.Where(s => !s.IsEmpty && keys.Add(s.Key)).ToList();
+        if (taken.Count == 0)
             return;
-        _clipboard = slot.Read().Clone();
+
+        _clipboard = [.. taken.Select(static s => s.Read().Clone())];
+        _cutSources = cut ? [.. taken.Select(static s => (s.Key, s.Read().Data.ToArray()))] : null;
         NotifySlotActionStates();
-        StatusMessage = "Pokémon copied.";
+        var what = taken.Count == 1 ? "Pokémon" : $"{taken.Count} Pokémon";
+        StatusMessage = cut ? $"{what} cut: paste to move." : $"{what} copied.";
+    }
+
+    private void ClearClipboard()
+    {
+        _clipboard = [];
+        _cutSources = null;
     }
 
     /// <summary>
-    ///     Writes the copied Pokémon into the slot. Crossing stores converts on the way, exactly as a
-    ///     drag between them would; returns false with a reason when the target refuses it.
+    ///     A cut only moves what is still where it was cut from. When a source slot changed meanwhile, the cut
+    ///     is dropped rather than risk emptying the wrong slot or duplicating a Pokémon.
+    /// </summary>
+    private bool IsCutStale(out string error)
+    {
+        error = string.Empty;
+        if (_cutSources is null)
+            return false;
+        if (_cutSources.TrueForAll(static c => c.Key.Store.Read(c.Key.Container, c.Key.Index).Data.SequenceEqual(c.Data)))
+            return false;
+
+        ClearClipboard();
+        NotifySlotActionStates();
+        error = "The cut Pokémon were moved or changed since; cut them again.";
+        StatusMessage = error;
+        return true;
+    }
+
+    /// <summary>
+    ///     Writes the one clipboard Pokémon into the slot, over whatever it holds (the caller confirms that).
+    ///     Crossing stores converts on the way, exactly as a drag between them would; a cut also empties its
+    ///     source. Returns false with a reason when the target refuses it.
     /// </summary>
     public bool PasteToSlot(SlotViewModel slot)
     {
-        if (_clipboard is null || SAV is null)
+        if (_clipboard.Count != 1 || SAV is null || IsCutStale(out _))
             return false;
-        var pk = slot.Store.TryAccept(_clipboard.Clone(), out var message);
+        if (_cutSources is [var source] && source.Key == slot.Key)
+            return false; // cut and pasted in place: nothing moves
+
+        var pk = slot.Store.TryAccept(_clipboard[0].Clone(), out var message);
         if (pk is null)
         {
             StatusMessage = message;
@@ -708,8 +786,45 @@ public sealed class MainWindowViewModel : ViewModelBase
         }
 
         WriteEntityToSlot(slot, pk);
+        if (_cutSources is [var (key, _)])
+        {
+            key.Store.Write(key.Container, key.Index, key.Store.Blank);
+            MarkEdited(key.Store);
+            ClearClipboard(); // a cut pastes once
+            RefreshAllSlots();
+            NotifySlotActionStates();
+            TrackBankChanges();
+            StatusMessage = "Pokémon moved.";
+            return true;
+        }
+
         StatusMessage = "Pokémon pasted.";
         return true;
+    }
+
+    /// <summary>
+    ///     Dry-run for pasting several Pokémon from <paramref name="target" /> on: they take the free slots
+    ///     forward, as a dropped selection does, and never overwrite. Null with a reason when they do not fit.
+    /// </summary>
+    public MultiMovePlan? TryPlanPaste(SlotViewModel target, out string error)
+    {
+        error = string.Empty;
+        if (_clipboard.Count == 0 || SAV is null || IsCutStale(out error))
+            return null;
+
+        var items = _clipboard.Select((pk, i) => (_cutSources?[i].Key, pk.Clone())).ToList();
+        return TryPlanPlacement(items, target, out error);
+    }
+
+    /// <summary>Carries out a plan from <see cref="TryPlanPaste" />; a cut pastes once.</summary>
+    public void ApplyPaste(MultiMovePlan plan)
+    {
+        var cut = IsCut;
+        ApplyMultiMove(plan);
+        if (cut)
+            ClearClipboard();
+        NotifySlotActionStates();
+        StatusMessage = cut ? $"Moved {plan.Placements.Count} Pokémon." : $"Pasted {plan.Placements.Count} Pokémon.";
     }
 
     /// <summary>Writes an entity the editor produced into the given slot.</summary>
@@ -737,6 +852,9 @@ public sealed class MainWindowViewModel : ViewModelBase
 
     private void LoadSave(SaveFile sav)
     {
+        // A cut points at the slots of the save it was made in; a copy may travel to another save.
+        if (IsCut && !ReferenceEquals(SAV, sav))
+            ClearClipboard();
         SAV = sav;
         _sources = new FilteredGameDataSource(sav, GameInfo.Sources);
         GameInfo.FilteredSources = _sources;
@@ -832,6 +950,8 @@ public sealed class MainWindowViewModel : ViewModelBase
     /// </summary>
     private void TrackBankChanges()
     {
+        // Using the spare trailing box made it a real one, with a new spare after it.
+        Bank.CurrentBox?.RefreshContainerNames();
         if (Bank.IsDirty)
             Bank.SavePending(_savePath ?? string.Empty);
         NotifyPendingChanges();

@@ -90,6 +90,9 @@ public sealed class BankSession
             ? pk
             : null;
 
+    /// <summary>Whether a slot holds an entity, decoded or not.</summary>
+    public bool IsOccupied(int box, int index) => _placement.ContainsKey((box * BankStorage.SlotsPerBox) + index);
+
     /// <summary>Puts an entity into a slot, or clears it with a blank one.</summary>
     public void Place(int box, int index, PKM? pk)
     {

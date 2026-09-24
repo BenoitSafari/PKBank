@@ -184,10 +184,16 @@ public sealed partial class MainWindow : Window
             await SlotEditorDialogs.EditSlotAsync(this, vm, slot);
     }
 
+    private void OnCutSelectedClicked(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is { CanCutSelected: true } vm)
+            vm.CutSlots(vm.GetSelectedSlotsInDisplayOrder());
+    }
+
     private void OnCopySelectedClicked(object? sender, RoutedEventArgs e)
     {
-        if (ViewModel is { CanCopySelected: true, SelectedSlot: { } slot } vm)
-            vm.CopySlot(slot);
+        if (ViewModel is { CanCopySelected: true } vm)
+            vm.CopySlots(vm.GetSelectedSlotsInDisplayOrder());
     }
 
     private async void OnPasteSelectedClicked(object? sender, RoutedEventArgs e)

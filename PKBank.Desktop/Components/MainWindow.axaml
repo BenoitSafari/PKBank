@@ -30,6 +30,7 @@
                         <!-- Fixed width so the bar does not shift as the label flips Edit/New -->
                         <Button Content="{Binding EditSelectedLabel}" MinWidth="64"
                                 Click="OnEditSelectedClicked" IsEnabled="{Binding CanEditSelected}" />
+                        <Button Content="Cut" Click="OnCutSelectedClicked" IsEnabled="{Binding CanCutSelected}" />
                         <Button Content="Copy" Click="OnCopySelectedClicked" IsEnabled="{Binding CanCopySelected}" />
                         <Button Content="Paste" Click="OnPasteSelectedClicked"
                                 IsEnabled="{Binding CanPasteSelected}" />

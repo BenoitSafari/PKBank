@@ -32,6 +32,9 @@ public sealed class BankSlotStore(BankSession session, SaveFile sav, string lang
 
     public PKM Read(int container, int index) => Session.Peek(container, index) ?? Blank;
 
+    /// <summary>From the layout, so boxes never shown still count as occupied.</summary>
+    public bool IsOccupied(int container, int index) => Session.IsOccupied(container, index);
+
     public void Write(int container, int index, PKM pk) =>
         Session.Place(container, index, pk.Species == 0 ? null : pk);
 
