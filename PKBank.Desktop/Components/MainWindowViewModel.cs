@@ -43,13 +43,13 @@ public sealed class MainWindowViewModel : ViewModelBase
         Config = config;
         SaveSelection = new SaveSelectionViewModel(config);
         Bank = new BankViewModel(config);
-        Bank.RefreshBanks();
+        Bank.StatusRaised += message => StatusMessage = message;
+        Bank.PropertyChanged += OnBankPropertyChanged;
+        Bank.Initialize();
         // Adding or removing a save folder (or switching language) changes what the
         // selection screen should list; only rescan while it is the visible screen.
         Config.Changed += (_, _) =>
         {
-            Bank.RefreshBanks();
-            OnPropertyChanged(nameof(CanOpenBank));
             if (SAV is null)
                 _ = SaveSelection.RefreshAsync();
         };
@@ -65,8 +65,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     public BankViewModel Bank { get; }
 
     public bool HasSave => SAV is not null;
-
-    public bool CanOpenBank => HasSave && Config.BankPaths.Count > 0;
 
     /// <summary>
     ///     Deliberately not tied to <see cref="SaveFileState.Edited" />: writing the save is also what commits
@@ -858,7 +856,6 @@ public sealed class MainWindowViewModel : ViewModelBase
         OnPropertyChanged(nameof(CanAddBox));
         OnPropertyChanged(nameof(CanCloseBox));
         OnPropertyChanged(nameof(WindowTitle));
-        OnPropertyChanged(nameof(CanOpenBank));
         NotifyPendingChanges();
     }
 
@@ -866,7 +863,6 @@ public sealed class MainWindowViewModel : ViewModelBase
     private void NotifyPendingChanges()
     {
         OnPropertyChanged(nameof(CanSave));
-        OnPropertyChanged(nameof(CanOpenBank));
         OnPropertyChanged(nameof(PendingChangesSummary));
         OnPropertyChanged(nameof(IsDirty));
     }
@@ -879,6 +875,29 @@ public sealed class MainWindowViewModel : ViewModelBase
     {
         if (SAV is { } sav && stores.Any(static s => s.Scope == SlotScope.Save))
             sav.State.Edited = true;
+    }
+
+    /// <summary>
+    ///     The bank box on screen was replaced (another bank picked, or the bank vanished from disk): bank
+    ///     slots still selected point at a box that is gone. Pending changes can also be dropped from under
+    ///     us when a bank folder disappears.
+    /// </summary>
+    private void OnBankPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        switch (e.PropertyName)
+        {
+            case nameof(BankViewModel.CurrentBox):
+                if (_selectedSlots.Exists(static s => s.Store.Scope == SlotScope.Bank))
+                {
+                    ClearSelection();
+                    NotifySlotActionStates();
+                }
+
+                break;
+            case nameof(BankViewModel.IsDirty):
+                NotifyPendingChanges();
+                break;
+        }
     }
 
     /// <summary>

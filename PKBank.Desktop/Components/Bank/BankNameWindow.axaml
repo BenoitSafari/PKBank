@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="PKBank.Desktop.Components.Bank.BankNameWindow"
+        Width="420" SizeToContent="Height"
+        CanResize="False"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner">
+
+    <StackPanel Margin="14" Spacing="{DynamicResource SpacingLarge}">
+
+        <StackPanel Spacing="{DynamicResource SpacingExtraSmall}">
+            <TextBlock Text="Bank name" />
+            <TextBox x:Name="NameBox" MaxLength="32" TextChanged="OnTextChanged" KeyDown="OnNameKeyDown" />
+            <TextBlock x:Name="ErrorText" TextWrapping="Wrap" FontSize="{DynamicResource FontSizeRegular}"
+                       Foreground="{DynamicResource SystemErrorTextColor}" IsVisible="False" />
+            <TextBlock Text="Letters, digits, spaces, “-”, “+” and “_”; up to 32 characters."
+                       TextWrapping="Wrap" FontSize="{DynamicResource FontSizeSmall}" Opacity="0.7" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="{DynamicResource SpacingRegular}">
+            <Button Content="Cancel" MinWidth="96" Click="OnCancelClicked" />
+            <Button x:Name="ConfirmButton" Content="OK" MinWidth="96" Classes="accent" IsEnabled="False"
+                    Click="OnConfirmClicked" />
+        </StackPanel>
+
+    </StackPanel>
+
+</Window>

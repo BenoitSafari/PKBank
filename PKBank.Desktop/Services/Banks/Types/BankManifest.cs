@@ -5,16 +5,13 @@ namespace PKBank.Desktop.Services.Banks.Types;
 
 /// <summary>
 ///     Persisted layout of a bank folder. A folder of Pokémon files has no notion of slot placement, so
-///     it is kept alongside them in <c>bank.json</c>.
+///     it is kept alongside them in <c>bank.json</c>. The bank name is the folder name, not stored here.
 /// </summary>
 public sealed class BankManifest
 {
     public const int CurrentVersion = 1;
 
     public int Version { get; set; } = CurrentVersion;
-
-    /// <summary>Display name; empty means "use the folder name".</summary>
-    public string Name { get; set; } = string.Empty;
 
     public int BoxCount { get; set; } = 1;
 

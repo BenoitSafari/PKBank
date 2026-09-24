@@ -20,15 +20,20 @@ public sealed partial class ConfirmationWindow : Window
 
     public ConfirmationWindow() => InitializeComponent(); // designer
 
+    /// <param name="saveText">
+    ///     Label of the middle button shown with <paramref name="allowSave" />, for a second way of going
+    ///     ahead that is not a save; it still reports <see cref="ConfirmationResult.Save" />.
+    /// </param>
     public static async Task<ConfirmationResult> ShowAsync(
-        Window owner, string title, string message, string confirmText, bool allowSave = false)
+        Window owner, string title, string message, string confirmText, bool allowSave = false,
+        string saveText = "Save")
     {
         var window = new ConfirmationWindow
         {
             Title = title,
             MessageText = { Text = message },
             ConfirmButton = { Content = confirmText },
-            SaveButton = { IsVisible = allowSave }
+            SaveButton = { IsVisible = allowSave, Content = saveText }
         };
         await window.ShowDialog(owner);
         return window._result;

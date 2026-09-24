@@ -14,7 +14,7 @@ public sealed class AppConfigService(IConfigStore store)
 
     public string Language => _config.Language;
     public IReadOnlyList<string> SavPaths => _config.SavPaths;
-    public IReadOnlyList<string> BankPaths => _config.BankPaths;
+    public string BanksPath => _config.BanksPath;
 
     public bool SetLanguage(string code)
     {
@@ -35,15 +35,19 @@ public sealed class AppConfigService(IConfigStore store)
     /// </returns>
     public bool RemoveSavPath(string path) => Remove(_config.SavPaths, path);
 
+    /// <summary>Sets the banks folder; blank goes back to the default one.</summary>
     /// <returns>
-    ///     <c>false</c> when the path is blank or already registered.
+    ///     <c>false</c> when nothing changed.
     /// </returns>
-    public bool AddBankPath(string path) => Add(_config.BankPaths, path);
-
-    /// <returns>
-    ///     <c>false</c> when the path was not registered.
-    /// </returns>
-    public bool RemoveBankPath(string path) => Remove(_config.BankPaths, path);
+    public bool SetBanksPath(string path)
+    {
+        var normalized = Normalize(path);
+        if (normalized == _config.BanksPath)
+            return false;
+        _config.BanksPath = normalized;
+        Commit();
+        return true;
+    }
 
     private bool Add(List<string> paths, string path)
     {
@@ -115,7 +119,7 @@ public sealed class AppConfigService(IConfigStore store)
             config.Language = GameLanguage.DefaultLanguage;
 
         Sanitize(config.SavPaths);
-        Sanitize(config.BankPaths);
+        config.BanksPath = Normalize(config.BanksPath ?? string.Empty);
         config.Version = AppConfig.CurrentVersion;
         return config;
     }

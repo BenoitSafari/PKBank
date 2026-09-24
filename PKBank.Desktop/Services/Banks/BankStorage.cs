@@ -52,7 +52,7 @@ public static class BankStorage
         if (manifest is null || !IsStructurallyValid(manifest))
         {
             changed = true;
-            return Rebuild(folder, files, manifest?.Name ?? string.Empty);
+            return Rebuild(files);
         }
 
         changed = Repair(manifest, files);
@@ -171,11 +171,10 @@ public static class BankStorage
         return true;
     }
 
-    private static BankManifest Rebuild(string folder, IReadOnlyList<string> files, string name)
+    private static BankManifest Rebuild(IReadOnlyList<string> files)
     {
         var manifest = new BankManifest
         {
-            Name = string.IsNullOrWhiteSpace(name) ? string.Empty : name,
             BoxCount = Math.Max(1, (files.Count + SlotsPerBox - 1) / SlotsPerBox)
         };
         for (var i = 0; i < files.Count; i++)

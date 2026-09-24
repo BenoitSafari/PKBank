@@ -23,6 +23,36 @@
         <Setter Property="Foreground" Value="{DynamicResource SystemAltHighColor}" />
     </Style>
 
+    <!-- Frame shared by storage sections (Party, Boxes, Bank) -->
+    <Style Selector="Border.section">
+        <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Padding" Value="4" />
+        <Setter Property="HorizontalAlignment" Value="Left" />
+    </Style>
+    <Style Selector="TextBlock.sectionTitle">
+        <Setter Property="FontWeight" Value="SemiBold" />
+        <Setter Property="Margin" Value="2,0,0,4" />
+    </Style>
+
+    <!-- A box panel on its own draws its frame; inside a section it is frameless, and side-by-side
+         panels are split by a vertical rule instead -->
+    <Style Selector="Border.boxFrame">
+        <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseLowBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="CornerRadius" Value="6" />
+        <Setter Property="Margin" Value="0,0,10,10" />
+    </Style>
+    <Style Selector="Border.section Border.boxFrame">
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="CornerRadius" Value="0" />
+        <Setter Property="Margin" Value="0" />
+    </Style>
+    <Style Selector="Border.section ItemsControl.boxPanels > ContentPresenter:nth-child(n+2) Border.boxFrame">
+        <Setter Property="BorderThickness" Value="1,0,0,0" />
+    </Style>
+
     <Style Selector="Button.slot">
         <Setter Property="Padding" Value="2" />
         <Setter Property="Margin" Value="1" />

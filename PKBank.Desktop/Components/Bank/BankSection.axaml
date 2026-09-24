@@ -1,0 +1,45 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:PKBank.Desktop.Components"
+             xmlns:bankVm="using:PKBank.Desktop.Components.Bank.ViewModels"
+             x:Class="PKBank.Desktop.Components.Bank.BankSection"
+             x:DataType="vm:MainWindowViewModel">
+
+    <!-- The DataContext stays the MainWindowViewModel so slots resolve it the same way they do in the
+         save boxes; the bank sub-view-model is reached through it. -->
+    <StackPanel MinWidth="420">
+
+        <!-- Bank picker and management; the box navigation right below comes with the box panel -->
+        <Grid ColumnDefinitions="*,Auto,Auto,Auto" Margin="8,8,8,0">
+            <ComboBox Grid.Column="0" HorizontalAlignment="Stretch"
+                      ItemsSource="{Binding Bank.Banks}"
+                      SelectedItem="{Binding Bank.SelectedBank, Mode=TwoWay}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="bankVm:BankEntryViewModel">
+                        <TextBlock Text="{Binding Name}" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+            <Button Grid.Column="1" Content="+" MinWidth="34" Margin="8,0,0,0"
+                    Click="OnCreateClicked"
+                    ToolTip.Tip="Create a new Bank" />
+            <Button Grid.Column="2" Content="✎" MinWidth="34" Margin="6,0,0,0"
+                    Click="OnRenameClicked"
+                    ToolTip.Tip="Rename this Bank" />
+            <Button Grid.Column="3" Content="−" MinWidth="34" Margin="6,0,0,0"
+                    Click="OnDeleteClicked"
+                    IsEnabled="{Binding Bank.CanDelete}"
+                    ToolTip.Tip="Delete this Bank" />
+        </Grid>
+
+        <Panel>
+            <!-- Implicit template on BoxPanelViewModelBase renders the box -->
+            <ContentControl x:Name="BoxHost" Content="{Binding Bank.CurrentBox}" />
+            <!-- Over the box rather than beside the picker, so loading never shifts the layout -->
+            <ProgressBar VerticalAlignment="Top" Margin="8,2,8,0" MinWidth="0" Height="2"
+                         IsIndeterminate="True" IsVisible="{Binding Bank.IsLoading}" />
+        </Panel>
+
+    </StackPanel>
+
+</UserControl>

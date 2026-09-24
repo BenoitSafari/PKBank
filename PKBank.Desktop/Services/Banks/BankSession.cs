@@ -32,15 +32,16 @@ public sealed class BankSession
     private BankSession(string folder, BankManifest manifest, IEnumerable<string> onDisk)
     {
         Folder = folder;
-        Name = string.IsNullOrWhiteSpace(manifest.Name) ? BankStorage.DefaultName(folder) : manifest.Name;
         BoxCount = manifest.BoxCount;
         _onDisk = new HashSet<string>(onDisk, StringComparer.Ordinal);
         foreach (var entry in manifest.Slots)
             _placement[(entry.Box * BankStorage.SlotsPerBox) + entry.Index] = entry.File;
     }
 
-    public string Folder { get; }
-    public string Name { get; }
+    public string Folder { get; private set; }
+
+    /// <summary>The folder name: renaming the folder is renaming the bank.</summary>
+    public string Name => BankStorage.DefaultName(Folder);
     public int BoxCount { get; private set; }
 
     public bool IsDirty => _changed;
@@ -53,6 +54,12 @@ public sealed class BankSession
             BankStorage.SaveManifest(folder, manifest);
         return new BankSession(folder, manifest, BankStorage.ScanEntityFiles(folder));
     }
+
+    /// <summary>
+    ///     The folder was renamed or moved. Files are addressed relative to it, so nothing else changes;
+    ///     the pending-changes file moved along with it.
+    /// </summary>
+    public void Relocate(string folder) => Folder = folder;
 
     /// <summary>Decodes the entities of one box. Safe to call off the UI thread; a no-op once loaded.</summary>
     public void LoadBox(int box, CancellationToken token)
@@ -139,7 +146,6 @@ public sealed class BankSession
 
             BankStorage.SaveManifest(Folder, new BankManifest
             {
-                Name = Name,
                 BoxCount = BoxCount,
                 Slots = [.. BuildEntries()]
             });

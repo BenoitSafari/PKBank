@@ -7,14 +7,11 @@ using Avalonia.Interactivity;
 using PKBank.Desktop.Services.Slots;
 using PKBank.Desktop.Utils;
 
-using PKBank.Desktop.Components.Bank;
-
 namespace PKBank.Desktop.Components;
 
 public sealed partial class MainWindow : Window
 {
     private readonly SlotDragDropHost _drag;
-    private BankWindow? _bankWindow;
     private bool _forceClose;
 
     public MainWindow()
@@ -26,6 +23,7 @@ public sealed partial class MainWindow : Window
         };
         _drag.AttachArea(BoxPanelsItems);
         _drag.AttachArea(PartyItems);
+        _drag.AttachArea(BankSection.BoxArea);
         _drag.AttachWindow();
     }
 
@@ -78,25 +76,6 @@ public sealed partial class MainWindow : Window
             return false;
         vm.TryImportFileToSlot(path, slot);
         return true;
-    }
-
-    /// <summary>
-    ///     Opens the bank next to this window, or brings it back to the front. Owned, so it stays above
-    ///     and closes with the main window.
-    /// </summary>
-    private void OnBankClicked(object? sender, RoutedEventArgs e)
-    {
-        if (ViewModel is not { CanOpenBank: true })
-            return;
-        if (_bankWindow is null)
-        {
-            _bankWindow = new BankWindow { DataContext = DataContext };
-            _bankWindow.Closed += (_, _) => _bankWindow = null;
-            _bankWindow.Show(this);
-            return;
-        }
-
-        _bankWindow.Activate();
     }
 
     // ----- Selected-slot actions -------------------------------------------

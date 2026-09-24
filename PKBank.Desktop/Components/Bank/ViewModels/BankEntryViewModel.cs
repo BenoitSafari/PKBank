@@ -2,13 +2,22 @@ using PKBank.Desktop.Services.Banks;
 
 namespace PKBank.Desktop.Components.Bank.ViewModels;
 
-/// <summary>One configured bank folder, as listed in the bank picker.</summary>
-public sealed class BankEntryViewModel(string folder)
+/// <summary>One bank folder, as listed in the bank picker. Its name is the folder name.</summary>
+public sealed class BankEntryViewModel(string folder) : ViewModelBase
 {
-    public string Folder { get; } = folder;
+    private string _folder = folder;
 
-    /// <summary>Folder name until the bank is opened and its manifest supplies one.</summary>
-    public string Name { get; set; } = BankStorage.DefaultName(folder);
+    public string Folder
+    {
+        get => _folder;
+        set
+        {
+            if (SetField(ref _folder, value))
+                OnPropertyChanged(nameof(Name));
+        }
+    }
+
+    public string Name => BankLibrary.NameOf(Folder);
 
     public override string ToString() => Name;
 }

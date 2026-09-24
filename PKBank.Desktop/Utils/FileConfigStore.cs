@@ -14,6 +14,9 @@ public sealed class FileConfigStore : IConfigStore
 
     private static readonly string ConfigPath = Resolve();
 
+    /// <summary>Folder holding the config file; the default banks folder sits next to it.</summary>
+    public static string ConfigDirectory => Path.GetDirectoryName(ConfigPath)!;
+
     public string? Read() => File.Exists(ConfigPath) ? File.ReadAllText(ConfigPath) : null;
 
     public void Write(string content)

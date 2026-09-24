@@ -3,6 +3,7 @@
         xmlns:vm="using:PKBank.Desktop.Components"
         xmlns:v="using:PKBank.Desktop.Components"
         xmlns:ss="using:PKBank.Desktop.Components.SaveSelection"
+        xmlns:bank="using:PKBank.Desktop.Components.Bank"
         x:Class="PKBank.Desktop.Components.MainWindow"
         x:DataType="vm:MainWindowViewModel"
         Icon="/Assets/icon.png"
@@ -22,53 +23,67 @@
                 <ss:SaveSelectionView IsVisible="{Binding !HasSave}" />
 
                 <!-- Storage: editing happens in PokemonEditorWindow, so the boxes get the full width -->
-                <Border IsVisible="{Binding HasSave}"
-                        BorderBrush="{DynamicResource SystemControlForegroundBaseLowBrush}"
-                        BorderThickness="1" CornerRadius="6" Padding="10">
-                    <DockPanel>
+                <DockPanel IsVisible="{Binding HasSave}">
 
-                        <!-- Selected-slot actions: mirrors the slot context menu -->
-                        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
-                            <!-- Fixed width so the bar does not shift as the label flips Edit/New -->
-                            <Button Content="{Binding EditSelectedLabel}" MinWidth="64"
-                                    Click="OnEditSelectedClicked" IsEnabled="{Binding CanEditSelected}" />
-                            <Button Content="Copy" Click="OnCopySelectedClicked" IsEnabled="{Binding CanCopySelected}" />
-                            <Button Content="Paste" Click="OnPasteSelectedClicked"
-                                    IsEnabled="{Binding CanPasteSelected}" />
-                            <Button Content="Import" Click="OnImportSelectedClicked"
-                                    IsEnabled="{Binding CanImportSelected}" />
-                            <Button Content="Export" Click="OnExportSelectedClicked"
-                                    IsEnabled="{Binding CanExportSelected}" />
-                            <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}" />
-                            <Button Content="Bank" Classes="accent" Click="OnBankClicked"
-                                    IsEnabled="{Binding CanOpenBank}" />
+                    <!-- Selected-slot actions: mirrors the slot context menu -->
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Spacing="{DynamicResource SpacingSmall}">
+                        <!-- Fixed width so the bar does not shift as the label flips Edit/New -->
+                        <Button Content="{Binding EditSelectedLabel}" MinWidth="64"
+                                Click="OnEditSelectedClicked" IsEnabled="{Binding CanEditSelected}" />
+                        <Button Content="Copy" Click="OnCopySelectedClicked" IsEnabled="{Binding CanCopySelected}" />
+                        <Button Content="Paste" Click="OnPasteSelectedClicked"
+                                IsEnabled="{Binding CanPasteSelected}" />
+                        <Button Content="Import" Click="OnImportSelectedClicked"
+                                IsEnabled="{Binding CanImportSelected}" />
+                        <Button Content="Export" Click="OnExportSelectedClicked"
+                                IsEnabled="{Binding CanExportSelected}" />
+                        <Button Content="Delete" Click="OnDeleteClicked" IsEnabled="{Binding CanDeleteSelected}" />
+                    </StackPanel>
+
+                    <!-- Party, save boxes and bank stack up; the whole column scrolls when it outgrows the window -->
+                    <ScrollViewer Margin="0,10,0,0" HorizontalScrollBarVisibility="Auto">
+                        <StackPanel Spacing="{DynamicResource SpacingLarge}" HorizontalAlignment="Left">
+
+                            <StackPanel IsVisible="{Binding HasParty}">
+                                <TextBlock Classes="sectionTitle" Text="Party" />
+                                <Border Classes="section">
+                                    <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </Border>
+                            </StackPanel>
+
+                            <!-- Open box panels: fixed-size boxes flowing left to right, wrapping to the next line -->
+                            <StackPanel IsVisible="{Binding HasBox}">
+                                <TextBlock Classes="sectionTitle" Text="Boxes" />
+                                <Border Classes="section">
+                                    <ItemsControl x:Name="BoxPanelsItems" Classes="boxPanels"
+                                                  ItemsSource="{Binding OpenBoxes}"
+                                                  HorizontalAlignment="Left" VerticalAlignment="Top">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <WrapPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                    </ItemsControl>
+                                </Border>
+                            </StackPanel>
+
+                            <StackPanel>
+                                <TextBlock Classes="sectionTitle" Text="Bank" />
+                                <Border Classes="section">
+                                    <bank:BankSection x:Name="BankSection" />
+                                </Border>
+                            </StackPanel>
+
                         </StackPanel>
+                    </ScrollViewer>
 
-                        <StackPanel DockPanel.Dock="Top" IsVisible="{Binding HasParty}" Margin="0,10,0,0">
-                            <TextBlock Text="Party" FontWeight="SemiBold" Margin="2,0,0,4" />
-                            <ItemsControl x:Name="PartyItems" ItemsSource="{Binding PartySlots}">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <StackPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </StackPanel>
-
-                        <!-- Open box panels: fixed-size boxes flowing left to right, wrapping to the next line -->
-                        <ScrollViewer Margin="0,10,0,0" IsVisible="{Binding HasBox}">
-                            <ItemsControl x:Name="BoxPanelsItems" ItemsSource="{Binding OpenBoxes}"
-                                          HorizontalAlignment="Left" VerticalAlignment="Top">
-                                <ItemsControl.ItemsPanel>
-                                    <ItemsPanelTemplate>
-                                        <WrapPanel Orientation="Horizontal" />
-                                    </ItemsPanelTemplate>
-                                </ItemsControl.ItemsPanel>
-                            </ItemsControl>
-                        </ScrollViewer>
-
-                    </DockPanel>
-                </Border>
+                </DockPanel>
 
             </Grid>
 

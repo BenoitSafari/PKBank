@@ -4,11 +4,11 @@
     xmlns:directoryPathList="clr-namespace:PKBank.Desktop.Components.Common.DirectoryPathList"
     x:Class="PKBank.Desktop.Components.Settings.SettingsWindow"
     Title="Settings"
-    Width="560" Height="620"
+    Width="560" Height="520"
     MinWidth="420" MinHeight="460"
     WindowStartupLocation="CenterOwner">
 
-    <Grid Margin="16" RowSpacing="{DynamicResource SpacingLarge}" RowDefinitions="Auto,Auto,Auto,*,*,Auto">
+    <Grid Margin="16" RowSpacing="{DynamicResource SpacingLarge}" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto">
         <TextBlock Grid.Row="0" Text="Program" FontWeight="SemiBold" FontSize="{DynamicResource FontSizeLarge}" />
         <Grid Grid.Row="1" ColumnDefinitions="170,*" RowDefinitions="Auto,Auto" Margin="4,0,0,0">
             <TextBlock
@@ -33,14 +33,21 @@
             PickerTitle="Add Save Folder"
             PathAdded="OnSavPathAdded"
             PathRemoved="OnSavPathRemoved" />
-        <directoryPathList:DirectoryPathList
-            Grid.Row="4"
-            x:Name="BankFolders"
-            Header="Bank Folders (will be scanned for Pokémon files)"
-            ColumnHeader="Bank Directory"
-            PickerTitle="Add Bank Folder"
-            PathAdded="OnBankPathAdded"
-            PathRemoved="OnBankPathRemoved" />
+
+        <!-- One folder holding every bank, one sub-folder each -->
+        <StackPanel Grid.Row="4" Spacing="{DynamicResource SpacingExtraSmall}">
+            <TextBlock Text="Banks Folder" Margin="4,0,0,0" />
+            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{DynamicResource SpacingSmall}">
+                <TextBox Grid.Column="0" x:Name="BanksPathBox"
+                         KeyDown="OnBanksPathKeyDown" LostFocus="OnBanksPathLostFocus" />
+                <Button Grid.Column="1" Content="Browse…" MinWidth="86" Click="OnBanksBrowseClicked" />
+                <Button Grid.Column="2" Content="Default" MinWidth="86" Click="OnBanksDefaultClicked"
+                        ToolTip.Tip="Use the default banks folder, next to the settings file" />
+            </Grid>
+            <TextBlock x:Name="BanksPathNote" Margin="4,0,0,0" TextWrapping="Wrap"
+                       FontSize="{DynamicResource FontSizeRegular}"
+                       Foreground="{DynamicResource SystemErrorTextColor}" IsVisible="False" />
+        </StackPanel>
 
         <Button Grid.Row="5" Content="Close" HorizontalAlignment="Right" Click="OnCloseClicked" />
     </Grid>

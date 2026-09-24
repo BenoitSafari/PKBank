@@ -9,7 +9,7 @@ public sealed class AppConfig
     /// <summary>
     ///     Schema version of the persisted payload, for migrations.
     /// </summary>
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     public int Version { get; set; } = CurrentVersion;
 
@@ -17,7 +17,8 @@ public sealed class AppConfig
 
     public List<string> SavPaths { get; set; } = [];
 
-    public List<string> BankPaths { get; set; } = [];
+    /// <summary>Folder holding one sub-folder per bank; empty means the default next to the config file.</summary>
+    public string BanksPath { get; set; } = string.Empty;
 }
 
 [JsonSourceGenerationOptions(WriteIndented = true)]
