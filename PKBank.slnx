@@ -4,4 +4,5 @@
   <Folder Name="/packages/">
     <Project Path="packages/PKHeX/PKHeX.Core/PKHeX.Core.csproj" />
   </Folder>
+  <Project Path="PKBank.Game\PKBank.Game.csproj" />
 </Solution>
